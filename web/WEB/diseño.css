@@ -1,0 +1,33 @@
+.hero {
+  position: relative;
+  height: 90vh;
+  overflow: hidden;
+}
+
+.hero .fondo {
+  position: absolute;
+  inset: 0;
+  background-image: url("../imagenes/fondo.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: brightness(60%);
+}
+
+.hero .hero-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  gap: 50px;
+}
+
+.hero .hero-content .btn{
+    height: 100px;
+    width: 350px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
