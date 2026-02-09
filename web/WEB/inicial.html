@@ -28,14 +28,39 @@
   <div class="hero d-flex align-items-center justify-content-center text-center">
     <div class="fondo"></div>
     <div class="hero-content">
-      <a href="#" class="btn btn-outline-light">DIAGRAMAS</a>
+      <button class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#modalDiagramas">DIAGRAMASs</button>
       <a href="#" class="btn btn-outline-light">DOCUMENTACION</a>
+      <a href="paginas alternas/galeria.html" class="btn btn-outline-light">GALERÍA</a>
     </div>
   </div>
   
   <footer class="d-flex justify-content-between align-items-center p-3 bg-dark"></footer>
+
+  <!--modal ver diagramas -->
+<div class="modal fade" id="modalDiagramas" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-white border-light">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Nuestros Diagramas</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Selecciona el diagrama que deseas visualizar en Drive:</p>
+        <div class="list-group">
+          <a href="https://drive.google.com/file/d/1EpYGA7vaYFY4pX-uxHGrDisolltNVBy1/view?usp=drive_link" target="_blank" class="list-group-item list-group-item-action list-group-item-dark">Diagrama de clases</a>
+          <a href="https://drive.google.com/file/d/1FLjAv7ZrgSPB72lsUFJ_42OXfnFPfdWd/view?usp=drive_link" target="_blank" class="list-group-item list-group-item-action list-group-item-dark">Diagrama de casos de uso</a>
+          <a href="https://drive.google.com/file/d/18ZmheBFiCQIIhto_Ef6ZeHrU40QuWBmG/view?usp=drive_link" target="_blank" class="list-group-item list-group-item-action list-group-item-dark">Diagrama de Modelo Entidad Relación</a>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+
 </body>
-
-
 
 </html>
