@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Aplication Platform',
       debugShowCheckedModeBanner: false,
-      home: loading(),
+      home: const ErrorView(),
     );
     
   }
