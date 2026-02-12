@@ -40,6 +40,8 @@ dependencies:
   bloc: ^9.2.0
   http: ^1.6.0
   flutter_bloc: ^9.1.1
+  carousel_slider: ^5.1.2
+
 
 dev_dependencies:
   flutter_test:
