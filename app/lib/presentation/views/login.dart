@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../bloc/home_bloc.dart';
 
 class loginview extends StatelessWidget {
   const loginview({
@@ -82,7 +85,9 @@ class loginview extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
                     child: FilledButton(
                       onPressed: () {
-                        // no hace nada por ahora
+                        //funcion del boton inicio
+                        final homeBloc = BlocProvider.of<HomeBloc>(context);
+                        homeBloc.add(HomeSearchPressed());
                       },
                       style: FilledButton.styleFrom(
                         backgroundColor: const Color(0xff0D1A63),
