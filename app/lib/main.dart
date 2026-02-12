@@ -1,6 +1,7 @@
 import 'package:app/presentation/views/Home_Page.dart';
 import 'package:flutter/material.dart';
 import 'presentation/screenns/onboarding/onboardingScreen.dart';
+import 'presentation/views/Error.dart';
 import 'presentation/views/loading.dart';
 import 'presentation/views/login.dart';
 
