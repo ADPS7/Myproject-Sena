@@ -6,7 +6,7 @@ import 'presentation/views/Error.dart';
 import 'presentation/views/loading.dart';
 import 'presentation/views/login.dart';
 import 'presentation/views/mainView.dart';
-
+import 'presentation/views/registro.dart'; 
 
 void main() {
   runApp(const MyApp());
@@ -17,12 +17,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       title: 'Aplication Platform',
       debugShowCheckedModeBanner: false,
-      home: mainView(),
+      home: RegisterView(), 
     );
   }
 }
-
-
