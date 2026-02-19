@@ -1,126 +1,74 @@
-import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-class mainView extends StatelessWidget {
-  const mainView({
-    super.key,
-  });
+import '../bloc/home_bloc.dart';
+import 'Error.dart';
+import 'Home_Page.dart';
+import 'loading.dart';
+
+class LoginView extends StatelessWidget {
+  const LoginView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Color(0xff4988C4),
-        title: Row(
-          children: [
-            Image.asset('assets/images/logo-app.png', height: 62),
-            SizedBox(width: 10),
-            Text("Lucy",
-            style: TextStyle(color: Colors.white,
-            fontWeight: FontWeight.bold, fontSize: 30),
+    return BlocConsumer<HomeBloc, HomeState>(
+      listener: (context, state) {
+        if (state is HomeLoadSuccess) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) =>  HomePage()),
+          );
+        }
+      },
+      builder: (context, state) {
+        if (state is HomeLoadInProgress) return const loading();
+        if (state is HomeLoadFailure) return const ErrorView();
+
+        return Scaffold(
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: <Color>[
+                  Color(0xffF0FFDF), Color(0xffBDE8F5), Color(0xff4988C4),
+                  Color(0xff1C4D8D), Color(0xff0F2854)
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
             ),
-          ],
-        ),
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-           gradient: LinearGradient(
-            colors: <Color>[
-              Color(0xffF0FFDF),
-              Color(0xffBDE8F5),
-              Color(0xff4988C4),
-              Color(0xff1C4D8D),
-              Color(0xff0F2854)
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal:0 ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CarouselSlider(
-                  options: CarouselOptions(
-                    height: 295,
-                    autoPlay: true,
-                    enlargeCenterPage: true,
-                    aspectRatio: 16/9,
-                    autoPlayAnimationDuration: Duration(milliseconds: 800),
-                    autoPlayCurve: Curves.fastOutSlowIn,
-                    enableInfiniteScroll: true,
-                    viewportFraction: 1.1,
-                  ), 
-                  items: [
-                    "assets/images/preview1.jpg",
-                    "assets/images/preview2.jpg",
-                    "assets/images/preview3.jpg",
-                    "assets/images/preview4.jpg",
-                    "assets/images/preview5.jpg",
-                  ].map((imagePath){
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(9.0),
-                      child: Image.asset(
-                        imagePath,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 80),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: (){
-              
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.0)
-                            ),
+                      Image.network(
+                        "https://image2url.com/r2/default/images/1770490852326-698c5fd0-f5e1-48cc-8548-30eb28e1596b.png",
+                        height: 140,
+                      ),
+                      const SizedBox(height: 10),
+                      const Text("¡Hola de Nuevo!", style: TextStyle(fontSize: 34, color: Color(0xff0D1A63), fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 25),
+                      // ... Campos de texto (Email/Password) igual que antes
+                      
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+                        child: FilledButton(
+                          onPressed: () => context.read<HomeBloc>().add(HomeSearchPressed()),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xff0D1A63),
+                            minimumSize: const Size(double.infinity, 56),
                           ),
-                          child: const Text(
-                            "Iniciar Sesión",
-                            style: TextStyle(fontSize: 16, color: Colors.black, fontWeight: FontWeight.bold),
-                          ),
+                          child: const Text("Iniciar Sesión"),
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.0)
-                            ),
-                          ),
-                          child: const Text(
-                            "Registrarse",
-                            style: TextStyle(fontSize: 16, color: Colors.black, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      )
                     ],
                   ),
-                )
-              ],
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
