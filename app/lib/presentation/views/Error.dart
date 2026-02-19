@@ -17,10 +17,25 @@ class ErrorView extends StatelessWidget {
             const SizedBox(height: 20),
             Image.asset(
             'assets/images/error.png',
-               width: 200,
-               height: 200,
-               fit: BoxFit.cover,
-             ),
+              width: 200,
+              height: 200,
+              fit: BoxFit.cover,
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context); // 👈 Regresa a la pantalla anterior
+              },
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 12,
+                ),
+              ),
+              child: const Text(
+                'Regresar',
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
           ],
         ),
       ),
