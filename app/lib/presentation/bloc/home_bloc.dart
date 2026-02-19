@@ -11,6 +11,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       final url = Uri.parse('https://raw.githubusercontent.com/MarkusGutierrez10/json/refs/heads/main/proyecto');
       final response = await http.get(url);
       emit(HomeLoadInProgress());
+      await Future.delayed(const Duration(seconds: 5));
       if(response.statusCode == 200){
         emit(HomeLoadSuccess());
       } else {
