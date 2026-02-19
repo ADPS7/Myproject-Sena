@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app/presentation/bloc/home_bloc.dart';
 import 'package:app/presentation/views/login.dart';
 
+import 'presentation/views/Home_Page.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -15,17 +17,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (context) => HomeBloc()),
-      ],
+      providers: [BlocProvider(create: (context) => HomeBloc())],
       child: MaterialApp(
         title: 'Tu App',
         debugShowCheckedModeBanner: false, // Quita la banda roja de "Debug"
-        theme: ThemeData(
-          useMaterial3: true,
-          primarySwatch: Colors.blue,
-        ),
-        home: const LoginView(), 
+        theme: ThemeData(useMaterial3: true, primarySwatch: Colors.blue),
+        home: HomePage(),
       ),
     );
   }
