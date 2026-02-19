@@ -1,3 +1,4 @@
+import 'package:app/presentation/views/Error.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -22,7 +23,7 @@ class MyApp extends StatelessWidget {
         title: 'Tu App',
         debugShowCheckedModeBanner: false, // Quita la banda roja de "Debug"
         theme: ThemeData(useMaterial3: true, primarySwatch: Colors.blue),
-        home: HomePage(),
+        home: LoginView(),
       ),
     );
   }
