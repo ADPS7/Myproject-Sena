@@ -13,11 +13,11 @@ class mainView extends StatelessWidget {
         backgroundColor: Color(0xff4988C4),
         title: Row(
           children: [
-            Image.asset('assets/images/imagen2.png', height: 50),
+            Image.asset('assets/images/logo-app.png', height: 62),
             SizedBox(width: 10),
             Text("Lucy",
             style: TextStyle(color: Colors.white,
-            fontWeight: FontWeight.bold),
+            fontWeight: FontWeight.bold, fontSize: 30),
             ),
           ],
         ),
@@ -54,9 +54,11 @@ class mainView extends StatelessWidget {
                     viewportFraction: 1.1,
                   ), 
                   items: [
-                    "assets/images/aula1.jpg",
-                    "assets/images/aula2.jpg",
-                    "assets/images/aula3.jpg",
+                    "assets/images/preview1.jpg",
+                    "assets/images/preview2.jpg",
+                    "assets/images/preview3.jpg",
+                    "assets/images/preview4.jpg",
+                    "assets/images/preview5.jpg",
                   ].map((imagePath){
                     return ClipRRect(
                       borderRadius: BorderRadius.circular(9.0),
@@ -88,7 +90,7 @@ class mainView extends StatelessWidget {
                             ),
                           ),
                           child: const Text(
-                            "Login",
+                            "Iniciar Sesión",
                             style: TextStyle(fontSize: 16, color: Colors.black, fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -106,7 +108,7 @@ class mainView extends StatelessWidget {
                             ),
                           ),
                           child: const Text(
-                            "Sign Up",
+                            "Registrarse",
                             style: TextStyle(fontSize: 16, color: Colors.black, fontWeight: FontWeight.bold),
                           ),
                         ),
