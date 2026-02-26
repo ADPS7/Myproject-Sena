@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
         title: 'Tu App',
         debugShowCheckedModeBanner: false, // Quita la banda roja de "Debug"
         theme: ThemeData(useMaterial3: true, primarySwatch: Colors.blue),
-        home: LoginView(),
+        home: HomePage(),
       ),
     );
   }

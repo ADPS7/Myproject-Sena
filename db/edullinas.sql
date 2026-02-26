@@ -1,0 +1,16 @@
+CREATE DATABASE edullinas;
+USE edullinas;
+
+CREATE TABLE usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombres VARCHAR(250) NOT NULL,
+    apellidos VARCHAR(250) NOT NULL,
+    correo VARCHAR(100) NOT NULL UNIQUE,
+    fecha_nacimiento DATE NOT NULL,
+    clave VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE roles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL UNIQUE
+);
