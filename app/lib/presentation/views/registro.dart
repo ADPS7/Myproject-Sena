@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/api_service.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -15,6 +16,8 @@ class _RegisterViewState extends State<RegisterView> {
   final TextEditingController fechaController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
+  bool isLoading = false;
+
   DateTime? selectedDate;
 
   Future<void> _selectDate() async {
@@ -29,7 +32,7 @@ class _RegisterViewState extends State<RegisterView> {
       setState(() {
         selectedDate = picked;
         fechaController.text =
-            "${picked.day}/${picked.month}/${picked.year}";
+            "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
       });
     }
   }
@@ -66,6 +69,57 @@ class _RegisterViewState extends State<RegisterView> {
         ),
       ),
     );
+  }
+
+  Future<void> _registerUser() async {
+    if (nombresController.text.isEmpty ||
+        apellidosController.text.isEmpty ||
+        emailController.text.isEmpty ||
+        fechaController.text.isEmpty ||
+        passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, completa todos los campos')),
+      );
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final apiService = ApiService();
+      final result = await apiService.createUser(
+        nombres: nombresController.text,
+        apellidos: apellidosController.text,
+        correo: emailController.text,
+        fechaNacimiento: fechaController.text,
+        clave: passwordController.text,
+      );
+
+      if (result.containsKey('message')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Usuario registrado exitosamente')),
+        );
+        nombresController.clear();
+        apellidosController.clear();
+        emailController.clear();
+        fechaController.clear();
+        passwordController.clear();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${result['detail'] ?? 'Desconocido'}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error de conexión: $e')),
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override
@@ -150,9 +204,7 @@ class _RegisterViewState extends State<RegisterView> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20.0, vertical: 8.0),
                     child: FilledButton(
-                      onPressed: () {
-                        print("Registrando usuario...");
-                      },
+                      onPressed: isLoading ? null : _registerUser,
                       style: FilledButton.styleFrom(
                         backgroundColor: const Color(0xff0D1A63),
                         foregroundColor: Colors.white,
@@ -165,7 +217,9 @@ class _RegisterViewState extends State<RegisterView> {
                             fontSize: 16,
                             fontWeight: FontWeight.bold),
                       ),
-                      child: const Text("Registrarse"),
+                      child: isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text("Registrarse"),
                     ),
                   ),
 
