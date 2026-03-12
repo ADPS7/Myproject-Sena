@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:app/presentation/bloc/home_bloc.dart';
 
-import 'presentation/views/Home_Page.dart';
+import 'presentation/widget/home_widget.dart';
 
 void main() {
   runApp(const MyApp());
