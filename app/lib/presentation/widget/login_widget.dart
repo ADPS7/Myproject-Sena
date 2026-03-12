@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
-import 'homescreen.dart';
+import 'homescreen_widget.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});

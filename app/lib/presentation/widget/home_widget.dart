@@ -1,7 +1,7 @@
-import 'package:app/presentation/views/login.dart';
+import 'package:app/presentation/widget/login_widget.dart';
 import 'package:flutter/material.dart';
 
-import 'registro.dart';
+import 'register_widget.dart';
 
 class HomePage extends StatelessWidget {
   @override
