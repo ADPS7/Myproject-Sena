@@ -3,8 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:app/presentation/bloc/home_bloc.dart';
 
-import 'presentation/view/homeAdmin.dart';
-
+import 'presentation/widget/home_widget.dart';
 
 void main() {
   runApp(const MyApp());
@@ -21,7 +20,7 @@ class MyApp extends StatelessWidget {
         title: 'Tu App',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(useMaterial3: true, primarySwatch: Colors.blue),
-        home: Homeadmin(),
+        home: HomePage(),
       ),
     );
   }
