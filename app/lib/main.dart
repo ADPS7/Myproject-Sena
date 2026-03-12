@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-// REVISA EL NOMBRE 'app': Si tu proyecto se llama distinto en el pubspec.yaml, cámbialo.
 import 'package:app/presentation/bloc/home_bloc.dart';
 
 import 'presentation/views/Home_Page.dart';
@@ -19,7 +18,7 @@ class MyApp extends StatelessWidget {
       providers: [BlocProvider(create: (context) => HomeBloc())],
       child: MaterialApp(
         title: 'Tu App',
-        debugShowCheckedModeBanner: false, // Quita la banda roja de "Debug"
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(useMaterial3: true, primarySwatch: Colors.blue),
         home: HomePage(),
       ),
