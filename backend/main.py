@@ -41,7 +41,6 @@ def create_user():
         conn.commit()
         cursor.close()
         conn.close()
-        print("Usuario creado exitosamente")
         return jsonify({"message": "Usuario creado exitosamente"}), 200
     except Error as e:
         print(f"Error de base de datos: {str(e)}")
