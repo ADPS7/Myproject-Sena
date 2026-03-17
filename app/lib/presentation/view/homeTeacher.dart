@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
+import '../widget/login_widget.dart';
 
 class HomeTeacher extends StatelessWidget {
-  const HomeTeacher({super.key});
+  final Map<String, dynamic> user;
+  const HomeTeacher({super.key, required this.user});
+
+  void _cerrarSesion(BuildContext context) {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginView()),
+      (route) => false,
+    );
+  }
 
   void _mostrarPerfil(BuildContext context) {
     showModalBottomSheet(
@@ -35,15 +45,15 @@ class HomeTeacher extends StatelessWidget {
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xff0D1A63)),
               ),
               const SizedBox(height: 20),
-              const ListTile(
-                leading: Icon(Icons.badge, color: Color(0xff0D1A63)),
-                title: Text("Nombre del Instructor", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                subtitle: Text("Profesor de Software", style: TextStyle(fontWeight: FontWeight.bold)),
+              ListTile(
+                leading: const Icon(Icons.badge, color: Color(0xff0D1A63)),
+                title: const Text("Nombre del Instructor", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                subtitle: Text("${user['nombres']} ${user['apellidos']}", style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
-              const ListTile(
-                leading: Icon(Icons.email, color: Color(0xff0D1A63)),
-                title: Text("Correo Institucional", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                subtitle: Text("instructor@sena.edu.co", style: TextStyle(fontWeight: FontWeight.bold)),
+              ListTile(
+                leading: const Icon(Icons.email, color: Color(0xff0D1A63)),
+                title: const Text("Correo Institucional", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                subtitle: Text("${user['correo']}", style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: 20),
               SizedBox(
@@ -61,7 +71,7 @@ class HomeTeacher extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               TextButton.icon(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => _cerrarSesion(context),
                 icon: const Icon(Icons.logout, color: Colors.red),
                 label: const Text("Cerrar Sesión", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
               ),
@@ -98,11 +108,14 @@ class HomeTeacher extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Column(
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("Panel de Control,", style: TextStyle(color: Colors.white70, fontSize: 16)),
-                            Text("Docente", style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
+                            const Text("Panel de Control,", style: TextStyle(color: Colors.white70, fontSize: 16)),
+                            Text(
+                              user['nombres'] ?? "Docente", 
+                              style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)
+                            ),
                           ],
                         ),
                         GestureDetector(
@@ -121,18 +134,13 @@ class HomeTeacher extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 30),
-
             _buildLegacyContainer(Icons.class_, "Gestión de Cursos"),
             const SizedBox(height: 20),
-
             _buildLegacyContainer(Icons.group, "Mis Alumnos"),
             const SizedBox(height: 20),
-
             _buildLegacyContainer(Icons.assignment, "Calificar Notas"),
             const SizedBox(height: 20),
-
             _buildLegacyContainer(Icons.layers, "Contenido de Módulos"),
-
             const Padding(
               padding: EdgeInsets.all(30.0),
               child: Text(

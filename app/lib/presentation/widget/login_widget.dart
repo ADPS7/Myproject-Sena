@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
-import 'homescreen_widget.dart';
+import '../view/homeAdmin.dart';
+import '../view/homeTeacher.dart';
+import '../view/homestudent.dart';
+
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -25,22 +28,42 @@ class _LoginViewState extends State<LoginView> {
     setState(() => isLoading = true);
 
     final result = await ApiService().login(
-      correo: emailController.text,
-      clave: passwordController.text,
+      correo: emailController.text.trim(),
+      clave: passwordController.text.trim(),
     );
 
     setState(() => isLoading = false);
 
     if (result['success']) {
-      // Navegación exitosa
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
+      final userData = result['user'];
+      final String rol = userData['rol'].toString().toLowerCase();
+
+      Widget nextScreen;
+      
+      // Aquí ocurre la redirección por rol
+      if (rol == 'admin') {
+        nextScreen = Homeadmin(user: userData);
+      } else if (rol == 'estudiante') {
+        nextScreen = StudentHomeScreen(user: userData);
+      } else if (rol == 'profesor') {
+        nextScreen = HomeTeacher(user: userData);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error: Rol no reconocido')),
+        );
+        return;
+      }
+
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => nextScreen),
+          (route) => false,
+        );
+      }
     } else {
-      // Error de credenciales o servidor
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['error'])),
+        SnackBar(content: Text(result['error'] ?? 'Error de credenciales')),
       );
     }
   }
@@ -64,16 +87,10 @@ class _LoginViewState extends State<LoginView> {
                   Image.network("https://image2url.com/r2/default/images/1770490852326-698c5fd0-f5e1-48cc-8548-30eb28e1596b.png", height: 140),
                   const Text("¡Hola de Nuevo!", style: TextStyle(fontSize: 34, color: Color(0xff0D1A63), fontWeight: FontWeight.bold)),
                   const SizedBox(height: 25),
-                  
-                  // Campo Email
                   _customInput(controller: emailController, hint: "Email"),
                   const SizedBox(height: 10),
-                  
-                  // Campo Contraseña
                   _customInput(controller: passwordController, hint: "Contraseña", isPassword: true),
                   const SizedBox(height: 20),
-
-                  // Botón Iniciar Sesión
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: FilledButton(
@@ -84,8 +101,8 @@ class _LoginViewState extends State<LoginView> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       child: isLoading 
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text("Iniciar Sesión", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Text("Iniciar Sesión"),
                     ),
                   ),
                 ],
