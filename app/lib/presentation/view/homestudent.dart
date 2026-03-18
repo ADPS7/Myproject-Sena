@@ -1,6 +1,8 @@
+import 'package:app/presentation/view/asiststudent.dart';
 import 'package:flutter/material.dart';
 
 import '../widget/login_widget.dart';
+
 
 class StudentHomeScreen extends StatelessWidget {
   final Map<String, dynamic> user;
@@ -11,6 +13,16 @@ class StudentHomeScreen extends StatelessWidget {
       context,
       MaterialPageRoute(builder: (context) => const LoginView()),
       (route) => false,
+    );
+  }
+
+  // Función para navegar a la pantalla de asistencias
+  void _goToAttendance(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AttendanceScreen(),
+      ),
     );
   }
 
@@ -28,7 +40,10 @@ class StudentHomeScreen extends StatelessWidget {
                   height: 200,
                   decoration: const BoxDecoration(
                     color: Color(0xFF0A1E3A),
-                    borderRadius: BorderRadius.only(bottomLeft: Radius.circular(40), bottomRight: Radius.circular(40)),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(40),
+                      bottomRight: Radius.circular(40),
+                    ),
                   ),
                   child: SafeArea(
                     child: Padding(
@@ -40,7 +55,14 @@ class StudentHomeScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text("Bienvenido,", style: TextStyle(color: Colors.white70, fontSize: 18)),
-                              Text(user['nombres'], style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+                              Text(
+                                user['nombres'] ?? 'Estudiante',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
                           const CircleAvatar(
@@ -58,8 +80,12 @@ class StudentHomeScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    const Text("Tu tablero", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                    const Text(
+                      "Tu tablero",
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    ),
                     const SizedBox(height: 20),
+
                     GridView.count(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -69,11 +95,23 @@ class StudentHomeScreen extends StatelessWidget {
                       childAspectRatio: 0.8,
                       children: [
                         _buildStatCard("Promedio", "4.3", Icons.grade, Colors.green),
-                        _buildStatCard("Asistencia", "94%", Icons.how_to_reg, Colors.blue),
+                        
+                        // ← TARJETA DE ASISTENCIA CLICABLE
+                        GestureDetector(
+                          onTap: () => _goToAttendance(context),
+                          child: _buildStatCard(
+                            "Asistencia",
+                            "94%",
+                            Icons.how_to_reg,
+                            Colors.blue,
+                          ),
+                        ),
+
                         _buildStatCard("Cursos", "6", Icons.book, Colors.purple),
                         _buildStatCard("Módulos", "14", Icons.grid_view, Colors.orange),
                       ],
                     ),
+
                     const SizedBox(height: 30),
                     Center(
                       child: TextButton.icon(

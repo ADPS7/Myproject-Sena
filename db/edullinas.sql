@@ -92,3 +92,8 @@ INSERT INTO Roles (nombre) values ('estudiante');
 INSERT INTO Roles (nombre) values ('profesor');
 
 
+/* INSERT INTO Cursos (nombre) VALUES ('Desarrollo de Aplicaciones Móviles'); */
+
+/* INSERT INTO Modulos (nombre, fecha_inicio, fecha_fin, id_curso) VALUES ('Flutter Básico', '2026-02-01', '2026-03-15', 1),('Firebase y Backend', '2026-03-20', '2026-04-30', 1),('UI/UX Avanzado', '2026-05-01', '2026-06-15', 1); */
+
+/* INSERT INTO Asistencia (fecha, asistio, id_usuario, id_modulo) VALUES('2026-02-05', 'SI', 1, 1),('2026-02-12', 'SI', 1, 1),('2026-02-19', 'NO', 1, 1),('2026-03-25', 'SI', 1, 2),('2026-04-01', 'SI', 1, 2),('2026-05-10', 'SI', 1, 3); */

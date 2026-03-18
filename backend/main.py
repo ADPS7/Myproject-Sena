@@ -78,5 +78,37 @@ def login():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/asistencias/<int:id_usuario>', methods=['GET'])
+def get_asistencias(id_usuario):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        query = """
+            SELECT 
+                a.fecha,
+                a.asistio,
+                m.nombre as modulo_nombre
+            FROM Asistencia a
+            JOIN Modulos m ON a.id_modulo = m.id_modulo
+            WHERE a.id_usuario = %s
+            ORDER BY a.fecha DESC
+        """
+        cursor.execute(query, (id_usuario,))
+        asistencias = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            "success": True,
+            "asistencias": asistencias
+        }), 200
+        
+    except Error as e:
+        return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        return jsonify({"error": "Error interno del servidor"}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)
