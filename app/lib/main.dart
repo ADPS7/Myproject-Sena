@@ -1,3 +1,4 @@
+import 'package:app/presentation/view/asiststudent.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -20,7 +21,7 @@ class MyApp extends StatelessWidget {
         title: 'Tu App',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(useMaterial3: true, primarySwatch: Colors.blue),
-        home: HomePage(),
+        home: HomePage(), 
       ),
     );
   }

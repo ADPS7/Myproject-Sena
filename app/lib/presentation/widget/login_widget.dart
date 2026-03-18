@@ -1,3 +1,4 @@
+import 'package:app/services/aut_service.dart';
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../view/homeAdmin.dart';
@@ -36,6 +37,7 @@ class _LoginViewState extends State<LoginView> {
 
     if (result['success']) {
       final userData = result['user'];
+      await AuthService.saveUser(userData);
       final String rol = userData['rol'].toString().toLowerCase();
 
       Widget nextScreen;
