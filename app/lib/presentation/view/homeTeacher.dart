@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widget/login_widget.dart';
+import 'asistsTeacher.dart'; // 1. IMPORTA TU VISTA DE ASISTENCIA
 
 class HomeTeacher extends StatelessWidget {
   final Map<String, dynamic> user;
@@ -56,20 +57,6 @@ class HomeTeacher extends StatelessWidget {
                 subtitle: Text("${user['correo']}", style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xffFFC107),
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                  ),
-                  child: const Text("Mis Horarios", style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ),
-              const SizedBox(height: 10),
               TextButton.icon(
                 onPressed: () => _cerrarSesion(context),
                 icon: const Icon(Icons.logout, color: Colors.red),
@@ -97,9 +84,7 @@ class HomeTeacher extends StatelessWidget {
                   width: double.infinity,
                   decoration: const BoxDecoration(
                     color: Color(0xff0D1A63),
-                    borderRadius: BorderRadius.only(
-                      bottomRight: Radius.circular(100),
-                    ),
+                    borderRadius: BorderRadius.only(bottomRight: Radius.circular(100)),
                   ),
                 ),
                 SafeArea(
@@ -113,18 +98,17 @@ class HomeTeacher extends StatelessWidget {
                           children: [
                             const Text("Panel de Control,", style: TextStyle(color: Colors.white70, fontSize: 16)),
                             Text(
-                              user['nombres'] ?? "Docente", 
-                              style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)
+                                user['nombres'] ?? "Docente", 
+                                style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)
                             ),
                           ],
                         ),
                         GestureDetector(
                           onTap: () => _mostrarPerfil(context),
-                          child: Container(
-                            height: 80,
-                            width: 80,
-                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                            child: const Icon(Icons.account_circle, color: Color(0xff0D1A63), size: 50),
+                          child: const CircleAvatar(
+                            radius: 35,
+                            backgroundColor: Colors.white,
+                            child: Icon(Icons.account_circle, color: Color(0xff0D1A63), size: 50),
                           ),
                         ),
                       ],
@@ -134,13 +118,22 @@ class HomeTeacher extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 30),
-            _buildLegacyContainer(Icons.class_, "Gestión de Cursos"),
+            _buildLegacyContainer(context, Icons.class_, "Gestión de Cursos", () {}),
             const SizedBox(height: 20),
-            _buildLegacyContainer(Icons.group, "Mis Alumnos"),
+            
+            // 2. AQUÍ CONECTAMOS LA VISTA DE ASISTENCIA
+            _buildLegacyContainer(context, Icons.group, "Tomar Asistencia", () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AsistenciaView()),
+              );
+            }),
+
             const SizedBox(height: 20),
-            _buildLegacyContainer(Icons.assignment, "Calificar Notas"),
+            _buildLegacyContainer(context, Icons.assignment, "Calificar Notas", () {}),
             const SizedBox(height: 20),
-            _buildLegacyContainer(Icons.layers, "Contenido de Módulos"),
+            _buildLegacyContainer(context, Icons.layers, "Contenido de Módulos", () {}),
+            
             const Padding(
               padding: EdgeInsets.all(30.0),
               child: Text(
@@ -154,37 +147,41 @@ class HomeTeacher extends StatelessWidget {
     );
   }
 
-  Widget _buildLegacyContainer(IconData icono, String texto) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 25),
-      padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          )
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xff0D1A63).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+  // 3. ACTUALIZAMOS EL MÉTODO PARA RECIBIR EL CLIC (onTap)
+  Widget _buildLegacyContainer(BuildContext context, IconData icono, String texto, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.symmetric(horizontal: 25),
+        padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            )
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xff0D1A63).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icono, color: const Color(0xff0D1A63), size: 30),
             ),
-            child: Icon(icono, color: const Color(0xff0D1A63), size: 30),
-          ),
-          const SizedBox(width: 20),
-          Text(texto, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xff333333))),
-          const Spacer(),
-          const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-        ],
+            const SizedBox(width: 20),
+            Text(texto, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xff333333))),
+            const Spacer(),
+            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }

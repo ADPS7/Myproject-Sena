@@ -109,6 +109,54 @@ def get_asistencias(id_usuario):
         return jsonify({"error": str(e)}), 500
     except Exception as e:
         return jsonify({"error": "Error interno del servidor"}), 500
+    
+
+    #Markus
+    # 1. RUTA PARA TRAER TODOS LOS ESTUDIANTES (id_rol = 2)
+@app.route('/usuarios/estudiantes', methods=['GET'])
+def get_estudiantes():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Consultamos usuarios que sean estudiantes (id_rol = 2)
+        query = "SELECT id_usuario, nombres, apellidos, correo FROM usuarios WHERE id_rol = 2"
+        cursor.execute(query)
+        estudiantes = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify(estudiantes), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# 2. RUTA PARA REGISTRAR LA ASISTENCIA MASIVA
+@app.route('/asistencia/registrar', methods=['POST'])
+def registrar_asistencia():
+    try:
+        data = request.json  # Recibe la lista de asistencias desde Flutter
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        query = "INSERT INTO Asistencia (fecha, asistio, id_usuario, id_modulo) VALUES (%s, %s, %s, %s)"
+        
+        # Recorremos la lista que envía Flutter y guardamos cada uno
+        for registro in data:
+            cursor.execute(query, (
+                registro['fecha'], 
+                registro['asistio'], 
+                registro['id_usuario'], 
+                registro['id_modulo']
+            ))
+            
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"message": "Asistencia registrada correctamente"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)
