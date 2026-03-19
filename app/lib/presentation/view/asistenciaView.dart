@@ -6,9 +6,9 @@ class MarcarAsistenciaView extends StatefulWidget {
   final String nombreModulo;
 
   const MarcarAsistenciaView({
-    super.key, 
-    required this.idModulo, 
-    required this.nombreModulo
+    super.key,
+    required this.idModulo,
+    required this.nombreModulo,
   });
 
   @override
@@ -18,8 +18,16 @@ class MarcarAsistenciaView extends StatefulWidget {
 class _MarcarAsistenciaViewState extends State<MarcarAsistenciaView> {
   final ApiService _apiService = ApiService();
   
-  // Esta lista almacenará los IDs de los aprendices que el profesor marque
-  List<int> seleccionados = []; 
+  // Lista de IDs únicos seleccionados
+  List<int> seleccionados = [];
+  late Future<List<dynamic>> _futureEstudiantes;
+
+  @override
+  void initState() {
+    super.initState();
+    // Cargamos la lista una sola vez al entrar
+    _futureEstudiantes = _apiService.getEstudiantesPorModulo(widget.idModulo);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,118 +36,71 @@ class _MarcarAsistenciaViewState extends State<MarcarAsistenciaView> {
         title: Text("Asistencia: ${widget.nombreModulo}"),
         backgroundColor: const Color(0xff0D1A63),
         foregroundColor: Colors.white,
-        elevation: 0,
       ),
       body: Column(
         children: [
-          // Encabezado con contador
+          // Info Card
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                )
-              ],
-            ),
+            color: Colors.white,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Listado de Aprendices",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      "Marque a los que están presentes",
-                      style: TextStyle(color: Colors.grey, fontSize: 13),
-                    ),
-                  ],
+                const Text(
+                  "Listado de Aprendices",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                CircleAvatar(
-                  backgroundColor: const Color(0xff0D1A63),
-                  radius: 25,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "${seleccionados.length}",
-                        style: const TextStyle(
-                            color: Colors.white, 
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16),
-                      ),
-                      const Text(
-                        "P",
-                        style: TextStyle(color: Colors.white70, fontSize: 10),
-                      ),
-                    ],
+                Chip(
+                  label: Text(
+                    "Presentes: ${seleccionados.length}",
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
-                )
+                  backgroundColor: const Color(0xff0D1A63),
+                ),
               ],
             ),
           ),
-
-          // Lista de Estudiantes
+          
           Expanded(
             child: FutureBuilder<List<dynamic>>(
-              future: _apiService.getEstudiantesPorModulo(widget.idModulo),
+              future: _futureEstudiantes,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                
                 if (snapshot.hasError) {
-                  return Center(child: Text("Error al cargar: ${snapshot.error}"));
+                  return Center(child: Text("Error: ${snapshot.error}"));
                 }
 
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(
-                    child: Text("No se encontraron aprendices en este módulo."),
-                  );
+                final estudiantes = snapshot.data ?? [];
+                if (estudiantes.isEmpty) {
+                  return const Center(child: Text("No hay alumnos inscritos."));
                 }
-
-                final estudiantes = snapshot.data!;
 
                 return ListView.separated(
-                  padding: const EdgeInsets.only(top: 10, bottom: 100),
                   itemCount: estudiantes.length,
                   separatorBuilder: (context, index) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final est = estudiantes[index];
                     
-                    // --- PROTECCIÓN CONTRA ERRORES NULL ---
-                    // Si 'id_usuario' viene nulo o no existe, usamos 0 para evitar el crash
-                    final int idEst = est['id_usuario'] ?? 0; 
-                    final String nombre = est['nombres'] ?? "Sin Nombre";
-                    final String apellido = est['apellidos'] ?? "";
-                    final String correo = est['correo'] ?? "Sin correo";
-                    
+                    // Verificamos el ID. Si 'id_usuario' no existe, idEst será 0
+                    final int idEst = est['id_usuario'] ?? 0;
                     final bool estaCheck = seleccionados.contains(idEst);
 
                     return CheckboxListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                       activeColor: const Color(0xff0D1A63),
-                      value: estaCheck,
-                      title: Text(
-                        "$nombre $apellido",
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Text(correo),
+                      title: Text("${est['nombres']} ${est['apellidos']}"),
+                      subtitle: Text(est['correo'] ?? ""),
                       secondary: CircleAvatar(
                         backgroundColor: estaCheck ? Colors.green : Colors.grey[300],
-                        child: Text(
-                          nombre.isNotEmpty ? nombre[0].toUpperCase() : "?",
-                          style: const TextStyle(color: Colors.white),
-                        ),
+                        child: const Icon(Icons.person, color: Colors.white),
                       ),
+                      value: estaCheck,
                       onChanged: (bool? valor) {
-                        if (idEst == 0) return; // Seguridad: no marcar si el ID es inválido
+                        if (idEst == 0) {
+                          debugPrint("⚠️ ERROR: El estudiante no tiene ID válido en el JSON.");
+                          return;
+                        }
                         setState(() {
                           if (valor == true) {
                             seleccionados.add(idEst);
@@ -156,24 +117,23 @@ class _MarcarAsistenciaViewState extends State<MarcarAsistenciaView> {
           ),
         ],
       ),
-
-      // Botón Flotante/Fijo inferior para Guardar
-      bottomSheet: Container(
+      bottomNavigationBar: Container(
         padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: Colors.white,
-          border: Border(top: BorderSide(color: Colors.black12)),
+          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5)],
         ),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xffFFC107),
-            minimumSize: const Size(double.infinity, 55),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-            elevation: 2,
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
           onPressed: () async {
             if (seleccionados.isEmpty) {
-              _mostrarAlerta(context, "Atención", "No has seleccionado ningún aprendiz.");
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Selecciona al menos un estudiante")),
+              );
               return;
             }
 
@@ -181,37 +141,16 @@ class _MarcarAsistenciaViewState extends State<MarcarAsistenciaView> {
               idModulo: widget.idModulo, 
               idsEstudiantes: seleccionados
             );
-            
-            if (context.mounted) {
-              if (res['success'] == true) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Asistencia guardada correctamente")),
-                );
-                Navigator.pop(context); // Regresar a la vista de cursos
-              } else {
-                _mostrarAlerta(context, "Error", res['error'] ?? "Hubo un problema al guardar.");
-              }
+
+            if (res['success'] == true) {
+              if (mounted) Navigator.pop(context);
             }
           },
           child: const Text(
-            "CONFIRMAR ASISTENCIA", 
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
+            "REGISTRAR ASISTENCIA",
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
           ),
         ),
-      ),
-    );
-  }
-
-  // Función auxiliar para mostrar alertas de error
-  void _mostrarAlerta(BuildContext context, String titulo, String mensaje) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(titulo),
-        content: Text(mensaje),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("OK"))
-        ],
       ),
     );
   }
