@@ -60,11 +60,16 @@ def login():
         cursor = conn.cursor(dictionary=True)
         
         query = """
-            SELECT u.id_usuario, u.nombres, u.id_rol, r.nombre as rol 
-            FROM usuarios u 
-            JOIN roles r ON u.id_rol = r.id_rol 
-            WHERE u.correo = %s AND u.clave = %s
-        """
+                SELECT 
+                    u.id_usuario, 
+                    u.nombres, 
+                    u.apellidos,
+                    u.id_rol, 
+                    r.nombre as rol 
+                FROM usuarios u 
+                JOIN roles r ON u.id_rol = r.id_rol 
+                WHERE u.correo = %s AND u.clave = %s
+            """
         cursor.execute(query, (correo, hashed_password))
         user = cursor.fetchone()
         
@@ -243,18 +248,14 @@ def get_detalle_asistencias(id_usuario):
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
-        query = """
-            SELECT 
-                m.nombre as modulo_nombre,
-                DATE_FORMAT(a.fecha, '%d/%m/%Y') as fecha_formateada,
-                a.asistio  -- Aquí ya viene el "SI" o "NO" de la tabla
-            FROM Asistencia a
-            JOIN Modulos m ON a.id_modulo = m.id_modulo
-            WHERE a.id_usuario = %s
-            ORDER BY a.fecha DESC
-        """
+        # Quitamos el JOIN momentáneamente para ver si al menos trae las fechas
+        query = "SELECT fecha, asistio, id_modulo FROM Asistencia WHERE id_usuario = %s"
+        
         cursor.execute(query, (id_usuario,))
         resultado = cursor.fetchall()
+        
+        # Si esto imprime algo en tu terminal de Python, la conexión está bien
+        print(f"Registros encontrados para el usuario {id_usuario}: {len(resultado)}")
         
         cursor.close()
         conn.close()
