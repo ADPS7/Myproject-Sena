@@ -123,10 +123,18 @@ class ApiService {
   }
   Future<Map<String, dynamic>> getHistorialAsistencia(int idUsuario) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/asistencias/detalle/$idUsuario'));
-      return json.decode(response.body);
+      final response = await http.get(
+        Uri.parse('$baseUrl/asistencias/detalle/$idUsuario'),
+      );
+      
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        return {"success": false, "asistencias": []};
+      }
     } catch (e) {
-      return {"success": false, "error": e.toString()};
+      print("Error en ApiService: $e");
+      return {"success": false, "asistencias": []};
     }
   }
 }

@@ -218,10 +218,11 @@ def registrar_asistencia():
             ON DUPLICATE KEY UPDATE asistio = VALUES(asistio)
         """
 
+        # Busca esta parte en tu ruta /asistencia/registrar
         for id_estudiante in todos_los_estudiantes:
-            # Si el ID está en la lista de Flutter, asistio = 1, si no, 0
-            asistio = 1 if id_estudiante in ids_estudiantes_presentes else 0
-            cursor.execute(insert_query, (id_estudiante, id_modulo, fecha, asistio))
+            # CAMBIO AQUÍ: Guardamos "SI" o "NO" como texto
+            asistio_texto = "SI" if id_estudiante in ids_estudiantes_presentes else "NO"
+            cursor.execute(insert_query, (id_estudiante, id_modulo, fecha, asistio_texto))
 
         conn.commit()
         cursor.close()
@@ -236,37 +237,35 @@ def registrar_asistencia():
         print(f"Error Interno: {e}")
         return jsonify({"success": False, "error": "Error interno"}), 500
 
-@app.route('/asistencias/historial/<int:id_usuario>', methods=['GET'])
-def get_historial_alumno(id_usuario):
+@app.route('/asistencias/detalle/<int:id_usuario>', methods=['GET'])
+def get_detalle_asistencias(id_usuario):
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
-        # Esta consulta trae la fecha bonita (día/mes/año), 
-        # el estado (SI/NO) y el nombre del módulo
         query = """
             SELECT 
-                DATE_FORMAT(a.fecha, '%d/%m/%Y') as fecha,
-                a.asistio,
-                m.nombre as modulo_nombre
+                m.nombre as modulo_nombre,
+                DATE_FORMAT(a.fecha, '%d/%m/%Y') as fecha_formateada,
+                a.asistio  -- Aquí ya viene el "SI" o "NO" de la tabla
             FROM Asistencia a
             JOIN Modulos m ON a.id_modulo = m.id_modulo
             WHERE a.id_usuario = %s
             ORDER BY a.fecha DESC
         """
-        
         cursor.execute(query, (id_usuario,))
-        historial = cursor.fetchall()
+        resultado = cursor.fetchall()
         
         cursor.close()
         conn.close()
         
-        # Devolvemos la lista de asistencias
-        return jsonify(historial), 200
-        
+        return jsonify({
+            "success": True,
+            "asistencias": resultado
+        }), 200
     except Exception as e:
-        print(f"Error al consultar historial: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)

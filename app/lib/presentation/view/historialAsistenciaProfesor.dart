@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 
 class HistorialAsistenciaView extends StatelessWidget {
-  final int idModulo;
-  final String nombreModulo;
+  final int idUsuario;
+  final String nombreAlumno;
 
   const HistorialAsistenciaView({
-    super.key,
-    required this.idModulo,
-    required this.nombreModulo,
+    super.key, 
+    required this.idUsuario, 
+    required this.nombreAlumno
   });
 
   @override
@@ -17,51 +17,69 @@ class HistorialAsistenciaView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Historial: $nombreModulo"),
+        title: Text("Asistencias: $nombreAlumno"),
         backgroundColor: const Color(0xff0D1A63),
         foregroundColor: Colors.white,
       ),
-      body: FutureBuilder<List<dynamic>>(
-        // Aquí llamamos a la función de tu ApiService
-        future: _apiService.getHistorialPorModulo(idModulo), 
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _apiService.getHistorialAsistencia(idUsuario),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
           
-          if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
+          if (snapshot.hasError || snapshot.data?['success'] == false) {
+            return const Center(
+              child: Text("Error al cargar el historial o no hay datos."),
+            );
           }
 
-          final historial = snapshot.data ?? [];
+          final lista = snapshot.data?['asistencias'] as List<dynamic>? ?? [];
 
-          if (historial.isEmpty) {
-            return const Center(child: Text("No hay registros para este módulo."));
+          if (lista.isEmpty) {
+            return const Center(
+              child: Text("Aún no tienes registros de asistencia."),
+            );
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(10),
-            itemCount: historial.length,
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            itemCount: lista.length,
             itemBuilder: (context, index) {
-              final registro = historial[index];
-              final bool asistio = registro['asistio'] == 'SI';
+              final item = lista[index];
+              final bool asistio = item['asistio'] == 'SI';
 
               return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: asistio ? Colors.green : Colors.red,
+                    backgroundColor: asistio ? Colors.green[100] : Colors.red[100],
                     child: Icon(
-                      asistio ? Icons.check : Icons.close,
-                      color: Colors.white,
+                      asistio ? Icons.check_circle : Icons.cancel, 
+                      color: asistio ? Colors.green : Colors.red
                     ),
                   ),
-                  title: Text("${registro['nombres']} ${registro['apellidos']}"),
-                  subtitle: Text("Fecha: ${registro['fecha']}"),
-                  trailing: Text(
-                    registro['asistio'],
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
+                  title: Text(
+                    item['modulo_nombre'] ?? "Sin nombre",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text("Fecha: ${item['fecha_formateada']}"),
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
                       color: asistio ? Colors.green : Colors.red,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      item['asistio'],
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12
+                      ),
                     ),
                   ),
                 ),
