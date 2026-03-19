@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.138.52:8000'; // Asegúrate que esta IP sea la de tu PC
+  static const String baseUrl = 'http://10.2.127.130:8000'; // Asegúrate que esta IP sea la de tu PC
 
   Future<Map<String, dynamic>> login({
     required String correo,
