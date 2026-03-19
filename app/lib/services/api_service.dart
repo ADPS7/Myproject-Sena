@@ -96,4 +96,26 @@ class ApiService {
       return [];
     }
   }
+  // 6. Guardar Asistencia (Nuevo método)
+  Future<Map<String, dynamic>> guardarAsistencia({
+    required int idModulo,
+    required List<int> idsEstudiantes,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/asistencia/guardar'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'id_modulo': idModulo,
+          'estudiantes_presentes': idsEstudiantes,
+          'fecha': DateTime.now().toIso8601String().split('T')[0], // Envia solo YYYY-MM-DD
+        }),
+      );
+
+      return json.decode(response.body);
+    } catch (e) {
+      print("Error al guardar asistencia: $e");
+      return {"success": false, "error": "Error de red"};
+    }
+  }
 }

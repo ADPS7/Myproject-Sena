@@ -140,7 +140,7 @@ class HomeTeacher extends StatelessWidget {
             _buildLegacyContainer(
               context, 
               Icons.class_, 
-              "Asistencia", 
+              " Cursos", 
               () {
                 Navigator.push(
                   context,
