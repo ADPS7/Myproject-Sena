@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.101.81:8000'; // Asegúrate que esta IP sea la de tu PC
+  static const String baseUrl = 'http://10.2.138.52:8000'; // Asegúrate que esta IP sea la de tu PC
 
   Future<Map<String, dynamic>> login({
     required String correo,
@@ -49,5 +49,76 @@ class ApiService {
       }),
     );
     return json.decode(response.body);
+  }
+
+  Future<List<dynamic>> getCursosPorProfesor(int idUsuario) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/cursos/profesor/$idUsuario'),
+      );
+
+      if (response.statusCode == 200) {
+        // Retorna la lista de cursos (id_curso y nombre)
+        return json.decode(response.body);
+      } else {
+        print("Error en el servidor: ${response.statusCode}");
+        return [];
+      }
+    } catch (e) {
+      print("Error de conexión: $e");
+      return [];
+    }
+  }
+  // Obtener módulos de un curso específico
+  Future<List<dynamic>> getModulosPorCurso(int idCurso) async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/modulos/curso/$idCurso'));
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      return [];
+    } catch (e) {
+      print("Error en getModulosPorCurso: $e");
+      return [];
+    }
+  }
+  
+  Future<List<dynamic>> getEstudiantesPorModulo(int idModulo) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/modulo/$idModulo/students'),
+      );
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+  Future<Map<String, dynamic>> guardarAsistencia({
+    required int idModulo,
+    required List<int> idsEstudiantes,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/asistencia/registrar'), // Ajusta esta URL a tu backend
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'id_modulo': idModulo,
+          'estudiantes': idsEstudiantes, // La lista de IDs que marcaste
+          'fecha': DateTime.now().toIso8601String().split('T')[0], // Fecha actual YYYY-MM-DD
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {'success': true};
+      } else {
+        final errorBody = json.decode(response.body);
+        return {'success': false, 'error': errorBody['detail'] ?? 'Error al guardar'};
+      }
+    } catch (e) {
+      return {'success': false, 'error': 'Error de conexión: $e'};
+    }
   }
 }

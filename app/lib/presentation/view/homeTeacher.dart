@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widget/login_widget.dart';
+import 'asistsTeacher.dart'; 
 
 class HomeTeacher extends StatelessWidget {
   final Map<String, dynamic> user;
@@ -134,13 +135,27 @@ class HomeTeacher extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 30),
-            _buildLegacyContainer(Icons.class_, "Gestión de Cursos"),
+            
+            // CONEXIÓN AQUÍ: Gestión de Cursos
+            _buildLegacyContainer(
+              context, 
+              Icons.class_, 
+              " Cursos", 
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => MisCursosView(user: user)),
+                );
+              }
+            ),
+            
             const SizedBox(height: 20),
-            _buildLegacyContainer(Icons.group, "Mis Alumnos"),
+            _buildLegacyContainer(context, Icons.group, "Mis Alumnos", () {}),
             const SizedBox(height: 20),
-            _buildLegacyContainer(Icons.assignment, "Calificar Notas"),
+            _buildLegacyContainer(context, Icons.assignment, "Calificar Notas", () {}),
             const SizedBox(height: 20),
-            _buildLegacyContainer(Icons.layers, "Contenido de Módulos"),
+            _buildLegacyContainer(context, Icons.layers, "Contenido de Módulos", () {}),
+            
             const Padding(
               padding: EdgeInsets.all(30.0),
               child: Text(
@@ -154,37 +169,41 @@ class HomeTeacher extends StatelessWidget {
     );
   }
 
-  Widget _buildLegacyContainer(IconData icono, String texto) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 25),
-      padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          )
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xff0D1A63).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+  // Widget mejorado con funcionalidad de botón
+  Widget _buildLegacyContainer(BuildContext context, IconData icono, String texto, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.symmetric(horizontal: 25),
+        padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            )
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xff0D1A63).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icono, color: const Color(0xff0D1A63), size: 30),
             ),
-            child: Icon(icono, color: const Color(0xff0D1A63), size: 30),
-          ),
-          const SizedBox(width: 20),
-          Text(texto, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xff333333))),
-          const Spacer(),
-          const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-        ],
+            const SizedBox(width: 20),
+            Text(texto, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xff333333))),
+            const Spacer(),
+            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }
