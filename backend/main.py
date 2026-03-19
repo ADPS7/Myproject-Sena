@@ -236,5 +236,37 @@ def registrar_asistencia():
         print(f"Error Interno: {e}")
         return jsonify({"success": False, "error": "Error interno"}), 500
 
+@app.route('/asistencias/historial/<int:id_usuario>', methods=['GET'])
+def get_historial_alumno(id_usuario):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Esta consulta trae la fecha bonita (día/mes/año), 
+        # el estado (SI/NO) y el nombre del módulo
+        query = """
+            SELECT 
+                DATE_FORMAT(a.fecha, '%d/%m/%Y') as fecha,
+                a.asistio,
+                m.nombre as modulo_nombre
+            FROM Asistencia a
+            JOIN Modulos m ON a.id_modulo = m.id_modulo
+            WHERE a.id_usuario = %s
+            ORDER BY a.fecha DESC
+        """
+        
+        cursor.execute(query, (id_usuario,))
+        historial = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        # Devolvemos la lista de asistencias
+        return jsonify(historial), 200
+        
+    except Exception as e:
+        print(f"Error al consultar historial: {e}")
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)

@@ -121,4 +121,12 @@ class ApiService {
       return {'success': false, 'error': 'Error de conexión: $e'};
     }
   }
+  Future<Map<String, dynamic>> getHistorialAsistencia(int idUsuario) async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/asistencias/detalle/$idUsuario'));
+      return json.decode(response.body);
+    } catch (e) {
+      return {"success": false, "error": e.toString()};
+    }
+  }
 }
