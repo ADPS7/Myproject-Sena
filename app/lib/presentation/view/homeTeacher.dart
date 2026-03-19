@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widget/login_widget.dart';
-import 'asistsTeacher.dart'; // 1. IMPORTA TU VISTA DE ASISTENCIA
+import 'asistsTeacher.dart'; 
 
 class HomeTeacher extends StatelessWidget {
   final Map<String, dynamic> user;
@@ -57,6 +57,20 @@ class HomeTeacher extends StatelessWidget {
                 subtitle: Text("${user['correo']}", style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xffFFC107),
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  ),
+                  child: const Text("Mis Horarios", style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(height: 10),
               TextButton.icon(
                 onPressed: () => _cerrarSesion(context),
                 icon: const Icon(Icons.logout, color: Colors.red),
@@ -84,7 +98,9 @@ class HomeTeacher extends StatelessWidget {
                   width: double.infinity,
                   decoration: const BoxDecoration(
                     color: Color(0xff0D1A63),
-                    borderRadius: BorderRadius.only(bottomRight: Radius.circular(100)),
+                    borderRadius: BorderRadius.only(
+                      bottomRight: Radius.circular(100),
+                    ),
                   ),
                 ),
                 SafeArea(
@@ -98,17 +114,18 @@ class HomeTeacher extends StatelessWidget {
                           children: [
                             const Text("Panel de Control,", style: TextStyle(color: Colors.white70, fontSize: 16)),
                             Text(
-                                user['nombres'] ?? "Docente", 
-                                style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)
+                              user['nombres'] ?? "Docente", 
+                              style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)
                             ),
                           ],
                         ),
                         GestureDetector(
                           onTap: () => _mostrarPerfil(context),
-                          child: const CircleAvatar(
-                            radius: 35,
-                            backgroundColor: Colors.white,
-                            child: Icon(Icons.account_circle, color: Color(0xff0D1A63), size: 50),
+                          child: Container(
+                            height: 80,
+                            width: 80,
+                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                            child: const Icon(Icons.account_circle, color: Color(0xff0D1A63), size: 50),
                           ),
                         ),
                       ],
@@ -118,17 +135,22 @@ class HomeTeacher extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 30),
-            _buildLegacyContainer(context, Icons.class_, "Gestión de Cursos", () {}),
-            const SizedBox(height: 20),
             
-            // 2. AQUÍ CONECTAMOS LA VISTA DE ASISTENCIA
-            _buildLegacyContainer(context, Icons.group, "Tomar Asistencia", () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AsistenciaView()),
-              );
-            }),
-
+            // CONEXIÓN AQUÍ: Gestión de Cursos
+            _buildLegacyContainer(
+              context, 
+              Icons.class_, 
+              "Asistencia", 
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => MisCursosView(user: user)),
+                );
+              }
+            ),
+            
+            const SizedBox(height: 20),
+            _buildLegacyContainer(context, Icons.group, "Mis Alumnos", () {}),
             const SizedBox(height: 20),
             _buildLegacyContainer(context, Icons.assignment, "Calificar Notas", () {}),
             const SizedBox(height: 20),
@@ -147,7 +169,7 @@ class HomeTeacher extends StatelessWidget {
     );
   }
 
-  // 3. ACTUALIZAMOS EL MÉTODO PARA RECIBIR EL CLIC (onTap)
+  // Widget mejorado con funcionalidad de botón
   Widget _buildLegacyContainer(BuildContext context, IconData icono, String texto, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,

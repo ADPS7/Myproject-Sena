@@ -110,53 +110,73 @@ def get_asistencias(id_usuario):
     except Exception as e:
         return jsonify({"error": "Error interno del servidor"}), 500
     
-
-    #Markus
-    # 1. RUTA PARA TRAER TODOS LOS ESTUDIANTES (id_rol = 2)
-@app.route('/usuarios/estudiantes', methods=['GET'])
-def get_estudiantes():
+@app.route('/cursos/profesor/<int:id_usuario>', methods=['GET'])
+def get_cursos_profesor(id_usuario):
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
-        # Consultamos usuarios que sean estudiantes (id_rol = 2)
-        query = "SELECT id_usuario, nombres, apellidos, correo FROM usuarios WHERE id_rol = 2"
-        cursor.execute(query)
-        estudiantes = cursor.fetchall()
+        query = """
+            SELECT 
+                c.id_curso, 
+                c.nombre 
+            FROM Cursos c
+            JOIN Profesor p ON c.id_curso = p.id_curso
+            WHERE p.id_usuario = %s
+        """
+        
+        cursor.execute(query, (id_usuario,))
+        cursos = cursor.fetchall()
         
         cursor.close()
         conn.close()
         
-        return jsonify(estudiantes), 200
-    except Exception as e:
+        return jsonify(cursos), 200
+        
+    except Error as e:
+        print(f"Error en base de datos: {e}")
         return jsonify({"error": str(e)}), 500
-
-# 2. RUTA PARA REGISTRAR LA ASISTENCIA MASIVA
-@app.route('/asistencia/registrar', methods=['POST'])
-def registrar_asistencia():
+    except Exception as e:
+        print(f"Error interno: {e}")
+        return jsonify({"error": "Error interno del servidor"}), 500
+    
+@app.route('/modulos/curso/<int:id_curso>', methods=['GET'])
+def get_modulos_curso(id_curso):
     try:
-        data = request.json  # Recibe la lista de asistencias desde Flutter
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)
         
-        query = "INSERT INTO Asistencia (fecha, asistio, id_usuario, id_modulo) VALUES (%s, %s, %s, %s)"
+        # Consultamos los módulos asociados al curso seleccionado
+        query = "SELECT id_modulo, nombre, fecha_inicio, fecha_fin FROM Modulos WHERE id_curso = %s"
+        cursor.execute(query, (id_curso,))
+        modulos = cursor.fetchall()
         
-        # Recorremos la lista que envía Flutter y guardamos cada uno
-        for registro in data:
-            cursor.execute(query, (
-                registro['fecha'], 
-                registro['asistio'], 
-                registro['id_usuario'], 
-                registro['id_modulo']
-            ))
-            
-        conn.commit()
         cursor.close()
         conn.close()
         
-        return jsonify({"message": "Asistencia registrada correctamente"}), 201
-    except Exception as e:
+        return jsonify(modulos), 200
+    except Error as e:
         return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        return jsonify({"error": "Error interno del servidor"}), 500
+    
+@app.route('/modulo/<int:id_modulo>/students', methods=['GET'])
+def get_estudiantes(id_modulo):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    # Esta consulta asume que los alumnos están ligados al curso del módulo
+    query = """
+        SELECT u.nombres, u.apellidos, u.correo 
+        FROM Usuarios u
+        JOIN Alumnos a ON u.id_usuario = a.id_usuario
+        JOIN Modulos m ON a.id_curso = m.id_curso
+        WHERE m.id_modulo = %s
+    """
+    cursor.execute(query, (id_modulo,))
+    estudiantes = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return jsonify(estudiantes)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)

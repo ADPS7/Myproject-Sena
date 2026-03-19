@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.138.52:8000';
+  static const String baseUrl = 'http://10.2.138.52:8000'; // Asegúrate que esta IP sea la de tu PC
 
   Future<Map<String, dynamic>> login({
     required String correo,
@@ -12,17 +12,21 @@ class ApiService {
       final response = await http.post(
         Uri.parse('$baseUrl/login'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({'correo': correo, 'clave': clave}),
+        body: json.encode({
+          'correo': correo,
+          'clave': clave,
+        }),
       );
 
       final decodedData = json.decode(response.body);
+      
       if (response.statusCode == 200) {
         return {"success": true, "user": decodedData['user']};
       } else {
         return {"success": false, "error": decodedData['error']};
       }
     } catch (e) {
-      return {"success": false, "error": "Error de conexión"};
+      return {"success": false, "error": "Error de conexión con el servidor"};
     }
   }
 
@@ -47,28 +51,49 @@ class ApiService {
     return json.decode(response.body);
   }
 
-  Future<List<dynamic>> getTodosLosEstudiantes() async {
+  Future<List<dynamic>> getCursosPorProfesor(int idUsuario) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/usuarios/estudiantes'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/cursos/profesor/$idUsuario'),
+      );
+
+      if (response.statusCode == 200) {
+        // Retorna la lista de cursos (id_curso y nombre)
+        return json.decode(response.body);
+      } else {
+        print("Error en el servidor: ${response.statusCode}");
+        return [];
+      }
+    } catch (e) {
+      print("Error de conexión: $e");
+      return [];
+    }
+  }
+  // Obtener módulos de un curso específico
+  Future<List<dynamic>> getModulosPorCurso(int idCurso) async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/modulos/curso/$idCurso'));
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      return [];
+    } catch (e) {
+      print("Error en getModulosPorCurso: $e");
+      return [];
+    }
+  }
+  
+  Future<List<dynamic>> getEstudiantesPorModulo(int idModulo) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/modulo/$idModulo/students'),
+      );
       if (response.statusCode == 200) {
         return json.decode(response.body);
       }
       return [];
     } catch (e) {
       return [];
-    }
-  }
-
-  Future<bool> guardarAsistencia(List<Map<String, dynamic>> datos) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/asistencia/registrar'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(datos),
-      );
-      return response.statusCode == 200 || response.statusCode == 201;
-    } catch (e) {
-      return false;
     }
   }
 }
