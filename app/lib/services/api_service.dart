@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.138.52:8000'; // Asegúrate que esta IP sea la de tu PC
+  static const String baseUrl = 'http://10.2.127.130:8000'; // Asegúrate que esta IP sea la de tu PC
 
   Future<Map<String, dynamic>> login({
     required String correo,
@@ -119,6 +119,22 @@ class ApiService {
       }
     } catch (e) {
       return {'success': false, 'error': 'Error de conexión: $e'};
+    }
+  }
+  Future<Map<String, dynamic>> getHistorialAsistencia(dynamic idUsuario) async { // dynamic por si acaso
+    try {
+      // Forzamos el ID a string para evitar errores en la URL
+      final String idStr = idUsuario.toString();
+      final response = await http.get(
+        Uri.parse('$baseUrl/asistencias/detalle/$idStr'),
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } 
+      return {"success": false, "asistencias": []};
+    } catch (e) {
+      return {"success": false, "asistencias": []};
     }
   }
 }

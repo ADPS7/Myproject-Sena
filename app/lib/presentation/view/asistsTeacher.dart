@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
-import 'asistenciaView.dart'; // Asegúrate de que este sea el nombre correcto de tu archivo
+import 'asistenciaView.dart'; 
+// IMPORTANTE: Asegúrate de que el nombre del archivo sea el correcto
+import 'historialAsistenciaProfesor.dart';
 
 class MisCursosView extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -17,7 +19,7 @@ class _MisCursosViewState extends State<MisCursosView> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      isScrollControlled: true, // Permite que el modal crezca si hay muchos módulos
+      isScrollControlled: true, 
       builder: (context) {
         return Container(
           padding: const EdgeInsets.all(25),
@@ -88,12 +90,22 @@ class _MisCursosViewState extends State<MisCursosView> {
                                 padding: const EdgeInsets.only(bottom: 10, left: 10, right: 10),
                                 child: Row(
                                   children: [
-                                    // BOTÓN VER ASISTENCIAS
+                                    // BOTÓN VER HISTORIAL (Redirección directa)
                                     Expanded(
                                       child: OutlinedButton.icon(
                                         onPressed: () {
-                                          // Aquí iría la navegación a tu historial
-                                          print("Ver historial de ${modulo['nombre']}");
+                                          Navigator.pop(context); // Cierra el modal
+                                          
+                                          // NAVEGACIÓN A LA VISTA QUE ME PASASTE
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => HistorialAsistenciaView(
+                                                idUsuario: widget.user['id_usuario'], 
+                                                nombreAlumno: "${widget.user['nombres']} ${widget.user['apellidos']}",
+                                              ),
+                                            ),
+                                          );
                                         },
                                         icon: const Icon(Icons.history, size: 18),
                                         label: const Text("VER"),
@@ -108,7 +120,7 @@ class _MisCursosViewState extends State<MisCursosView> {
                                     Expanded(
                                       child: ElevatedButton.icon(
                                         onPressed: () {
-                                          Navigator.pop(context); // Cierra el modal
+                                          Navigator.pop(context); 
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
