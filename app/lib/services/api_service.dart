@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.127.130:8000'; // Asegúrate que esta IP sea la de tu PC
+  static const String baseUrl = 'http://192.168.101.91:8000'; // Asegúrate que esta IP sea la de tu PC
 
   Future<Map<String, dynamic>> login({
     required String correo,
@@ -135,6 +135,28 @@ class ApiService {
       return {"success": false, "asistencias": []};
     } catch (e) {
       return {"success": false, "asistencias": []};
+    }
+  }
+
+  Future<Map<String, dynamic>> getAdminAsistencias() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin/asistencias'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      final decodedData = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        return {"success": true, "cursos": decodedData['cursos'] ?? []};
+      } else {
+        return {
+          "success": false,
+          "error": decodedData['error'] ?? 'Error desconocido',
+        };
+      }
+    } catch (e) {
+      return {"success": false, "error": "Error de conexión con el servidor"};
     }
   }
 }

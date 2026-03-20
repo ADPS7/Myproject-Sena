@@ -266,6 +266,96 @@ def get_detalle_asistencias(id_usuario):
         }), 200
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+    
+from collections import defaultdict
+
+@app.route('/admin/asistencias', methods=['GET'])
+def get_admin_asistencias():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+            SELECT 
+                c.id_curso,
+                c.nombre as curso_nombre,
+                m.id_modulo,
+                m.nombre as modulo_nombre,
+                u.id_usuario,
+                CONCAT(u.nombres, ' ', u.apellidos) as estudiante_nombre,
+                a.fecha,
+                a.asistio
+            FROM Cursos c
+            JOIN Modulos m ON m.id_curso = c.id_curso
+            JOIN Alumnos al ON al.id_curso = c.id_curso
+            JOIN Usuarios u ON u.id_usuario = al.id_usuario
+            LEFT JOIN Asistencia a ON a.id_usuario = u.id_usuario 
+                                 AND a.id_modulo = m.id_modulo
+            ORDER BY c.id_curso, m.id_modulo, u.id_usuario, a.fecha ASC
+        """
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+        # === AGRUPACIÓN EN PYTHON ===
+        cursos_dict = defaultdict(lambda: {
+            "id_curso": 0, "nombre": "", "modulos": defaultdict(lambda: {
+                "id_modulo": 0, "nombre": "", "estudiantes": defaultdict(lambda: {
+                    "id_usuario": 0, "nombre": "", "asistencias": [], "inasistencias": 0
+                })
+            })
+        })
+
+        for row in rows:
+            c_key = row['id_curso']
+            m_key = row['id_modulo']
+            u_key = row['id_usuario']
+
+            # Curso
+            if cursos_dict[c_key]["id_curso"] == 0:
+                cursos_dict[c_key]["id_curso"] = row['id_curso']
+                cursos_dict[c_key]["nombre"] = row['curso_nombre']
+
+            # Módulo
+            if cursos_dict[c_key]["modulos"][m_key]["id_modulo"] == 0:
+                cursos_dict[c_key]["modulos"][m_key]["id_modulo"] = row['id_modulo']
+                cursos_dict[c_key]["modulos"][m_key]["nombre"] = row['modulo_nombre']
+
+            # Estudiante
+            est = cursos_dict[c_key]["modulos"][m_key]["estudiantes"][u_key]
+            if est["id_usuario"] == 0:
+                est["id_usuario"] = row['id_usuario']
+                est["nombre"] = row['estudiante_nombre']
+
+            # Asistencia (solo si existe)
+            if row['fecha'] is not None:
+                est["asistencias"].append({
+                    "fecha": str(row['fecha']),
+                    "asistio": row['asistio']
+                })
+                if row['asistio'] == 'NO':
+                    est["inasistencias"] += 1
+
+        # Convertir a listas normales
+        cursos = []
+        for curso in cursos_dict.values():
+            modulos_list = []
+            for mod in curso["modulos"].values():
+                estudiantes_list = []
+                for est in mod["estudiantes"].values():
+                    est["alerta"] = est["inasistencias"] > 3
+                    estudiantes_list.append(est)
+                mod["estudiantes"] = estudiantes_list
+                modulos_list.append(mod)
+            curso["modulos"] = modulos_list
+            cursos.append(curso)
+
+        cursor.close()
+        conn.close()
+        return jsonify({"success": True, "cursos": cursos}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 if __name__ == '__main__':
