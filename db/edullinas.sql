@@ -109,7 +109,6 @@ INSERT INTO Profesor (id_usuario, id_curso) VALUES (3, 1);
 
 INSERT INTO Modulos (nombre, fecha_inicio, fecha_fin, id_curso) VALUES ('Introducción a Flask', '2026-06-01', '2026-07-15', 2);
 
--- 10 Estudiantes para el Curso 2 (Backend con Python)
 INSERT INTO Usuarios (nombres, apellidos, correo, fecha_nacimiento, clave, id_rol) VALUES
 ('Pedro', 'Hernández', 'pedro.h@email.com', '1997-03-10', '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5', 2),
 ('Clara', 'Ruiz', 'clara.r@email.com', '2003-09-12', '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5', 2),
@@ -122,7 +121,6 @@ INSERT INTO Usuarios (nombres, apellidos, correo, fecha_nacimiento, clave, id_ro
 ('Hugo', 'Mendoza', 'hugo.m@email.com', '1998-04-04', '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5', 2),
 ('Camila', 'Vargas', 'camila.v@email.com', '2002-07-07', '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5', 2);
 
--- 10 Estudiantes Adicionales (Registrados en el sistema)
 INSERT INTO Usuarios (nombres, apellidos, correo, fecha_nacimiento, clave, id_rol) VALUES
 ('Gabriel', 'Soto', 'gabriel.s@email.com', '2000-01-01', '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5', 2),
 ('Sara', 'Vega', 'sara.v@email.com', '2001-03-03', '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5', 2),
@@ -135,10 +133,7 @@ INSERT INTO Usuarios (nombres, apellidos, correo, fecha_nacimiento, clave, id_ro
 ('Oscar', 'Blanco', 'oscar.b@email.com', '2000-08-08', '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5', 2),
 ('Natalia', 'Paredes', 'natalia.p@email.com', '2001-10-10', '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5', 2);
 
--- Asignar los siguientes 10 (IDs del 14 al 23) al Curso 2 (Backend Python)
-INSERT INTO Alumnos (id_usuario, id_curso) VALUES 
+/*INSERT INTO Alumnos (id_usuario, id_curso) VALUES 
 (14, 2), (15, 2), (16, 2), (17, 2), (18, 2), (19, 2), (20, 2), (21, 2), (22, 2), (23, 2);
-
--- Asignar los últimos 10 (IDs del 24 al 33) al Curso 1 para que ese grupo sea más grande
 INSERT INTO Alumnos (id_usuario, id_curso) VALUES 
-(24, 1), (25, 1), (26, 1), (27, 1), (28, 1), (29, 1), (30, 1), (31, 1), (32, 1), (33, 1);
+(24, 1), (25, 1), (26, 1), (27, 1), (28, 1), (29, 1), (30, 1), (31, 1), (32, 1), (33, 1);*/
