@@ -1,7 +1,5 @@
 import 'package:app/services/api_service.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class AdminAttendanceScreen extends StatelessWidget {
   const AdminAttendanceScreen({super.key});

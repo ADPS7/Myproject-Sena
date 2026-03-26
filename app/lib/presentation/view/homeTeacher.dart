@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widget/login_widget.dart';
-import 'asistsTeacher.dart'; 
+import 'asistsTeacher.dart';
+import 'notaPro.dart'; 
 
 class HomeTeacher extends StatelessWidget {
   final Map<String, dynamic> user;
@@ -152,7 +153,19 @@ class HomeTeacher extends StatelessWidget {
             const SizedBox(height: 20),
             _buildLegacyContainer(context, Icons.group, "Mis Alumnos", () {}),
             const SizedBox(height: 20),
-            _buildLegacyContainer(context, Icons.assignment, "Calificar Notas", () {}),
+            //aqui
+            _buildLegacyContainer(
+              context, 
+              Icons.assignment,
+              "Calificar Notas", 
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => NotasProfesorView(idUsuario: user['id_usuario'])),
+                );
+              }
+            ),
+            //aqui
             const SizedBox(height: 20),
             _buildLegacyContainer(context, Icons.layers, "Contenido de Módulos", () {}),
             
