@@ -430,6 +430,85 @@ def get_admin_notas():
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+    
+@app.route('/notas/modulo/<int:id_modulo>', methods=['GET'])
+def get_notas_modulo(id_modulo):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+            SELECT 
+                u.id_usuario,
+                CONCAT(u.nombres, ' ', u.apellidos) AS nombre,
+                n.id_nota,
+                n.nota
+            FROM Usuarios u
+            JOIN Alumnos a ON u.id_usuario = a.id_usuario
+            JOIN Modulos m ON a.id_curso = m.id_curso
+            LEFT JOIN Notas n 
+                ON n.id_usuario = u.id_usuario 
+                AND n.id_modulo = m.id_modulo
+            WHERE m.id_modulo = %s
+        """
+
+        cursor.execute(query, (id_modulo,))
+        data = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/notas', methods=['POST'])
+def guardar_nota():
+    try:
+        data = request.json
+        id_usuario = data['id_usuario']
+        id_modulo = data['id_modulo']
+        nota = data['nota']
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        query = """
+            INSERT INTO Notas (id_usuario, id_modulo, nota)
+            VALUES (%s, %s, %s)
+            ON DUPLICATE KEY UPDATE nota = VALUES(nota)
+        """
+
+        cursor.execute(query, (id_usuario, id_modulo, nota))
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({"success": True}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/notas/<int:id_nota>', methods=['DELETE'])
+def eliminar_nota(id_nota):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("DELETE FROM Notas WHERE id_nota = %s", (id_nota,))
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({"success": True}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+    
 
 
 if __name__ == '__main__':
