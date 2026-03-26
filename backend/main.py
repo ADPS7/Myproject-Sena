@@ -355,7 +355,81 @@ def get_admin_asistencias():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/admin/notas', methods=['GET'])
+def get_admin_notas():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
 
+        query = """
+            SELECT 
+                c.nombre AS curso,
+                m.nombre AS modulo,
+                CONCAT(u.nombres, ' ', u.apellidos) AS estudiante,
+                n.nota
+            FROM Cursos c
+            JOIN Modulos m ON m.id_curso = c.id_curso
+            JOIN Alumnos a ON a.id_curso = c.id_curso
+            JOIN Usuarios u ON u.id_usuario = a.id_usuario
+            LEFT JOIN Notas n 
+                ON n.id_usuario = u.id_usuario 
+                AND n.id_modulo = m.id_modulo
+            ORDER BY c.nombre, m.nombre, estudiante
+        """
+
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+        from collections import defaultdict
+
+        data = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+
+        # Agrupar datos
+        for row in rows:
+            curso = row['curso']
+            modulo = row['modulo']
+            estudiante = row['estudiante']
+
+            if row['nota'] is not None:
+                data[curso][modulo][estudiante].append({
+                    "nota": float(row['nota'])
+                })
+
+        resultado = []
+
+        # Construir respuesta final
+        for curso, modulos in data.items():
+            curso_data = {"nombre": curso, "modulos": []}
+
+            for modulo, estudiantes in modulos.items():
+                modulo_data = {"nombre": modulo, "estudiantes": []}
+
+                for estudiante, notas in estudiantes.items():
+                    
+                    if notas:
+                        promedio = sum(n['nota'] for n in notas) / len(notas)
+                    else:
+                        promedio = 0
+
+                    modulo_data["estudiantes"].append({
+                        "nombre": estudiante,
+                        "notas": notas,
+                        "promedio": round(promedio, 2),
+                        "alerta": promedio < 3.0
+                    })
+
+                curso_data["modulos"].append(modulo_data)
+
+            resultado.append(curso_data)
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({"success": True, "cursos": resultado}), 200
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 if __name__ == '__main__':

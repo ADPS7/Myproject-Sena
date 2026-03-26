@@ -2,11 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.101.91:8000'; // Asegúrate que esta IP sea la de tu PC
+  static const String baseUrl = 'http://192.168.1.5:8000'; // Asegúrate que esta IP sea la de tu PC
 
   Future<Map<String, dynamic>> login({
     required String correo,
-    required String clave,
+    required String clave,  
   }) async {
     try {
       final response = await http.post(
@@ -158,5 +158,11 @@ class ApiService {
     } catch (e) {
       return {"success": false, "error": "Error de conexión con el servidor"};
     }
+  }
+
+  Future<Map<String, dynamic>> getAdminNotas() async {
+  final response = await http.get(Uri.parse('$baseUrl/admin/notas'));
+
+  return json.decode(response.body);
   }
 }
