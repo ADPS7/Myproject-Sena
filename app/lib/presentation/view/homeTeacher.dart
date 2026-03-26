@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'notasadmin.dart';
 import '../widget/login_widget.dart';
 import 'asistsTeacher.dart'; 
 
@@ -152,7 +153,12 @@ class HomeTeacher extends StatelessWidget {
             const SizedBox(height: 20),
             _buildLegacyContainer(context, Icons.group, "Mis Alumnos", () {}),
             const SizedBox(height: 20),
-            _buildLegacyContainer(context, Icons.assignment, "Calificar Notas", () {}),
+            _buildLegacyContainer(context, Icons.assignment, "Calificar Notas", () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AdminNotasScreen()),
+              );
+            }),
             const SizedBox(height: 20),
             _buildLegacyContainer(context, Icons.layers, "Contenido de Módulos", () {}),
             
