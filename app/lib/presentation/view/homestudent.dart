@@ -1,6 +1,7 @@
 import 'package:app/presentation/view/asiststudent.dart';
 import 'package:flutter/material.dart';
 import '../widget/login_widget.dart';
+import 'NotasEstudiantes.dart';
 
 class StudentHomeScreen extends StatelessWidget {
   final Map<String, dynamic> user;
@@ -19,6 +20,15 @@ class StudentHomeScreen extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder: (context) => AttendanceScreen(),
+      ),
+    );
+  }
+
+  void _goToNotes(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => NotasEstudiantesScreen(idAlumno: user['id_usuario']),
       ),
     );
   }
@@ -188,7 +198,10 @@ class StudentHomeScreen extends StatelessWidget {
                   crossAxisSpacing: 12,
                   childAspectRatio: 0.8,
                   children: [
-                    _buildStatCard("Promedio", "4.3", Icons.grade, Colors.green),
+                    GestureDetector(
+                      onTap: () => _goToNotes(context),
+                      child:  _buildStatCard("Promedio", "4.3", Icons.grade, Colors.green),
+                    ),
                     GestureDetector(
                       onTap: () => _goToAttendance(context),
                       child: _buildStatCard("Asistencia", "94%", Icons.how_to_reg, Colors.blue),

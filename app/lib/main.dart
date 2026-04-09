@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'package:app/presentation/bloc/home_bloc.dart';
-
 import 'presentation/widget/home_widget.dart';
 
 void main() {
@@ -25,3 +23,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+

@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.127.202:5000';
+  static const String baseUrl = 'http://192.168.1.5:5000';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,  
@@ -164,5 +164,16 @@ class ApiService {
 
   return json.decode(response.body);
   }
+
+  Future<Map<String, dynamic>> getNotasEstudiante(int id) async {
+  final response = await http.get(
+    Uri.parse('$baseUrl/notas-alumno/$id'),
+  );
+
+  return jsonDecode(response.body);
+}
+
+  
+
   
 }
