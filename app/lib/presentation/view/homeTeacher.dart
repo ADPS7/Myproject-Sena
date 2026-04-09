@@ -1,7 +1,7 @@
+import 'package:app/presentation/view/asistsTeacher.dart';
+import 'package:app/presentation/view/notaPro.dart'; 
 import 'package:flutter/material.dart';
 import '../widget/login_widget.dart';
-import 'asistsTeacher.dart';
-import 'notaPro.dart'; 
 
 class HomeTeacher extends StatelessWidget {
   final Map<String, dynamic> user;
@@ -15,6 +15,7 @@ class HomeTeacher extends StatelessWidget {
     );
   }
 
+  // DISEÑO MEJORADO: Menú desplegable para Docente
   void _mostrarPerfil(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -23,65 +24,115 @@ class HomeTeacher extends StatelessWidget {
       builder: (context) {
         return Container(
           decoration: const BoxDecoration(
-            color: Colors.white,
+            color: Color(0xffF5F6FA),
             borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(30),
-              topRight: Radius.circular(30),
+              topLeft: Radius.circular(40),
+              topRight: Radius.circular(40),
             ),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 50,
-                height: 5,
+                width: 60,
+                height: 6,
                 decoration: BoxDecoration(
                   color: Colors.grey[300],
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              const SizedBox(height: 25),
-              const Text(
-                "Perfil del Docente",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xff0D1A63)),
+              const SizedBox(height: 30),
+              const CircleAvatar(
+                radius: 45,
+                backgroundColor: Color(0xff0D1A63),
+                child: Icon(Icons.person_pin_rounded, color: Colors.white, size: 50),
               ),
-              const SizedBox(height: 20),
-              ListTile(
-                leading: const Icon(Icons.badge, color: Color(0xff0D1A63)),
-                title: const Text("Nombre del Instructor", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                subtitle: Text("${user['nombres']} ${user['apellidos']}", style: const TextStyle(fontWeight: FontWeight.bold)),
-              ),
-              ListTile(
-                leading: const Icon(Icons.email, color: Color(0xff0D1A63)),
-                title: const Text("Correo Institucional", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                subtitle: Text("${user['correo']}", style: const TextStyle(fontWeight: FontWeight.bold)),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xffFFC107),
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                  ),
-                  child: const Text("Mis Horarios", style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 15),
+              Text(
+                "${user['nombres'] + ' ' + user['apellidos']}",
+                style: const TextStyle(
+                  fontSize: 22, 
+                  fontWeight: FontWeight.bold, 
+                  color: Color(0xff0D1A63)
                 ),
               ),
-              const SizedBox(height: 10),
-              TextButton.icon(
-                onPressed: () => _cerrarSesion(context),
-                icon: const Icon(Icons.logout, color: Colors.red),
-                label: const Text("Cerrar Sesión", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              Text(
+                (user['rol'] ?? 'INSTRUCTOR').toString().toUpperCase(),
+                style: const TextStyle(fontSize: 14, color: Colors.blueGrey, letterSpacing: 1.2),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 30),
+              
+              // Tarjeta de información blanca
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(25),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10))
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    _buildProfileItem(Icons.email_outlined, "Correo", "${user['correo']}"),
+                    Divider(height: 1, color: Colors.grey[100], indent: 70),
+                    _buildProfileItem(Icons.badge_outlined, "Rol","Instructor"),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 25),
+              
+              // Botón de Horarios (Acción secundaria)
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(Icons.calendar_month, color: Color(0xff0D1A63)),
+                  label: const Text("VER MIS HORARIOS", style: TextStyle(color: Color(0xff0D1A63), fontWeight: FontWeight.bold)),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    side: const BorderSide(color: Color(0xff0D1A63)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 15),
+
+              // Botón de Cerrar Sesión
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _cerrarSesion(context),
+                  icon: const Icon(Icons.logout_rounded, color: Colors.white),
+                  label: const Text("CERRAR SESIÓN", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildProfileItem(IconData icon, String title, String value) {
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: const Color(0xff0D1A63).withOpacity(0.05),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: const Color(0xff0D1A63)),
+      ),
+      title: Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+      subtitle: Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
     );
   }
 
@@ -99,9 +150,7 @@ class HomeTeacher extends StatelessWidget {
                   width: double.infinity,
                   decoration: const BoxDecoration(
                     color: Color(0xff0D1A63),
-                    borderRadius: BorderRadius.only(
-                      bottomRight: Radius.circular(100),
-                    ),
+                    borderRadius: BorderRadius.only(bottomRight: Radius.circular(100)),
                   ),
                 ),
                 SafeArea(
@@ -120,13 +169,14 @@ class HomeTeacher extends StatelessWidget {
                             ),
                           ],
                         ),
+                        // Avatar activador del menú
                         GestureDetector(
                           onTap: () => _mostrarPerfil(context),
                           child: Container(
-                            height: 80,
-                            width: 80,
+                            height: 75,
+                            width: 75,
                             decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                            child: const Icon(Icons.account_circle, color: Color(0xff0D1A63), size: 50),
+                            child: const Icon(Icons.account_circle, color: Color(0xff0D1A63), size: 55),
                           ),
                         ),
                       ],
@@ -137,11 +187,10 @@ class HomeTeacher extends StatelessWidget {
             ),
             const SizedBox(height: 30),
             
-            // CONEXIÓN AQUÍ: Gestión de Cursos
             _buildLegacyContainer(
               context, 
-              Icons.class_, 
-              " Cursos", 
+              Icons.class_rounded, 
+              "Mis Cursos", 
               () {
                 Navigator.push(
                   context,
@@ -149,14 +198,14 @@ class HomeTeacher extends StatelessWidget {
                 );
               }
             ),
+            const SizedBox(height: 20),
             
+            _buildLegacyContainer(context, Icons.group_rounded, "Mis Alumnos", () {}),
             const SizedBox(height: 20),
-            _buildLegacyContainer(context, Icons.group, "Mis Alumnos", () {}),
-            const SizedBox(height: 20),
-            //aqui
+            
             _buildLegacyContainer(
               context, 
-              Icons.assignment,
+              Icons.assignment_turned_in_rounded,
               "Calificar Notas", 
               () {
                 Navigator.push(
@@ -165,15 +214,15 @@ class HomeTeacher extends StatelessWidget {
                 );
               }
             ),
-            //aqui
             const SizedBox(height: 20),
-            _buildLegacyContainer(context, Icons.layers, "Contenido de Módulos", () {}),
+            
+            _buildLegacyContainer(context, Icons.layers_rounded, "Contenido de Módulos", () {}),
             
             const Padding(
-              padding: EdgeInsets.all(30.0),
+              padding: EdgeInsets.symmetric(vertical: 40.0),
               child: Text(
                 "Tablero de Información Académica", 
-                style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
+                style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500, letterSpacing: 0.5),
               ),
             ),
           ],
@@ -182,22 +231,21 @@ class HomeTeacher extends StatelessWidget {
     );
   }
 
-  // Widget mejorado con funcionalidad de botón
   Widget _buildLegacyContainer(BuildContext context, IconData icono, String texto, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
         margin: const EdgeInsets.symmetric(horizontal: 25),
-        padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
+        padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(22),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
             )
           ],
         ),
@@ -206,15 +254,15 @@ class HomeTeacher extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xff0D1A63).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
+                color: const Color(0xff0D1A63).withOpacity(0.08),
+                borderRadius: BorderRadius.circular(15),
               ),
-              child: Icon(icono, color: const Color(0xff0D1A63), size: 30),
+              child: Icon(icono, color: const Color(0xff0D1A63), size: 28),
             ),
-            const SizedBox(width: 20),
-            Text(texto, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xff333333))),
+            const SizedBox(width: 18),
+            Text(texto, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xff2D3142))),
             const Spacer(),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
           ],
         ),
       ),

@@ -64,6 +64,7 @@ def login():
                     u.id_usuario, 
                     u.nombres, 
                     u.apellidos,
+                    u.correo,
                     u.id_rol, 
                     r.nombre as rol 
                 FROM usuarios u 
@@ -512,4 +513,4 @@ def eliminar_nota(id_nota):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

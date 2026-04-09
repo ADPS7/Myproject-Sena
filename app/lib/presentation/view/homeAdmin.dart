@@ -4,6 +4,7 @@ import '../widget/login_widget.dart';
 
 class Homeadmin extends StatelessWidget {
   final Map<String, dynamic> user;
+  
   const Homeadmin({super.key, required this.user});
 
   void _cerrarSesion(BuildContext context) {
@@ -13,8 +14,7 @@ class Homeadmin extends StatelessWidget {
       (route) => false,
     );
   }
-
-  void _mostrarPerfil(BuildContext context) {
+void _mostrarPerfil(BuildContext context) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -22,75 +22,116 @@ class Homeadmin extends StatelessWidget {
       builder: (context) {
         return Container(
           decoration: const BoxDecoration(
-            color: Colors.white,
+            color: Color(0xffF5F6FA), // Color de fondo de la app para consistencia
             borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(30),
-              topRight: Radius.circular(30),
+              topLeft: Radius.circular(40),
+              topRight: Radius.circular(40),
             ),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Barra superior estética
               Container(
-                width: 50,
-                height: 5,
+                width: 60,
+                height: 6,
                 decoration: BoxDecoration(
                   color: Colors.grey[300],
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              const SizedBox(height: 25),
-              const Text(
-                "Información de Cuenta",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xff0D1A63)),
+              const SizedBox(height: 30),
+
+              // Avatar grande y nombre
+              CircleAvatar(
+                radius: 45,
+                backgroundColor: const Color(0xff0D1A63),
+                child: const Icon(Icons.admin_panel_settings, color: Colors.white, size: 50),
+              ),
+              const SizedBox(height: 15),
+              Text(
+                "${user['nombres'] ?? ''} ${user['apellidos'] ?? ''}",
+                style: const TextStyle(
+                  fontSize: 22, 
+                  fontWeight: FontWeight.bold, 
+                  color: Color(0xff0D1A63)
+                ),
+              ),
+              Text(
+                (user['rol'] ?? 'ADMINISTRADOR').toString().toUpperCase(),
+                style: const TextStyle(fontSize: 14, color: Colors.blueGrey, letterSpacing: 1.2),
+              ),
+              const SizedBox(height: 30),
+
+              // Tarjeta de información
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(25),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    )
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    _buildProfileItem(
+                      Icons.email_outlined, 
+                      "Correo Electrónico", 
+                      "${user['correo']}"
+                    ),
+                    Divider(height: 1, color: Colors.grey[100], indent: 70),
+                    _buildProfileItem(
+                      Icons.fingerprint, 
+                      "Rol", 
+                      "Administrador"
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
+              // Botón de Cerrar Sesión Estilizado
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _cerrarSesion(context),
+                  icon: const Icon(Icons.logout_rounded, color: Colors.white),
+                  label: const Text("CERRAR SESIÓN", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    elevation: 0,
+                  ),
+                ),
               ),
               const SizedBox(height: 20),
-              
-              // Dato: Nombre y Apellido
-              ListTile(
-                leading: const Icon(Icons.person, color: Color(0xff0D1A63)),
-                title: const Text("Nombre Completo", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                subtitle: Text(
-                  "${user['nombres'] ?? 'N/A'} ${user['apellidos'] ?? ''}", 
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
-                ),
-              ),
-              
-              // Dato: Correo
-              ListTile(
-                leading: const Icon(Icons.email, color: Color(0xff0D1A63)),
-                title: const Text("Correo Electrónico", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                subtitle: Text(
-                  "${user['correo'] ?? 'Sin correo'}", 
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
-                ),
-              ),
-
-              // Dato: Rol (Base de datos)
-              ListTile(
-                leading: const Icon(Icons.verified_user, color: Color(0xff0D1A63)),
-                title: const Text("Rol de Usuario", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                subtitle: Text(
-                  "${user['rol']?.toUpperCase() ?? 'ADMINISTRADOR'}", 
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
-                ),
-              ),
-
-              const SizedBox(height: 20),
-              Divider(color: Colors.grey[200]),
-              const SizedBox(height: 10),
-
-              TextButton.icon(
-                onPressed: () => _cerrarSesion(context),
-                icon: const Icon(Icons.logout, color: Colors.red),
-                label: const Text("CERRAR SESIÓN", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-              ),
-              const SizedBox(height: 10),
             ],
           ),
         );
       },
+    );
+  }
+
+  // Widget auxiliar para los items del perfil
+  Widget _buildProfileItem(IconData icon, String title, String value) {
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: const Color(0xff0D1A63).withOpacity(0.05),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: const Color(0xff0D1A63)),
+      ),
+      title: Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+      subtitle: Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87)),
     );
   }
 
@@ -122,7 +163,7 @@ class Homeadmin extends StatelessWidget {
                           children: [
                             const Text("Bienvenido,", style: TextStyle(color: Colors.white70, fontSize: 16)),
                             Text(
-                              "${user['nombres'] ?? 'Admin'}", 
+                              "${user['nombres'] + ' ' + user['apellidos']}", 
                               style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)
                             ),
                           ],
