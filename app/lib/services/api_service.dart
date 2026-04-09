@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.127.202:5000';
+  static const String baseUrl = 'http://10.2.135.71:5000';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,  
@@ -26,6 +26,18 @@ class ApiService {
       }
     } catch (e) {
       return {"success": false, "error": "Error de conexión con el servidor"};
+    }
+  }
+  Future<Map<String, dynamic>> loginSocial({required String correo}) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/login_social'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'correo': correo}),
+      );
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {'success': false, 'error': 'Error de conexión'};
     }
   }
 

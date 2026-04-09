@@ -15,6 +15,30 @@ def get_db_connection():
         database="edullinas"
     )
 
+@app.route('/login_social', methods=['POST'])
+def login_social():
+    try:
+        data = request.json
+        correo = data.get('correo')
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT u.id_usuario, u.nombres, u.apellidos, u.correo, u.id_rol, r.nombre as rol 
+            FROM usuarios u 
+            JOIN roles r ON u.id_rol = r.id_rol 
+            WHERE u.correo = %s
+        """
+        cursor.execute(query, (correo,))
+        user = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        if user:
+            return jsonify({"success": True, "user": user}), 200
+        else:
+            return jsonify({"success": False, "error": "Usuario no registrado"}), 401
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/create_user', methods=['POST'])
 def create_user():
     try:
