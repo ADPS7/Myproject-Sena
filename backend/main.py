@@ -509,8 +509,77 @@ def eliminar_nota(id_nota):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+@app.route('/notas-alumno/<int:id_usuario>', methods=['GET'])
+def obtener_notas_estudiante(id_usuario):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT id_usuario, id_curso
+            FROM alumnos
+            WHERE id_usuario = %s
+        """, (id_usuario,))
+        
+        alumno = cursor.fetchone()
+
+        if not alumno:
+            return jsonify({"error": "Alumno no encontrado"}), 404
+
+        id_usuario = alumno[0]
+        id_curso = alumno[1]
+
+        cursor.execute("""
+            SELECT nombre
+            FROM cursos
+            WHERE id_curso = %s
+        """, (id_curso,))
+        
+        curso = cursor.fetchone()
+
+        cursor.execute("""
+            SELECT id_modulo, nombre
+            FROM modulos
+            WHERE id_curso = %s
+        """, (id_curso,))
+        
+        modulos = cursor.fetchall()
+
+        resultado_modulos = []
+
+        for modulo in modulos:
+            id_modulo = modulo[0]
+            nombre_modulo = modulo[1]
+
+            cursor.execute("""
+                SELECT nota
+                FROM notas
+                WHERE id_usuario = %s AND id_modulo = %s
+            """, (id_usuario, id_modulo))
+
+            notas = cursor.fetchall()
+
+            resultado_modulos.append({
+                "nombre": nombre_modulo,
+                "notas": [n[0] for n in notas]
+            })
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            "success": True,
+            "curso": curso[0] if curso else "Sin curso",
+            "modulos": resultado_modulos
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
     
 
+
+
+    
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
