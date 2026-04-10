@@ -94,9 +94,11 @@ def get_asistencias(id_usuario):
             SELECT 
                 a.fecha,
                 a.asistio,
-                m.nombre as modulo_nombre
+                m.nombre as modulo_nombre,
+                c.nombre as curso_nombre
             FROM Asistencia a
             JOIN Modulos m ON a.id_modulo = m.id_modulo
+            JOIN Cursos c ON m.id_curso = c.id_curso
             WHERE a.id_usuario = %s
             ORDER BY a.fecha DESC
         """
