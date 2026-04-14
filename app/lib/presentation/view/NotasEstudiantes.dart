@@ -108,8 +108,10 @@ class NotasEstudiantesScreen extends StatelessWidget {
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                         ),
                         subtitle: Text(
-                          "Promedio: ${promedio.toStringAsFixed(2)}",
-                          style: promedio < 3.0 ? const TextStyle(color: Colors.red) : const TextStyle(color: Colors.green),
+                         notas.isEmpty ? "Sin notas registradas" : "Promedio: ${promedio.toStringAsFixed(2)}",
+                        style: promedio == 0 ? const TextStyle(color: Colors.grey) : (promedio < 3.0 ? const TextStyle(color: Colors.red) : const TextStyle(color: Colors.green)),
+                          
+
                         ),
                         children: notas.asMap().entries.map<Widget>((entry) {
                           final i = entry.key + 1; 
