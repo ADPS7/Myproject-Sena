@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import 'aut_service.dart';
+
 class ApiService {
-  static const String baseUrl = 'http://192.168.1.5:5000';
+  static const String baseUrl = 'http://192.168.101.79:5000';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,  
@@ -173,6 +175,34 @@ class ApiService {
   return jsonDecode(response.body);
 }
 
+Future<String> getStudentCourse() async {
+  final userId = await AuthService.getUserId(); 
+  if (userId == null) return "Usuario no encontrado";
+
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/asistencias/$userId'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      
+      if (data['curso_nombre'] != null) {
+        return data['curso_nombre'];
+      }
+      if (data['asistencias'] != null && data['asistencias'].isNotEmpty) {
+        return data['asistencias'][0]['curso_nombre'] ?? 'Sin curso asignado';
+      }
+      return 'Sin curso asignado';
+    } else {
+      return "Error del servidor";
+    }
+  } catch (e) {
+    print("Error getStudentCourse: $e");
+    return "Sin conexión con el servidor";
+  }
+}
   
 
   
