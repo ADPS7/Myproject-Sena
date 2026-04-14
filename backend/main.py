@@ -90,12 +90,14 @@ def get_asistencias(id_usuario):
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
+       
         query = """
             SELECT 
                 a.fecha,
                 a.asistio,
                 m.nombre as modulo_nombre,
-                c.nombre as curso_nombre
+                c.nombre as curso_nombre,
+                m.id_curso
             FROM Asistencia a
             JOIN Modulos m ON a.id_modulo = m.id_modulo
             JOIN Cursos c ON m.id_curso = c.id_curso
@@ -104,19 +106,47 @@ def get_asistencias(id_usuario):
         """
         cursor.execute(query, (id_usuario,))
         asistencias = cursor.fetchall()
+
         
-        cursor.close()
-        conn.close()
+        if not asistencias:
+            cursor.execute("""
+                SELECT c.nombre as curso_nombre, c.id_curso
+                FROM Alumnos a
+                JOIN Cursos c ON a.id_curso = c.id_curso
+                WHERE a.id_usuario = %s
+                LIMIT 1
+            """, (id_usuario,))
+            curso = cursor.fetchone()
+            
+            if curso:
+                return jsonify({
+                    "success": True,
+                    "asistencias": [],
+                    "curso_nombre": curso['curso_nombre'],
+                    "id_curso": curso['id_curso']
+                }), 200
+            else:
+                return jsonify({
+                    "success": True,
+                    "asistencias": [],
+                    "curso_nombre": "Sin curso asignado",
+                    "id_curso": None
+                }), 200
+
         
         return jsonify({
             "success": True,
             "asistencias": asistencias
         }), 200
         
-    except Error as e:
-        return jsonify({"error": str(e)}), 500
     except Exception as e:
+        print(f"Error en get_asistencias: {e}")   
         return jsonify({"error": "Error interno del servidor"}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
     
 @app.route('/cursos/profesor/<int:id_usuario>', methods=['GET'])
 def get_cursos_profesor(id_usuario):
