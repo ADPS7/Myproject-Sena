@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../widget/login_widget.dart';
+import 'asistadmin.dart';
 
 class Homeadmin extends StatelessWidget {
   final Map<String, dynamic> user;
@@ -14,6 +15,16 @@ class Homeadmin extends StatelessWidget {
       (route) => false,
     );
   }
+
+  void _goToAssistanceAdmin(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AdminAttendanceScreen(),
+      ),
+    );
+  }
+
 void _mostrarPerfil(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -189,7 +200,10 @@ void _mostrarPerfil(BuildContext context) {
             const SizedBox(height: 20),
             _buildActionCard(Icons.people_alt, "Usuarios"),
             const SizedBox(height: 20),
-            _buildActionCard(Icons.fact_check, "Asistencias"),
+            GestureDetector(
+              onTap: () => _goToAssistanceAdmin(context),
+              child: _buildActionCard(Icons.fact_check, "Asistencias"),
+            ),
             const SizedBox(height: 40),
           ],
         ),
