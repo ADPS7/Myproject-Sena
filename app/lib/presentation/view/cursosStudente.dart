@@ -24,7 +24,7 @@ class MyCourseScreen extends StatelessWidget {
           return CustomScrollView(
             slivers: [
               SliverAppBar(
-                expandedHeight: 210,
+                expandedHeight: 205,
                 pinned: true,
                 backgroundColor: Colors.transparent,
                 leading: IconButton(
