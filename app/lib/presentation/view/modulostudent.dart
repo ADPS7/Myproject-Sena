@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 class MyModulesScreen extends StatelessWidget {
   const MyModulesScreen({super.key});
 
+
   Future<Map<String, dynamic>> _getMyModules() async {
     return await ApiService().getMyModules();
   }
@@ -38,8 +39,8 @@ class MyModulesScreen extends StatelessWidget {
                     decoration: const BoxDecoration(
                       color: Color(0xFF0A1E3A),
                       borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(55),
-                        bottomRight: Radius.circular(55),
+                        bottomLeft: Radius.circular(60),
+                        bottomRight: Radius.circular(60),
                       ),
                     ),
                     child: SafeArea(
