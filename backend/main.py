@@ -515,70 +515,67 @@ def eliminar_nota(id_nota):
 def obtener_notas_estudiante(id_usuario):
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)
 
-        cursor.execute("""
-            SELECT id_usuario, id_curso
-            FROM alumnos
-            WHERE id_usuario = %s
-        """, (id_usuario,))
-        
-        alumno = cursor.fetchone()
+        query = """
+            SELECT 
+                c.nombre AS curso_nombre,
+                m.nombre AS modulo_nombre,
+                n.nota
+            FROM alumnos a
+            JOIN cursos c ON a.id_curso = c.id_curso
+            LEFT JOIN modulos m ON m.id_curso = c.id_curso
+            LEFT JOIN notas n ON n.id_modulo = m.id_modulo AND n.id_usuario = a.id_usuario
+            WHERE a.id_usuario = %s
+            ORDER BY m.id_modulo
+        """
 
-        if not alumno:
-            return jsonify({"error": "Alumno no encontrado"}), 404
+        cursor.execute(query, (id_usuario,))
+        resultados = cursor.fetchall()
 
-        id_usuario = alumno[0]
-        id_curso = alumno[1]
+        if not resultados:
+            return jsonify({
+                "success": True,
+                "curso": "Sin curso",
+                "modulos": []
+            }), 200
 
-        cursor.execute("""
-            SELECT nombre
-            FROM cursos
-            WHERE id_curso = %s
-        """, (id_curso,))
-        
-        curso = cursor.fetchone()
+        curso_nombre = resultados[0]['curso_nombre']
 
-        cursor.execute("""
-            SELECT id_modulo, nombre
-            FROM modulos
-            WHERE id_curso = %s
-        """, (id_curso,))
-        
-        modulos = cursor.fetchall()
+        modulos_dict = {}
 
-        resultado_modulos = []
+        for row in resultados:
+            modulo = row['modulo_nombre']
+            nota = row['nota']
 
-        for modulo in modulos:
-            id_modulo = modulo[0]
-            nombre_modulo = modulo[1]
+            if modulo is None:
+                continue
 
-            cursor.execute("""
-                SELECT nota
-                FROM notas
-                WHERE id_usuario = %s AND id_modulo = %s
-            """, (id_usuario, id_modulo))
+            if modulo not in modulos_dict:
+                modulos_dict[modulo] = []
 
-            notas = cursor.fetchall()
+            if nota is not None:
+                modulos_dict[modulo].append(nota)
 
-            resultado_modulos.append({
-                "nombre": nombre_modulo,
-                "notas": [n[0] for n in notas]
-            })
+        resultado_modulos = [
+            {
+                "nombre": modulo,
+                "notas": notas
+            }
+            for modulo, notas in modulos_dict.items()
+        ]
 
         cursor.close()
         conn.close()
 
         return jsonify({
             "success": True,
-            "curso": curso[0] if curso else "Sin curso",
+            "curso": curso_nombre,
             "modulos": resultado_modulos
         }), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-
 
 
     
