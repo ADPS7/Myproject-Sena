@@ -204,6 +204,45 @@ Future<String> getStudentCourse() async {
   }
 }
   
+Future<Map<String, dynamic>> getMyModules() async {
+    final userId = await AuthService.getUserId();
+    if (userId == null) {
+      return {'curso': 'Usuario no encontrado', 'modulos': []};
+    }
 
+    try {
+      // Llamamos al endpoint correcto que ya mejoramos
+      final response = await http.get(
+        Uri.parse('$baseUrl/asistencias/$userId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        final List<dynamic> asistencias = data['asistencias'] ?? [];
+        
+        String cursoNombre = data['curso_nombre'] ?? 
+            (asistencias.isNotEmpty ? asistencias.first['curso_nombre'] ?? 'Sin curso asignado' : 'Sin curso asignado');
+
+        final int idCurso = asistencias.isNotEmpty 
+            ? (asistencias.first['id_curso'] ?? 1) 
+            : 1;
+
+        // Obtenemos los módulos
+        final List<dynamic> modulos = await getModulosPorCurso(idCurso);
+
+        return {
+          'curso': cursoNombre,
+          'modulos': modulos,
+        };
+      } else {
+        return {'curso': 'Error al cargar', 'modulos': []};
+      }
+    } catch (e) {
+      print("Error en getMyModules: $e");
+      return {'curso': 'Sin curso asignado', 'modulos': []};
+    }
+  }
   
 }
