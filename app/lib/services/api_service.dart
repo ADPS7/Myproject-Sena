@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'aut_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.101.79:5000';
+  static const String baseUrl = 'http://10.2.134.154:5000';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,  
@@ -242,6 +242,53 @@ Future<Map<String, dynamic>> getMyModules() async {
     } catch (e) {
       print("Error en getMyModules: $e");
       return {'curso': 'Sin curso asignado', 'modulos': []};
+    }
+  }
+  Future<Map<String, dynamic>> crearCurso(String nombreCurso) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/cursos/crear'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'nombre': nombreCurso}),
+      );
+
+      final data = json.decode(response.body);
+      return data; // Retorna el mapa con success y el mensaje/error
+    } catch (e) {
+      return {"success": false, "error": "Error de conexión: $e"};
+    }
+  }
+  Future<List<dynamic>> getCursos() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/cursos'));
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+  Future<Map<String, dynamic>> editarCurso(int idCurso, String nuevoNombre) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/cursos/editar/$idCurso'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'nombre': nuevoNombre}),
+      );
+      return json.decode(response.body);
+    } catch (e) {
+      return {"success": false, "error": "Error de conexión"};
+    }
+  }
+  Future<Map<String, dynamic>> eliminarCurso(int idCurso) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/cursos/eliminar/$idCurso'),
+      );
+      return json.decode(response.body);
+    } catch (e) {
+      return {"success": false, "error": "Error de conexión"};
     }
   }
   

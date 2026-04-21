@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../widget/login_widget.dart';
 import 'asistadmin.dart';
+import 'cursoAdmin.dart';
 
 class Homeadmin extends StatelessWidget {
   final Map<String, dynamic> user;
@@ -25,7 +26,7 @@ class Homeadmin extends StatelessWidget {
     );
   }
 
-void _mostrarPerfil(BuildContext context) {
+  void _mostrarPerfil(BuildContext context) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -33,7 +34,7 @@ void _mostrarPerfil(BuildContext context) {
       builder: (context) {
         return Container(
           decoration: const BoxDecoration(
-            color: Color(0xffF5F6FA), // Color de fondo de la app para consistencia
+            color: Color(0xffF5F6FA),
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(40),
               topRight: Radius.circular(40),
@@ -43,7 +44,6 @@ void _mostrarPerfil(BuildContext context) {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Barra superior estética
               Container(
                 width: 60,
                 height: 6,
@@ -53,8 +53,6 @@ void _mostrarPerfil(BuildContext context) {
                 ),
               ),
               const SizedBox(height: 30),
-
-              // Avatar grande y nombre
               CircleAvatar(
                 radius: 45,
                 backgroundColor: const Color(0xff0D1A63),
@@ -74,8 +72,6 @@ void _mostrarPerfil(BuildContext context) {
                 style: const TextStyle(fontSize: 14, color: Colors.blueGrey, letterSpacing: 1.2),
               ),
               const SizedBox(height: 30),
-
-              // Tarjeta de información
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -90,24 +86,13 @@ void _mostrarPerfil(BuildContext context) {
                 ),
                 child: Column(
                   children: [
-                    _buildProfileItem(
-                      Icons.email_outlined, 
-                      "Correo Electrónico", 
-                      "${user['correo']}"
-                    ),
+                    _buildProfileItem(Icons.email_outlined, "Correo Electrónico", "${user['correo']}"),
                     Divider(height: 1, color: Colors.grey[100], indent: 70),
-                    _buildProfileItem(
-                      Icons.fingerprint, 
-                      "Rol", 
-                      "Administrador"
-                    ),
+                    _buildProfileItem(Icons.fingerprint, "Rol", "Administrador"),
                   ],
                 ),
               ),
-
               const SizedBox(height: 30),
-
-              // Botón de Cerrar Sesión Estilizado
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -130,7 +115,6 @@ void _mostrarPerfil(BuildContext context) {
     );
   }
 
-  // Widget auxiliar para los items del perfil
   Widget _buildProfileItem(IconData icon, String title, String value) {
     return ListTile(
       leading: Container(
@@ -174,7 +158,7 @@ void _mostrarPerfil(BuildContext context) {
                           children: [
                             const Text("Bienvenido,", style: TextStyle(color: Colors.white70, fontSize: 16)),
                             Text(
-                              "${user['nombres'] + ' ' + user['apellidos']}", 
+                              "${user['nombres'] ?? ''} ${user['apellidos'] ?? ''}", 
                               style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)
                             ),
                           ],
@@ -194,15 +178,25 @@ void _mostrarPerfil(BuildContext context) {
               ],
             ),
             const SizedBox(height: 30),
-            _buildActionCard(Icons.book, "Cursos"),
+            _buildActionCard(
+              Icons.book, 
+              "Cursos",
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CursosScreen()),
+                );
+              },
+            ),
             const SizedBox(height: 20),
             _buildActionCard(Icons.view_module, "Módulos"),
             const SizedBox(height: 20),
             _buildActionCard(Icons.people_alt, "Usuarios"),
             const SizedBox(height: 20),
-            GestureDetector(
+            _buildActionCard(
+              Icons.fact_check, 
+              "Asistencias", 
               onTap: () => _goToAssistanceAdmin(context),
-              child: _buildActionCard(Icons.fact_check, "Asistencias"),
             ),
             const SizedBox(height: 40),
           ],
@@ -211,31 +205,35 @@ void _mostrarPerfil(BuildContext context) {
     );
   }
 
-  Widget _buildActionCard(IconData icono, String texto) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 25),
-      padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 8))],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xff0D1A63).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+  // AQUI ESTA LA CORRECCION: Se agregó GestureDetector
+  Widget _buildActionCard(IconData icono, String texto, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.symmetric(horizontal: 25),
+        padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 8))],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xff0D1A63).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icono, color: const Color(0xff0D1A63), size: 30),
             ),
-            child: Icon(icono, color: const Color(0xff0D1A63), size: 30),
-          ),
-          const SizedBox(width: 20),
-          Text(texto, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const Spacer(),
-          const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-        ],
+            const SizedBox(width: 20),
+            Text(texto, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Spacer(),
+            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }

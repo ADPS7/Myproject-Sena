@@ -607,6 +607,81 @@ def obtener_notas_estudiante(id_usuario):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/cursos/crear', methods=['POST'])
+def crear_curso():
+    try:
+        data = request.json
+        nombre = data.get('nombre')
+        
+        if not nombre:
+            return jsonify({"error": "Nombre del curso requerido"}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Verificar existencia
+        cursor.execute("SELECT id_curso FROM Cursos WHERE nombre = %s", (nombre,))
+        if cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({"success": False, "error": "El curso ya existe"}), 409
+            
+        # Registrar
+        cursor.execute("INSERT INTO Cursos (nombre) VALUES (%s)", (nombre,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"success": True, "message": "Curso registrado exitosamente"}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/cursos', methods=['GET'])
+def get_cursos():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id_curso, nombre FROM Cursos")
+        cursos = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify(cursos), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/cursos/editar/<int:id_curso>', methods=['PUT'])
+def editar_curso(id_curso):
+    try:
+        data = request.json
+        nuevo_nombre = data.get('nombre')
+        
+        if not nuevo_nombre:
+            return jsonify({"error": "Nombre requerido"}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE Cursos SET nombre = %s WHERE id_curso = %s", (nuevo_nombre, id_curso))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"success": True, "message": "Curso actualizado"}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/cursos/eliminar/<int:id_curso>', methods=['DELETE'])
+def eliminar_curso(id_curso):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM Cursos WHERE id_curso = %s", (id_curso,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify({"success": True, "message": "Curso eliminado"}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 
     
 
