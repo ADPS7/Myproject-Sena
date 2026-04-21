@@ -607,7 +607,34 @@ def obtener_notas_estudiante(id_usuario):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
+@app.route('/cursos/crear', methods=['POST'])
+def crear_curso():
+    try:
+        data = request.json
+        nombre = data.get('nombre')
+        
+        if not nombre:
+            return jsonify({"error": "Nombre del curso requerido"}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Verificar existencia
+        cursor.execute("SELECT id_curso FROM Cursos WHERE nombre = %s", (nombre,))
+        if cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({"success": False, "error": "El curso ya existe"}), 409
+            
+        # Registrar
+        cursor.execute("INSERT INTO Cursos (nombre) VALUES (%s)", (nombre,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"success": True, "message": "Curso registrado exitosamente"}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
     
