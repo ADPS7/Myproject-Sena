@@ -669,6 +669,19 @@ def editar_curso(id_curso):
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route('/cursos/eliminar/<int:id_curso>', methods=['DELETE'])
+def eliminar_curso(id_curso):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM Cursos WHERE id_curso = %s", (id_curso,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify({"success": True, "message": "Curso eliminado"}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 
     
 
