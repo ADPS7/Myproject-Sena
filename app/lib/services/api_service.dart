@@ -244,5 +244,19 @@ Future<Map<String, dynamic>> getMyModules() async {
       return {'curso': 'Sin curso asignado', 'modulos': []};
     }
   }
+  Future<Map<String, dynamic>> crearCurso(String nombreCurso) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/cursos/crear'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'nombre': nombreCurso}),
+      );
+
+      final data = json.decode(response.body);
+      return data; // Retorna el mapa con success y el mensaje/error
+    } catch (e) {
+      return {"success": false, "error": "Error de conexión: $e"};
+    }
+  }
   
 }

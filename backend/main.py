@@ -608,6 +608,8 @@ def obtener_notas_estudiante(id_usuario):
         return jsonify({"error": str(e)}), 500
 
 
+
+
     
 
 if __name__ == '__main__':
