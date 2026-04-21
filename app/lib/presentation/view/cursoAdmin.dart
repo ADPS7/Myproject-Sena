@@ -13,18 +13,25 @@ class _CursosScreenState extends State<CursosScreen> {
   final TextEditingController _cursoController = TextEditingController();
   final ApiService _apiService = ApiService();
 
-  void _mostrarDialogoNuevoCurso(BuildContext context) {
-    showDialog(
+  // Función para mostrar el formulario emergente
+  Future<void> _mostrarDialogoNuevoCurso(BuildContext context) async {
+    return showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text("Registrar Nuevo Curso"),
           content: TextField(
             controller: _cursoController,
-            decoration: const InputDecoration(labelText: "Nombre del curso"),
+            decoration: const InputDecoration(
+              labelText: "Nombre del curso",
+              border: OutlineInputBorder(),
+            ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar"),
+            ),
             ElevatedButton(
               onPressed: () async {
                 if (_cursoController.text.isNotEmpty) {
@@ -32,10 +39,14 @@ class _CursosScreenState extends State<CursosScreen> {
                   if (mounted) {
                     if (result['success'] == true) {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Curso registrado")));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Curso registrado con éxito")),
+                      );
                       _cursoController.clear();
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['error'])));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(result['error'] ?? "Error desconocido")),
+                      );
                     }
                   }
                 }
@@ -51,12 +62,53 @@ class _CursosScreenState extends State<CursosScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Gestión de Cursos")),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _mostrarDialogoNuevoCurso(context),
-        child: const Icon(Icons.add),
+      backgroundColor: const Color(0xffF5F6FA),
+      appBar: AppBar(
+        title: const Text("Gestión de Cursos"),
+        backgroundColor: const Color(0xff0D1A63),
+        foregroundColor: Colors.white,
       ),
-      body: const Center(child: Text("Lista de cursos")),
+      body: FutureBuilder<List<dynamic>>(
+        future: _apiService.getCursos(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return const Center(child: Text("Error al cargar los cursos"));
+          }
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text("No hay cursos registrados"));
+          }
+
+          final cursos = snapshot.data!;
+          return ListView.builder(
+            itemCount: cursos.length,
+            padding: const EdgeInsets.all(8),
+            itemBuilder: (context, index) {
+              return Card(
+                elevation: 2,
+                child: ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xff0D1A63),
+                    child: Icon(Icons.school, color: Colors.white),
+                  ),
+                  title: Text(cursos[index]['nombre']),
+                  subtitle: Text("codigo: ${cursos[index]['id_curso']}"),
+                ),
+              );
+            },
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xff0D1A63),
+        onPressed: () async {
+          await _mostrarDialogoNuevoCurso(context);
+          setState(() {}); // Esto fuerza al FutureBuilder a recargar la lista
+        },
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
     );
   }
 }

@@ -258,5 +258,28 @@ Future<Map<String, dynamic>> getMyModules() async {
       return {"success": false, "error": "Error de conexión: $e"};
     }
   }
+  Future<List<dynamic>> getCursos() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/cursos'));
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+  Future<Map<String, dynamic>> editarCurso(int idCurso, String nuevoNombre) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/cursos/editar/$idCurso'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'nombre': nuevoNombre}),
+      );
+      return json.decode(response.body);
+    } catch (e) {
+      return {"success": false, "error": "Error de conexión"};
+    }
+  }
   
 }

@@ -636,6 +636,39 @@ def crear_curso():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route('/cursos', methods=['GET'])
+def get_cursos():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id_curso, nombre FROM Cursos")
+        cursos = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify(cursos), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/cursos/editar/<int:id_curso>', methods=['PUT'])
+def editar_curso(id_curso):
+    try:
+        data = request.json
+        nuevo_nombre = data.get('nombre')
+        
+        if not nuevo_nombre:
+            return jsonify({"error": "Nombre requerido"}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE Cursos SET nombre = %s WHERE id_curso = %s", (nuevo_nombre, id_curso))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"success": True, "message": "Curso actualizado"}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 
     
 
