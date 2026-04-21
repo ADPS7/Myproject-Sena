@@ -281,5 +281,15 @@ Future<Map<String, dynamic>> getMyModules() async {
       return {"success": false, "error": "Error de conexión"};
     }
   }
+  Future<Map<String, dynamic>> eliminarCurso(int idCurso) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/cursos/eliminar/$idCurso'),
+      );
+      return json.decode(response.body);
+    } catch (e) {
+      return {"success": false, "error": "Error de conexión"};
+    }
+  }
   
 }
