@@ -291,5 +291,49 @@ Future<Map<String, dynamic>> getMyModules() async {
       return {"success": false, "error": "Error de conexión"};
     }
   }
+  Future<Map<String, dynamic>> crearModulo(String nombre, String inicio, String fin, int idCurso) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/modulos/crear'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'nombre': nombre,
+          'fecha_inicio': inicio,
+          'fecha_fin': fin,
+          'id_curso': idCurso
+        }),
+      );
+      return json.decode(response.body);
+    } catch (e) {
+      return {"success": false, "error": e.toString()};
+    }
+  }
+  Future<List<dynamic>> getModulos() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/modulos'));
+      
+      if (response.statusCode == 200) {
+        // Decodificamos el JSON y devolvemos la lista
+        return json.decode(response.body);
+      } else {
+        return []; // Retorna lista vacía si falla
+      }
+    } catch (e) {
+      print("Error al obtener módulos: $e");
+      return [];
+    }
+  }
+  Future<Map<String, dynamic>> editarModulo(int id, String nombre, String inicio, String fin, int idCurso) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/modulos/editar/$id'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'nombre': nombre, 'fecha_inicio': inicio, 'fecha_fin': fin, 'id_curso': idCurso}),
+    );
+    return json.decode(response.body);
+  }
+  Future<Map<String, dynamic>> eliminarModulo(int id) async {
+    final response = await http.delete(Uri.parse('$baseUrl/modulos/eliminar/$id'));
+    return json.decode(response.body);
+  }
   
 }

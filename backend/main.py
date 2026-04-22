@@ -682,6 +682,77 @@ def eliminar_curso(id_curso):
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route('/modulos/crear', methods=['POST'])
+def crear_modulo():
+    data = request.json
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO Modulos (nombre, fecha_inicio, fecha_fin, id_curso) VALUES (%s, %s, %s, %s)",
+        (data['nombre'], data['fecha_inicio'], data['fecha_fin'], data['id_curso'])
+    )
+    conn.commit()
+    return jsonify({"success": True})
+
+@app.route('/modulos', methods=['GET'])
+def get_modulos():
+    try:
+        conn = get_db_connection()
+        # Usamos un cursor de diccionario para manejar los datos como objetos JSON fácilmente
+        cursor = conn.cursor(dictionary=True)
+        
+        # Hacemos un JOIN para obtener el nombre del curso junto con el módulo
+        query = """
+            SELECT m.id_modulo, m.nombre, m.fecha_inicio, m.fecha_fin, c.nombre as nombre_curso 
+            FROM Modulos m
+            JOIN Cursos c ON m.id_curso = c.id_curso
+        """
+        cursor.execute(query)
+        modulos = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify(modulos), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/modulos/editar/<int:id_modulo>', methods=['PUT'])
+def editar_modulo(id_modulo):
+    data = request.json
+
+    conn = get_db_connection() 
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("""
+            UPDATE Modulos 
+            SET nombre = %s, fecha_inicio = %s, fecha_fin = %s, id_curso = %s 
+            WHERE id_modulo = %s
+        """, (data['nombre'], data['fecha_inicio'], data['fecha_fin'], data['id_curso'], id_modulo))
+        
+        conn.commit()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/modulos/eliminar/<int:id_modulo>', methods=['DELETE'])
+def eliminar_modulo(id_modulo):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM Modulos WHERE id_modulo = %s", (id_modulo,))
+        conn.commit()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
 
     
 
