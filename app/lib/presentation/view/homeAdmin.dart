@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../widget/login_widget.dart';
 import 'asistadmin.dart';
 import 'cursoAdmin.dart';
+import 'modulosAdmin.dart';
 
 class Homeadmin extends StatelessWidget {
   final Map<String, dynamic> user;
@@ -189,7 +190,17 @@ class Homeadmin extends StatelessWidget {
               },
             ),
             const SizedBox(height: 20),
-            _buildActionCard(Icons.view_module, "Módulos"),
+            
+            _buildActionCard(
+              Icons.view_module, 
+              "Módulos",
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ModulosScreen()),
+                );
+              },
+            ),
             const SizedBox(height: 20),
             _buildActionCard(Icons.people_alt, "Usuarios"),
             const SizedBox(height: 20),

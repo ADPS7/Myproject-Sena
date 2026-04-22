@@ -681,9 +681,3 @@ def eliminar_curso(id_curso):
         return jsonify({"success": True, "message": "Curso eliminado"}), 200
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
-
-
-    
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
