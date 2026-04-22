@@ -1,8 +1,6 @@
 // Archivo: cursos_screen.dart
 import 'package:flutter/material.dart';
-
 import '../../services/api_service.dart';
-
 
 class CursosScreen extends StatefulWidget {
   const CursosScreen({super.key});
@@ -15,41 +13,72 @@ class _CursosScreenState extends State<CursosScreen> {
   final TextEditingController _cursoController = TextEditingController();
   final ApiService _apiService = ApiService();
 
-  // Dialogo para Registrar
+  // --- MODAL PARA MOSTRAR MÓDULOS ---
+  void _mostrarModulosModal(int idCurso, String nombreCurso) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return SizedBox(
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Text("Módulos de: $nombreCurso", 
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xff0D1A63))),
+              ),
+              Expanded(
+                child: FutureBuilder<List<dynamic>>(
+                  future: _apiService.getModulosPorCurso(idCurso),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(child: Text("No hay módulos registrados"));
+                    }
+                    final modulos = snapshot.data!;
+                    return ListView.builder(
+                      itemCount: modulos.length,
+                      itemBuilder: (context, index) => ListTile(
+                        leading: const Icon(Icons.view_module, color: Color(0xff0D1A63)),
+                        title: Text(modulos[index]['nombre']),
+                        subtitle: Text("Inicio: ${modulos[index]['fecha_inicio']}"),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // --- DIÁLOGOS DE GESTIÓN (REGISTRAR/EDITAR/ELIMINAR) ---
   Future<void> _mostrarDialogoNuevoCurso() async {
     _cursoController.clear();
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Registrar Nuevo Curso"),
-        content: TextField(
-          controller: _cursoController,
-          decoration: const InputDecoration(labelText: "Nombre del curso"),
-        ),
+        content: TextField(controller: _cursoController, decoration: const InputDecoration(labelText: "Nombre del curso")),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
-          ElevatedButton(
-            onPressed: () async {
-              if (_cursoController.text.isNotEmpty) {
-                final result = await _apiService.crearCurso(_cursoController.text);
-                if (mounted) {
-                  Navigator.pop(context);
-                  if (result['success'] == true) {
-                    setState(() {});
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['error'])));
-                  }
-                }
-              }
-            },
-            child: const Text("Guardar"),
-          ),
+          ElevatedButton(onPressed: () async {
+            if (_cursoController.text.isNotEmpty) {
+              final result = await _apiService.crearCurso(_cursoController.text);
+              if (mounted) { Navigator.pop(context); if (result['success'] == true) setState(() {}); }
+            }
+          }, child: const Text("Guardar")),
         ],
       ),
     );
   }
 
-  // Dialogo para Editar
   void _mostrarDialogoEditarCurso(int id, String nombreActual) {
     TextEditingController editarController = TextEditingController(text: nombreActual);
     showDialog(
@@ -59,26 +88,15 @@ class _CursosScreenState extends State<CursosScreen> {
         content: TextField(controller: editarController),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
-          ElevatedButton(
-            onPressed: () async {
-              final result = await _apiService.editarCurso(id, editarController.text);
-              if (mounted) {
-                Navigator.pop(context);
-                if (result['success'] == true) {
-                  setState(() {});
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['error'] ?? "Error")));
-                }
-              }
-            },
-            child: const Text("Actualizar"),
-          ),
+          ElevatedButton(onPressed: () async {
+            final result = await _apiService.editarCurso(id, editarController.text);
+            if (mounted) { Navigator.pop(context); if (result['success'] == true) setState(() {}); }
+          }, child: const Text("Actualizar")),
         ],
       ),
     );
   }
 
-  // Dialogo para Eliminar
   void _confirmarEliminar(int id, String nombre) {
     showDialog(
       context: context,
@@ -87,21 +105,10 @@ class _CursosScreenState extends State<CursosScreen> {
         content: Text("¿Estás seguro de eliminar '$nombre'?"),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () async {
-              final result = await _apiService.eliminarCurso(id);
-              if (mounted) {
-                Navigator.pop(context);
-                if (result['success'] == true) {
-                  setState(() {});
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['error'])));
-                }
-              }
-            },
-            child: const Text("Eliminar", style: TextStyle(color: Colors.white)),
-          ),
+          ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.red), onPressed: () async {
+            final result = await _apiService.eliminarCurso(id);
+            if (mounted) { Navigator.pop(context); if (result['success'] == true) setState(() {}); }
+          }, child: const Text("Eliminar", style: TextStyle(color: Colors.white))),
         ],
       ),
     );
@@ -119,12 +126,8 @@ class _CursosScreenState extends State<CursosScreen> {
       body: FutureBuilder<List<dynamic>>(
         future: _apiService.getCursos(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("No hay cursos registrados"));
-          }
+          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+          if (!snapshot.hasData || snapshot.data!.isEmpty) return const Center(child: Text("No hay cursos registrados"));
 
           final cursos = snapshot.data!;
           return ListView.builder(
@@ -136,17 +139,12 @@ class _CursosScreenState extends State<CursosScreen> {
                   leading: const Icon(Icons.school, color: Color(0xff0D1A63)),
                   title: Text(cursos[index]['nombre']),
                   subtitle: Text("ID: ${cursos[index]['id_curso']}"),
+                  onTap: () => _mostrarModulosModal(cursos[index]['id_curso'], cursos[index]['nombre']),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () => _mostrarDialogoEditarCurso(cursos[index]['id_curso'], cursos[index]['nombre']),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _confirmarEliminar(cursos[index]['id_curso'], cursos[index]['nombre']),
-                      ),
+                      IconButton(icon: const Icon(Icons.edit, color: Colors.blue), onPressed: () => _mostrarDialogoEditarCurso(cursos[index]['id_curso'], cursos[index]['nombre'])),
+                      IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _confirmarEliminar(cursos[index]['id_curso'], cursos[index]['nombre'])),
                     ],
                   ),
                 ),
