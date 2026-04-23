@@ -64,7 +64,7 @@ CREATE TABLE Notas (
     id_usuario INT NOT NULL,
     FOREIGN KEY (id_modulo) REFERENCES Modulos (id_modulo),
     FOREIGN KEY (id_usuario) REFERENCES Usuarios (id_usuario)
-);
+); 
 
 CREATE TABLE NotaFinal(
     id_nota_final INT PRIMARY KEY AUTO_INCREMENT,
