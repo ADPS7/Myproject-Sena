@@ -753,8 +753,80 @@ def eliminar_modulo(id_modulo):
         cursor.close()
         conn.close()
 
+@app.route('/asignar-alumno', methods=['POST'])
+def asignar_alumno():
+    try:
+        data = request.json
+        id_usuario = data.get('id_usuario')
+        id_curso = data.get('id_curso')
+        
+        if not id_usuario or not id_curso:
+            return jsonify({"error": "id_usuario e id_curso requeridos"}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Verificar si el usuario existe y es estudiante
+        cursor.execute("SELECT id_rol FROM Usuarios WHERE id_usuario = %s", (id_usuario,))
+        user = cursor.fetchone()
+        if not user or user[0] != 2:  # 2 es estudiante
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Usuario no encontrado o no es estudiante"}), 400
+        
+        # Intentar insertar, el UNIQUE constraint evitará duplicados
+        cursor.execute("INSERT INTO Alumnos (id_usuario, id_curso) VALUES (%s, %s)", (id_usuario, id_curso))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"success": True, "message": "Estudiante asignado al curso exitosamente"}), 200
+    except mysql.connector.IntegrityError as e:
+        if e.errno == 1062:  # Duplicate entry
+            return jsonify({"error": "El estudiante ya está asignado a un curso"}), 409
+        else:
+            return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
+@app.route('/estudiantes', methods=['GET'])
+def get_estudiantes():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        query = """
+            SELECT id_usuario, nombres, apellidos, correo
+            FROM Usuarios
+            WHERE id_rol = 2
+        """
+        cursor.execute(query)
+        estudiantes = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify(estudiantes), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
+@app.route('/estudiantes-sin-curso', methods=['GET'])
+def get_estudiantes_sin_curso():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        query = """
+            SELECT u.id_usuario, u.nombres, u.apellidos, u.correo
+            FROM Usuarios u
+            LEFT JOIN Alumnos a ON u.id_usuario = a.id_usuario
+            WHERE u.id_rol = 2 AND a.id_usuario IS NULL
+        """
+        cursor.execute(query)
+        estudiantes = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify(estudiantes), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
     
 
 if __name__ == '__main__':

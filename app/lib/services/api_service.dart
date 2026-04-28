@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'aut_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.127.13:5000';
+  static const String baseUrl = 'http://10.2.124.107:5000';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,  
@@ -334,6 +334,43 @@ Future<Map<String, dynamic>> getMyModules() async {
   Future<Map<String, dynamic>> eliminarModulo(int id) async {
     final response = await http.delete(Uri.parse('$baseUrl/modulos/eliminar/$id'));
     return json.decode(response.body);
+  }
+
+  Future<List<dynamic>> getEstudiantes() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/estudiantes'));
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<List<dynamic>> getEstudiantesSinCurso() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/estudiantes-sin-curso'));
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> asignarAlumno(int idUsuario, int idCurso) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/asignar-alumno'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'id_usuario': idUsuario, 'id_curso': idCurso}),
+      );
+      return json.decode(response.body);
+    } catch (e) {
+      return {"success": false, "error": "Error de conexión"};
+    }
   }
   
   
