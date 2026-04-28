@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instituto Técnico Llinasiano</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='frontend/style/index.css') }}">
+</head>
+<body>
+
+    <div class="main-wrapper">
+        <div class="container">
+            <div class="glass-card">
+                <div class="row align-items-center">
+                    
+                    <div class="col-lg-6">
+                        <img src="{{ url_for('static', filename='frontend/images/instituto-removebg-preview.png') }}" 
+                             alt="Logo Instituto Llinasiano" class="logo-main">
+                        
+                        <h1>¡Ciencia para el<br>desarrollo humano!</h1>
+                        
+                        <p class="lead-text">
+                            Te damos la bienvenida a tu portal educativo. 
+                            Inicia sesión para gestionar tus módulos, calificaciones y asistencias en tiempo real.
+                        </p>
+
+                        <div class="btn-group-custom">
+                            <a href="/registrarse" class="btn-action btn-register shadow">Registrarse</a>
+                            <a href="/login" class="btn-action btn-login">Iniciar Sesión</a>
+                        </div>
+
+                        <a href="#" class="footer-terms d-inline-block">términos y condiciones de uso</a>
+                    </div>
+
+                    <div class="col-lg-6 text-center d-none d-lg-block">
+                        <img src="{{ url_for('static', filename='frontend/images/imagen2.png') }}" 
+                             alt="Plataforma Educativa" class="hero-img">
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
