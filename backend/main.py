@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, redirect
 from flask_cors import CORS
 import mysql.connector
 from mysql.connector import Error
@@ -15,15 +15,30 @@ def get_db_connection():
         database="edullinas"
     )
 
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/<page_name>')
+def render_static_page(page_name):
+    try:
+        return render_template(f"view/{page_name}.html")
+    except Exception:
+        return f"Error: El archivo 'templates/view/{page_name}.html' no existe.", 404
+
 @app.route('/create_user', methods=['POST'])
 def create_user():
     try:
-        data = request.json
-        nombres = data.get('nombres')
-        apellidos = data.get('apellidos')
-        correo = data.get('correo')
+        if request.is_json:
+            data = request.json
+        else:
+            data = request.form
+
+        nombres = data.get('nombres') or data.get('nombre')
+        apellidos = data.get('apellidos') or data.get('apellido')
+        correo = data.get('correo') or data.get('email')
         fecha_nacimiento = data.get('fecha_nacimiento')
-        clave = data.get('clave')
+        clave = data.get('clave') or data.get('password')
         
         if not all([nombres, apellidos, correo, fecha_nacimiento, clave]):
             return jsonify({"error": "Campos requeridos"}), 400
@@ -39,10 +54,13 @@ def create_user():
         conn.commit()
         cursor.close()
         conn.close()
-        return jsonify({"message": "Usuario creado exitosamente"}), 200
+        if request.is_json:
+            return jsonify({"message": "Usuario creado exitosamente"}), 200
+        else:
+            return redirect('/login') 
+
     except Error as e:
         return jsonify({"error": str(e)}), 400
-
 @app.route('/login', methods=['POST'])
 def login():
     try:
