@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'aut_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.136.83:5000 ';
+  static const String baseUrl = 'http://10.2.138.75:5000 ';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,  

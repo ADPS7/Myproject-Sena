@@ -1,0 +1,115 @@
+:root {
+    --primary: #2563eb;
+    --primary-soft: #eff6ff;
+    --bg-body: #f1f5f9;
+}
+
+body {
+    background-color: var(--bg-body);
+    font-family: 'Inter', sans-serif;
+    color: #1e293b;
+}
+
+/* SIDEBAR ESCRITORIO */
+.sidebar {
+    background: white;
+    height: 100vh;
+    border-right: 1px solid #e2e8f0;
+    padding: 2rem 1rem;
+    position: fixed;
+    left: 0;
+    top: 0;
+}
+
+.logo-img { max-height: 55px; }
+
+.menu-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    padding-left: 1rem;
+    letter-spacing: 1px;
+}
+
+.nav-link-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0.75rem 1rem;
+    color: #64748b;
+    text-decoration: none;
+    border-radius: 12px;
+    font-weight: 500;
+    margin-bottom: 2px;
+    transition: 0.2s;
+}
+
+.nav-link-item:hover {
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.nav-link-item.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+/* AJUSTE DE CONTENIDO PRINCIPAL */
+.main-content {
+    /* En computadoras dejamos espacio para el sidebar */
+    margin-left: 25%; 
+    padding: 2.5rem;
+}
+
+@media (min-width: 992px) {
+    .main-content { margin-left: 16.666667%; } /* Ajuste exacto para col-lg-2 */
+}
+
+/* RESPONSIVO MÓVIL (Pantallas pequeñas) */
+@media (max-width: 767px) {
+    .main-content {
+        margin-left: 0 !important; /* El contenido usa todo el ancho */
+        padding: 1.5rem;
+        padding-top: 5.5rem !important; /* Espacio para que el Navbar no tape nada */
+    }
+
+    .card-stat {
+        padding: 1rem !important;
+    }
+}
+
+/* COMPONENTES VISUALES */
+.bg-primary-soft { background: var(--primary-soft); }
+
+.user-pill {
+    background: #f8fafc;
+    padding: 8px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+.avatar {
+    width: 35px;
+    height: 35px;
+    background: var(--primary);
+    color: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.card-stat {
+    transition: transform 0.2s;
+}
+
+.card-stat:hover {
+    transform: translateY(-3px);
+}
