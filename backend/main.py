@@ -6,6 +6,8 @@ import hashlib
 
 app = Flask(__name__)
 CORS(app)
+app = Flask(__name__)
+app.secret_key = 'edullinas_secret_key_2026_pro_MADAN'
 
 def get_db_connection():
     return mysql.connector.connect(
@@ -61,46 +63,75 @@ def create_user():
 
     except Error as e:
         return jsonify({"error": str(e)}), 400
+
+from flask import session, redirect, url_for
+
 @app.route('/login', methods=['POST'])
 def login():
     try:
-        data = request.json
-        correo = data.get('correo')
-        clave = data.get('clave')
+        # Detectar si los datos vienen de Flutter (JSON) o de la Web (Formulario)
+        if request.is_json:
+            data = request.json
+            correo = data.get('correo')
+            clave = data.get('clave')
+        else:
+            data = request.form
+            # Usamos .get('email') porque así está en tu HTML
+            correo = data.get('email') 
+            clave = data.get('password')
 
         if not correo or not clave:
             return jsonify({"error": "Correo y clave requeridos"}), 400
 
-        # Encriptar la clave recibida para comparar
         hashed_password = hashlib.sha256(clave.encode('utf-8')).hexdigest()
 
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
         query = """
-                SELECT 
-                    u.id_usuario, 
-                    u.nombres, 
-                    u.apellidos,
-                    u.correo,
-                    u.id_rol, 
-                    r.nombre as rol 
+                SELECT u.id_usuario, u.nombres, u.apellidos, u.correo, u.id_rol, r.nombre as rol 
                 FROM usuarios u 
                 JOIN roles r ON u.id_rol = r.id_rol 
                 WHERE u.correo = %s AND u.clave = %s
             """
         cursor.execute(query, (correo, hashed_password))
         user = cursor.fetchone()
-        
         cursor.close()
         conn.close()
 
         if user:
-            return jsonify({"success": True, "user": user}), 200
+            # Si es Flutter, devolvemos el JSON original
+            if request.is_json:
+                return jsonify({"success": True, "user": user}), 200
+            
+            # Si es la Web, guardamos en sesión y redirigimos
+            session['usuario'] = user
+            return redirect(url_for('dashboard'))
         else:
-            return jsonify({"error": "Correo o contraseña incorrectos"}), 401
+            if request.is_json:
+                return jsonify({"error": "Correo o contraseña incorrectos"}), 401
+            return "Correo o contraseña incorrectos", 401
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+from flask import session, redirect, url_for, render_template
+
+@app.route('/dashboard')
+def dashboard():
+    if 'usuario' not in session:
+        return redirect('/login')
+    
+    user = session['usuario']
+    rol = user.get('rol').lower()
+    if rol == 'administrador' or user.get('id_rol') == 1:
+        return render_template('view/Admin/inicioAdmin.html', user=user)
+    
+    elif rol == 'profesor' or user.get('id_rol') == 3:
+        return render_template('view/dashboard_profesor.html', user=user)
+    
+    else:
+        return render_template('view/dashboard_estudiante.html', user=user)
 
 @app.route('/asistencias/<int:id_usuario>', methods=['GET'])
 def get_asistencias(id_usuario):
