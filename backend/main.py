@@ -21,6 +21,11 @@ def get_db_connection():
 def index():
     return render_template('index.html')
 
+@app.route('/logout')
+def logout():
+    session.clear() 
+    return redirect(url_for('login'))
+
 @app.route('/<page_name>')
 def render_static_page(page_name):
     try:
@@ -128,10 +133,10 @@ def dashboard():
         return render_template('view/Admin/inicioAdmin.html', user=user)
     
     elif rol == 'profesor' or user.get('id_rol') == 3:
-        return render_template('view/dashboard_profesor.html', user=user)
+        return render_template('view/profesor/inicioProfesor.html', user=user)
     
     else:
-        return render_template('view/dashboard_estudiante.html', user=user)
+        return render_template('view/estudiante/inicioEstudiante.html', user=user)
 
 @app.route('/asistencias/<int:id_usuario>', methods=['GET'])
 def get_asistencias(id_usuario):
