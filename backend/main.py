@@ -199,7 +199,7 @@ def get_modulos_curso(id_curso):
         return jsonify({"error": "Error interno del servidor"}), 500
     
 @app.route('/modulo/<int:id_modulo>/students', methods=['GET'])
-def get_estudiantes(id_modulo):
+def get_estudiantes_modulo(id_modulo):
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
