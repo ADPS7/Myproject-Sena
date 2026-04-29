@@ -6,7 +6,6 @@ import hashlib
 
 app = Flask(__name__)
 CORS(app)
-app = Flask(__name__)
 app.secret_key = 'edullinas_secret_key_2026_pro_MADAN'
 
 def get_db_connection():
