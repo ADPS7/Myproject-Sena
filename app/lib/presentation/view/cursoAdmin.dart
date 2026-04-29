@@ -58,6 +58,71 @@ class _CursosScreenState extends State<CursosScreen> {
     );
   }
 
+  // --- MODAL PARA ASIGNAR ESTUDIANTES ---
+  void _mostrarAsignarEstudiantesModal(int idCurso, String nombreCurso) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return SizedBox(
+          height: MediaQuery.of(context).size.height * 0.8,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Text("Asignar Estudiantes a: $nombreCurso", 
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xff0D1A63))),
+              ),
+              Expanded(
+                child: FutureBuilder<List<dynamic>>(
+                  future: _apiService.getEstudiantesSinCurso(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(child: Text("No hay estudiantes sin curso asignado"));
+                    }
+                    final estudiantes = snapshot.data!;
+                    return ListView.builder(
+                      itemCount: estudiantes.length,
+                      itemBuilder: (context, index) {
+                        final estudiante = estudiantes[index];
+                        return ListTile(
+                          leading: const Icon(Icons.person, color: Color(0xff0D1A63)),
+                          title: Text("${estudiante['nombres']} ${estudiante['apellidos']}"),
+                          subtitle: Text(estudiante['correo']),
+                          trailing: ElevatedButton(
+                            onPressed: () async {
+                              final result = await _apiService.asignarAlumno(estudiante['id_usuario'], idCurso);
+                              if (result['success'] == true) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Estudiante asignado exitosamente")),
+                                );
+                                Navigator.pop(context); // Cerrar modal
+                                setState(() {}); // Refrescar lista
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(result['error'] ?? "Error al asignar")),
+                                );
+                              }
+                            },
+                            child: const Text("Asignar"),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   // --- DIÁLOGOS DE GESTIÓN (REGISTRAR/EDITAR/ELIMINAR) ---
   Future<void> _mostrarDialogoNuevoCurso() async {
     _cursoController.clear();
@@ -143,6 +208,7 @@ class _CursosScreenState extends State<CursosScreen> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      IconButton(icon: const Icon(Icons.person_add, color: Colors.green), onPressed: () => _mostrarAsignarEstudiantesModal(cursos[index]['id_curso'], cursos[index]['nombre'])),
                       IconButton(icon: const Icon(Icons.edit, color: Colors.blue), onPressed: () => _mostrarDialogoEditarCurso(cursos[index]['id_curso'], cursos[index]['nombre'])),
                       IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _confirmarEliminar(cursos[index]['id_curso'], cursos[index]['nombre'])),
                     ],

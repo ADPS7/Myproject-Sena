@@ -27,7 +27,8 @@ CREATE TABLE Alumnos (
     id_usuario INT NOT NULL,
     id_curso INT NOT NULL,
     FOREIGN KEY (id_usuario) REFERENCES Usuarios (id_usuario),
-    FOREIGN KEY (id_curso) REFERENCES Cursos (id_curso)
+    FOREIGN KEY (id_curso) REFERENCES Cursos (id_curso),
+    UNIQUE(id_usuario)
 );
 
 CREATE TABLE Modulos (
