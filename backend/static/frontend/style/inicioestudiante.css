@@ -1,0 +1,140 @@
+:root {
+    --primary: #2563eb;
+    --primary-soft: #eff6ff;
+    --bg-body: #f1f5f9;
+}
+
+body {
+    background-color: var(--bg-body);
+    font-family: 'Inter', sans-serif;
+    color: #1e293b;
+}
+
+/* SIDEBAR ESCRITORIO */
+.sidebar {
+    background: white;
+    height: 100vh;
+    border-right: 1px solid #e2e8f0;
+    padding: 2rem 1rem;
+    position: fixed;
+    left: 0;
+    top: 0;
+}
+
+.logo-img { 
+    max-height: 55px; 
+}
+
+.menu-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    padding-left: 1rem;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+}
+
+.nav-link-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0.75rem 1rem;
+    color: #64748b;
+    text-decoration: none;
+    border-radius: 12px;
+    font-weight: 500;
+    margin-bottom: 2px;
+    transition: 0.2s;
+}
+
+.nav-link-item:hover {
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.nav-link-item.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+/* CONTENIDO PRINCIPAL */
+.main-content {
+    margin-left: 25%; 
+    padding: 2.5rem;
+}
+
+@media (min-width: 992px) {
+    .main-content { 
+        margin-left: 16.666667%; 
+    }
+}
+
+/* RESPONSIVO MÓVIL */
+@media (max-width: 767px) {
+    .main-content {
+        margin-left: 0 !important;
+        padding: 1.5rem;
+        padding-top: 5.5rem !important;
+    }
+}
+
+/* TARJETAS */
+.card-stat {
+    background: white;
+    border-radius: 20px;
+    padding: 1.8rem 1.5rem;
+    border: 1px solid #e2e8f0;
+    transition: transform 0.2s ease;
+    height: 100%;
+}
+
+.card-stat:hover {
+    transform: translateY(-4px);
+}
+
+.icon-box {
+    width: 55px;
+    height: 55px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    margin-bottom: 1.2rem;
+}
+
+/* User pill */
+.user-pill {
+    background: #f8fafc;
+    padding: 8px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+.avatar {
+    width: 35px;
+    height: 35px;
+    background: var(--primary);
+    color: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+/* Ajustes menores */
+h5 {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.text-muted {
+    color: #64748b !important;
+}
