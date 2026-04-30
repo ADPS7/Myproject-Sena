@@ -19,19 +19,14 @@ class Homeadmin extends StatefulWidget {
 
 class _HomeadminState extends State<Homeadmin> {
   final ApiService _apiService = ApiService();
-  
-  // Guardamos el Future en una variable para evitar que se dispare 
-  // múltiples veces innecesariamente al reconstruir la UI.
   late Future<Map<String, dynamic>> _statsFuture;
 
   @override
   void initState() {
     super.initState();
-    // Cargamos los datos iniciales de edullinas
     _statsFuture = _apiService.obtenerDatosCardAdmin();
   }
 
-  // Función para refrescar los datos desde la base de datos
   void _refreshData() {
     setState(() {
       _statsFuture = _apiService.obtenerDatosCardAdmin();
@@ -56,18 +51,22 @@ class _HomeadminState extends State<Homeadmin> {
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(30), topRight: Radius.circular(30)),
+              topLeft: Radius.circular(30),
+              topRight: Radius.circular(30),
+            ),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                  width: 50,
-                  height: 5,
-                  decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10))),
+                width: 50,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
               const SizedBox(height: 30),
               const CircleAvatar(
                 radius: 45,
@@ -75,24 +74,29 @@ class _HomeadminState extends State<Homeadmin> {
                 child: Icon(Icons.admin_panel_settings, color: Colors.white, size: 45),
               ),
               const SizedBox(height: 15),
-              Text(widget.user['nombres'] ?? 'Administrador',
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
-              const SizedBox(height: 10),
-              Text(widget.user['correo'] ?? "No email",
-                  style: TextStyle(color: Colors.grey[600])),
+              Text(
+                widget.user['nombres'] ?? 'Administrador',
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+              ),
+              Text(
+                widget.user['correo'] ?? "No email",
+                style: TextStyle(color: Colors.grey[600]),
+              ),
               const SizedBox(height: 30),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => _cerrarSesion(context),
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                    backgroundColor: Colors.redAccent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                   child: const Text("CERRAR SESIÓN", style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
+              const SizedBox(height: 20),
             ],
           ),
         );
@@ -108,7 +112,6 @@ class _HomeadminState extends State<Homeadmin> {
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // Header con nombre de usuario
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -119,8 +122,10 @@ class _HomeadminState extends State<Homeadmin> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text("Panel Admin", style: TextStyle(color: Color(0xFF7C4DFF), fontWeight: FontWeight.bold, fontSize: 12)),
-                        Text(widget.user['nombres']?.split(' ')[0] ?? 'Admin', 
-                        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
+                        Text(
+                          widget.user['nombres']?.split(' ')[0] ?? 'Admin', 
+                          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+                        ),
                       ],
                     ),
                     GestureDetector(
@@ -136,7 +141,6 @@ class _HomeadminState extends State<Homeadmin> {
               ),
             ),
 
-            // Tarjetas de Estadísticas Dinámicas
             SliverToBoxAdapter(
               child: Container(
                 height: 120,
@@ -167,7 +171,6 @@ class _HomeadminState extends State<Homeadmin> {
               ),
             ),
 
-            // Menú de Opciones
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               sliver: SliverList(
@@ -178,7 +181,7 @@ class _HomeadminState extends State<Homeadmin> {
                   _buildDashboardItem(Icons.auto_stories_outlined, "Gestionar Cursos", "Crea y edita programas", 
                     () async {
                       await Navigator.push(context, MaterialPageRoute(builder: (context) => const CursosScreen()));
-                      _refreshData(); // Al volver, pedimos los datos nuevos
+                      _refreshData();
                     }
                   ),
                   
@@ -189,22 +192,51 @@ class _HomeadminState extends State<Homeadmin> {
                     }
                   ),
                   
+                  _buildDashboardItem(Icons.badge_outlined, "Control de Usuarios", "Roles y permisos", 
+                    () async {
+                      // await Navigator.push(context, MaterialPageRoute(builder: (context) => const UsuariosScreen()));
+                      // _refreshData(); 
+                    }
+                  ),
+                  
                   _buildDashboardItem(Icons.fact_check_outlined, "Asistencias", "Reportes generales", 
                     () async {
                       await Navigator.push(context, MaterialPageRoute(builder: (context) => AdminAttendanceScreen()));
                       _refreshData();
                     }
                   ),
+                  const SizedBox(height: 40),
                 ]),
               ),
             ),
           ],
         ),
       ),
+      
+      // MENÚ DE ABAJO REINCORPORADO
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Colors.grey[200]!, width: 1)),
+        ),
+        child: BottomNavigationBar(
+          elevation: 0,
+          backgroundColor: Colors.white,
+          selectedItemColor: const Color(0xFF7C4DFF),
+          unselectedItemColor: Colors.grey[400],
+          currentIndex: 0,
+          type: BottomNavigationBarType.fixed,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Inicio"),
+            BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined), label: "Reportes"),
+            BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: "Configuración"),
+          ],
+        ),
+      ),
     );
   }
 
-  // Widgets de apoyo dentro de la clase para mantener el estado
   Widget _buildStatCard(String label, String value, IconData icon, bool loading) {
     return Container(
       width: 155,
