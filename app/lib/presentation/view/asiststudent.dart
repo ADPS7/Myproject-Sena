@@ -13,7 +13,7 @@ class AttendanceScreen extends StatelessWidget {
     }
 
     final response = await http.get(
-      Uri.parse('http://10.2.138.75/asistencias/$userId'),
+      Uri.parse('http://10.2.138.187/asistencias/$userId'),
       headers: {'Content-Type': 'application/json'},
     );
 

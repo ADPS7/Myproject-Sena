@@ -5,7 +5,6 @@ import '../view/homeAdmin.dart';
 import '../view/homeTeacher.dart';
 import '../view/homestudent.dart';
 
-
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
 
@@ -17,6 +16,7 @@ class _LoginViewState extends State<LoginView> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool isLoading = false;
+  bool _obscureText = true;
 
   Future<void> _handleLogin() async {
     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
@@ -42,7 +42,6 @@ class _LoginViewState extends State<LoginView> {
 
       Widget nextScreen;
       
-      // Aquí ocurre la redirección por rol
       if (rol == 'admin') {
         nextScreen = Homeadmin(user: userData);
       } else if (rol == 'estudiante') {
@@ -72,72 +71,212 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xffF0FFDF), Color(0xff0F2854)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  Image.network("https://image2url.com/r2/default/images/1770490852326-698c5fd0-f5e1-48cc-8548-30eb28e1596b.png", height: 140),
-                  const Text("¡Hola de Nuevo!", style: TextStyle(fontSize: 34, color: Color(0xff0D1A63), fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 25),
-                  _customInput(controller: emailController, hint: "Email"),
-                  const SizedBox(height: 10),
-                  _customInput(controller: passwordController, hint: "Contraseña", isPassword: true),
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: FilledButton(
-                      onPressed: isLoading ? null : _handleLogin,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xff0D1A63),
-                        minimumSize: const Size(double.infinity, 56),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: isLoading 
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text("Iniciar Sesión"),
-                    ),
-                  ),
-                ],
+      backgroundColor: const Color(0xFFE2E8F0), // Fondo Gris Sólido
+      body: Stack(
+        children: [
+          // --- DECORACIÓN GEOMÉTRICA ---
+          
+          // Rectángulo superior derecho rotado
+          Positioned(
+            top: -size.height * 0.15,
+            right: -size.width * 0.1,
+            child: Transform.rotate(
+              angle: -0.5,
+              child: Container(
+                width: size.width * 0.7,
+                height: 300,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF7C4DFF).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(50),
+                ),
               ),
             ),
           ),
-        ),
+
+          // Barra lateral izquierda
+          Positioned(
+            left: 0,
+            top: size.height * 0.3,
+            child: Container(
+              width: 6,
+              height: 100,
+              decoration: BoxDecoration(
+                color: const Color(0xFF7C4DFF).withOpacity(0.4),
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(10),
+                  bottomRight: Radius.circular(10),
+                ),
+              ),
+            ),
+          ),
+
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 30),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Logo
+                    Image.network(
+                      "https://image2url.com/r2/default/images/1770490852326-698c5fd0-f5e1-48cc-8548-30eb28e1596b.png", 
+                      height: 110
+                    ),
+                    const SizedBox(height: 40),
+
+                    // Tarjeta de Login
+                    Container(
+                      padding: const EdgeInsets.all(28),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Bienvenido",
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            "Inicia sesión para continuar",
+                            style: TextStyle(color: Color(0xFF64748B), fontSize: 15),
+                          ),
+                          const SizedBox(height: 35),
+
+                          // Inputs Estilo "Outline" Moderno
+                          _customInput(
+                            controller: emailController,
+                            label: "Correo Electrónico",
+                            icon: Icons.alternate_email_rounded,
+                          ),
+                          const SizedBox(height: 20),
+                          _customInput(
+                            controller: passwordController,
+                            label: "Contraseña",
+                            icon: Icons.lock_outline_rounded,
+                            isPassword: true,
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () {},
+                              style: TextButton.styleFrom(foregroundColor: const Color(0xFF7C4DFF)),
+                              child: const Text("¿Olvidaste tu contraseña?", 
+                                style: TextStyle(fontWeight: FontWeight.w600)),
+                            ),
+                          ),
+
+                          const SizedBox(height: 25),
+
+                          _buildLoginButton(),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 35),
+                    
+                    // Enlace a Registro
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: RichText(
+                        text: const TextSpan(
+                          text: "¿No tienes una cuenta? ",
+                          style: TextStyle(color: Color(0xFF64748B), fontSize: 15),
+                          children: [
+                            TextSpan(
+                              text: "Crea una aquí",
+                              style: TextStyle(
+                                color: Color(0xFF7C4DFF), 
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _customInput({required TextEditingController controller, required String hint, bool isPassword = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xff4988C4),
-          border: Border.all(color: Colors.white),
-          borderRadius: BorderRadius.circular(12),
+  // --- WIDGETS DE APOYO ---
+
+  Widget _customInput({
+    required TextEditingController controller, 
+    required String label, 
+    required IconData icon,
+    bool isPassword = false
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: isPassword ? _obscureText : false,
+      style: const TextStyle(color: Color(0xFF1E293B)),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 14),
+        prefixIcon: Icon(icon, color: const Color(0xFF7C4DFF), size: 22),
+        suffixIcon: isPassword 
+          ? IconButton(
+              icon: Icon(_obscureText ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
+              onPressed: () => setState(() => _obscureText = !_obscureText),
+            ) 
+          : null,
+        filled: true,
+        fillColor: const Color(0xFFF8FAFC),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
         ),
-        child: Padding(
-          padding: const EdgeInsets.only(left: 20.0),
-          child: TextField(
-            controller: controller,
-            obscureText: isPassword,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              hintText: hint,
-              hintStyle: const TextStyle(color: Colors.white70),
-            ),
-          ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF7C4DFF), width: 2),
         ),
+        contentPadding: const EdgeInsets.symmetric(vertical: 18),
+      ),
+    );
+  }
+
+  Widget _buildLoginButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 58,
+      child: ElevatedButton(
+        onPressed: isLoading ? null : _handleLogin,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF7C4DFF),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+        child: isLoading 
+          ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
+          : const Text("Ingresar al Portal", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
       ),
     );
   }
