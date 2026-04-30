@@ -1,0 +1,155 @@
+:root {
+    --primary: #4f46e5;
+    --primary-soft: #eef2ff;
+    --bg-body: #f8fafc;
+    --accent: #4f46e5;
+}
+
+body {
+    background-color: var(--bg-body);
+    font-family: 'Inter', sans-serif;
+    color: #1e293b;
+}
+
+/* ==================== SIDEBAR ESCRITORIO ==================== */
+.sidebar {
+    background: white;
+    height: 100vh;
+    border-right: 1px solid #e2e8f0;
+    padding: 2rem 1rem;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 280px; /* Ancho fijo más consistente */
+    z-index: 100;
+}
+
+.logo-img { 
+    max-height: 55px; 
+    width: auto;
+}
+
+.nav-link-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0.75rem 1rem;
+    color: #64748b;
+    text-decoration: none;
+    border-radius: 12px;
+    font-weight: 500;
+    margin-bottom: 2px;
+    transition: all 0.2s ease;
+}
+
+.nav-link-item:hover {
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.nav-link-item.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+}
+
+/* ==================== CONTENIDO PRINCIPAL ==================== */
+.main-content {
+    margin-left: 280px; /* Coincide con el ancho del sidebar */
+    padding: 2.5rem;
+    min-height: 100vh;
+}
+
+@media (min-width: 992px) {
+    .main-content {
+        margin-left: 280px;
+    }
+}
+
+/* ==================== RESPONSIVO MÓVIL ==================== */
+@media (max-width: 767px) {
+    .sidebar {
+        display: none; /* Ocultamos el sidebar de escritorio en móvil */
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+        padding: 1.5rem;
+        padding-top: 5.5rem !important; /* Espacio para navbar móvil */
+    }
+}
+
+/* ==================== TARJETAS Y COMPONENTES ==================== */
+.card-prof {
+    background: white;
+    border-radius: 20px;
+    padding: 1.75rem;
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 
+                0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+    border-left: 5px solid var(--accent);
+}
+
+.card-prof:hover {
+    transform: translateY(-4px);
+}
+
+.card-prof h4 {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.75rem;
+}
+
+.btn-action {
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 10px 24px;
+    transition: all 0.2s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(79, 70, 229, 0.25);
+}
+
+/* User pill */
+.user-pill {
+    background: #f8fafc;
+    padding: 8px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+.avatar {
+    width: 35px;
+    height: 35px;
+    background: var(--primary);
+    color: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+    font-size: 1.1rem;
+}
+
+/* Mejoras en listas */
+.list-group-item {
+    border: none;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+/* Alertas y botones */
+.alert {
+    border-radius: 12px;
+}
