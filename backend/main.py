@@ -880,6 +880,30 @@ def get_estudiantes_sin_curso():
         return jsonify(estudiantes), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/admin/stats', methods=['GET'])
+def get_admin_stats():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        cursor.execute("SELECT COUNT(*) as total FROM Cursos")
+        total_cursos = cursor.fetchone()['total']
+
+        cursor.execute("SELECT COUNT(*) as total FROM Usuarios")
+        total_usuarios = cursor.fetchone()['total']
+
+        cursor.close()
+        connection.close()
+
+        return jsonify({
+            "totalCursos": total_cursos,
+            "totalUsuarios": total_usuarios
+        }), 200
+
+    except Exception as e:
+        print(f"Error al obtener estadísticas: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
     
 
 if __name__ == '__main__':

@@ -103,12 +103,12 @@ class ApiService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/asistencia/registrar'), // Ajusta esta URL a tu backend
+        Uri.parse('$baseUrl/asistencia/registrar'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'id_modulo': idModulo,
-          'estudiantes': idsEstudiantes, // La lista de IDs que marcaste
-          'fecha': DateTime.now().toIso8601String().split('T')[0], // Fecha actual YYYY-MM-DD
+          'estudiantes': idsEstudiantes,
+          'fecha': DateTime.now().toIso8601String().split('T')[0],
         }),
       );
 
@@ -122,9 +122,8 @@ class ApiService {
       return {'success': false, 'error': 'Error de conexión: $e'};
     }
   }
-  Future<Map<String, dynamic>> getHistorialAsistencia(dynamic idUsuario) async { // dynamic por si acaso
+  Future<Map<String, dynamic>> getHistorialAsistencia(dynamic idUsuario) async {
     try {
-      // Forzamos el ID a string para evitar errores en la URL
       final String idStr = idUsuario.toString();
       final response = await http.get(
         Uri.parse('$baseUrl/asistencias/detalle/$idStr'),
@@ -370,6 +369,35 @@ Future<Map<String, dynamic>> getMyModules() async {
       return json.decode(response.body);
     } catch (e) {
       return {"success": false, "error": "Error de conexión"};
+    }
+  }
+
+  Future<Map<String, dynamic>> obtenerDatosCardAdmin() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin/stats'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return {
+          "success": true,
+          "totalCursos": data['totalCursos'] ?? 0,
+          "totalUsuarios": data['totalUsuarios'] ?? 0,
+        };
+      } else {
+        return {
+          "success": false,
+          "error": "Error al obtener datos del servidor"
+        };
+      }
+    } catch (e) {
+      print("Error en getAdminStats: $e");
+      return {
+        "success": false,
+        "error": "Error de conexión"
+      };
     }
   }
   
