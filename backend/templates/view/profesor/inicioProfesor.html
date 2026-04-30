@@ -1,65 +1,122 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Profesor - Edullinas</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <style>
-        :root { --bg: #f8fafc; --accent: #4f46e5; }
-        body { background: var(--bg); font-family: 'Inter', sans-serif; }
-        .sidebar { background: white; height: 100vh; border-right: 1px solid #e2e8f0; padding: 2rem; position: fixed; }
-        .main { margin-left: 16.6%; padding: 3rem; }
-        .card-prof { background: white; border-radius: 20px; padding: 1.5rem; border-left: 5px solid var(--accent); shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .btn-action { border-radius: 12px; font-weight: 600; padding: 10px 20px; }
-    </style>
-</head>
-<body>
-    <div class="container-fluid">
-        <div class="row">
-            <nav class="col-md-2 sidebar">
-                <img src="{{ url_for('static', filename='frontend/images/instituto-removebg-preview.png') }}" width="140" class="mb-4">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Profesor - Edullinas</title>
+        
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+        <link rel="stylesheet" href="{{ url_for('static', filename='frontend/style/inicioprofesor.css') }}">
+
+        <style>
+            :root {
+                --primary: #4f46e5;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- NAVBAR MÓVIL (visible solo en móviles) -->
+        <nav class="navbar navbar-dark bg-primary d-md-none fixed-top shadow-sm">
+            <div class="container-fluid">
+                <span class="navbar-brand fw-bold">Edullinas</span>
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
+                    <i class="bi bi-list fs-2"></i>
+                </button>
+            </div>
+        </nav>
+
+        <!-- MENÚ OFFCANVAS MÓVIL -->
+        <div class="offcanvas offcanvas-start d-md-none" tabindex="-1" id="mobileMenu" style="width: 280px;">
+            <div class="offcanvas-header border-bottom">
+                <h5 class="offcanvas-title fw-bold text-primary">Edullinas</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+            </div>
+            <div class="offcanvas-body">
                 <div class="nav flex-column">
-                    <a href="#" class="nav-link active" style="color: var(--accent)"><i class="bi bi-speedometer2"></i> Dashboard</a>
-                    <a href="#" class="nav-link text-secondary"><i class="bi bi-people"></i> Mis Grupos</a>
-                    <a href="#" class="nav-link text-secondary"><i class="bi bi-pencil-square"></i> Calificar</a>
-                    <a href="#" class="nav-link text-secondary"><i class="bi bi-file-earmark-arrow-up"></i> Materiales</a>
+                    <a href="#" class="nav-link-item active"><i class="bi bi-house"></i> Inicio</a>
+                    <a href="#" class="nav-link-item"><i class="bi bi-journal-bookmark"></i> Grupos</a>
+                    <a href="#" class="nav-link-item"><i class="bi bi-stack"></i> Calificar</a>
+                    <a href="#" class="nav-link-item"><i class="bi bi-people"></i> Asistencia</a>
+                    <a href="#" class="nav-link-item"><i class="bi bi-calendar-check"></i> Notas</a>
                     <hr>
-                    <a href="/logout" class="nav-link text-danger"><i class="bi bi-box-arrow-right"></i> Salir</a>
+                    <a href="/logout" class="nav-link-item text-danger"><i class="bi bi-box-arrow-right"></i> Salir</a>
                 </div>
-            </nav>
-            <main class="col-md-10 main">
-                <div class="d-flex justify-content-between align-items-center mb-5">
-                    <div>
-                        <h2 class="fw-bold">Gestión Académica</h2>
-                        <p class="text-muted">Bienvenido, Prof. {{ user.apellidos }}</p>
-                    </div>
-                    <button class="btn btn-primary btn-action"><i class="bi bi-plus-lg"></i> Nuevo Aviso</button>
-                </div>
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <div class="card-prof">
-                            <h4><i class="bi bi-people me-2"></i> Grupos Activos</h4>
-                            <p class="text-muted">Tienes 4 grupos asignados esta semana.</p>
-                            <div class="list-group list-group-flush mt-3">
-                                <div class="list-group-item d-flex justify-content-between">Programación Web <span>32 alumnos</span></div>
-                                <div class="list-group-item d-flex justify-content-between">Bases de Datos <span>28 alumnos</span></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card-prof" style="border-left-color: #ef4444;">
-                            <h4><i class="bi bi-clock-history me-2"></i> Pendientes</h4>
-                            <p class="text-muted">Tareas por revisar de la semana pasada.</p>
-                            <div class="alert alert-danger mt-3 py-2">
-                                <i class="bi bi-info-circle me-2"></i> 15 exámenes sin calificar
-                            </div>
-                            <button class="btn btn-outline-danger btn-sm w-100">Ir a calificar ahora</button>
-                        </div>
-                    </div>
-                </div>
-            </main>
+            </div>
         </div>
-    </div>
-</body>
+
+        <div class="container-fluid">
+            <div class="row">
+                <!-- SIDEBAR PARA ESCRITORIO (oculto en móvil) -->
+                <nav class="col-md-3 col-lg-2 sidebar d-none d-md-flex flex-column">
+                    <div class="sidebar-header text-center mb-4">
+                        <img src="{{ url_for('static', filename='frontend/images/instituto-removebg-preview.png') }}" class="img-fluid logo-img" alt="Logo">
+                    </div>
+                    
+                    <div class="nav flex-column flex-grow-1 px-2">
+                        <a href="#" class="nav-link-item active"><i class="bi bi-house"></i> Inicio</a>
+                        <a href="#" class="nav-link-item"><i class="bi bi-journal-bookmark"></i> Grupos</a>
+                        <a href="#" class="nav-link-item"><i class="bi bi-stack"></i> Calificar</a>
+                        <a href="#" class="nav-link-item"><i class="bi bi-people"></i> Asistencia</a>
+                        <a href="#" class="nav-link-item"><i class="bi bi-calendar-check"></i> Notas</a>
+                    </div>
+
+                    <div class="sidebar-footer mt-auto pt-3">
+                        <div class="user-pill mb-3">
+                            <div class="avatar">{{ user.nombres[0] }}</div>
+                            <div class="overflow-hidden">
+                                <p class="mb-0 fw-bold small text-truncate">{{ user.nombres }}</p>
+                                <span class="text-muted" style="font-size: 0.75rem;">{{ user.rol }}</span>
+                            </div>
+                        </div>
+                        <a href="/logout" class="btn btn-sm btn-outline-danger w-100">Cerrar Sesión</a>
+                    </div>
+                </nav>
+
+                <!-- CONTENIDO PRINCIPAL -->
+                <main class="col-12 col-md-9 col-lg-10 main-content">
+                    <div class="d-flex justify-content-between align-items-center mb-5">
+                        <div>
+                            <h2 class="fw-bold">Gestión Académica</h2>
+                            <p class="text-muted">Bienvenido, Prof. {{ user.apellidos }}</p>
+                        </div>
+                        <button class="btn btn-primary btn-action">
+                            <i class="bi bi-plus-lg"></i> Nuevo Aviso
+                        </button>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card-prof">
+                                <h4><i class="bi bi-people me-2"></i> Grupos Activos</h4>
+                                <p class="text-muted">Tienes 4 grupos asignados esta semana.</p>
+                                <div class="list-group list-group-flush mt-3">
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        Programación Web <span class="badge bg-primary">32 alumnos</span>
+                                    </div>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        Bases de Datos <span class="badge bg-primary">28 alumnos</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card-prof" style="border-left-color: #ef4444;">
+                                <h4><i class="bi bi-clock-history me-2"></i> Pendientes</h4>
+                                <p class="text-muted">Tareas por revisar de la semana pasada.</p>
+                                <div class="alert alert-danger mt-3 py-3">
+                                    <i class="bi bi-info-circle me-2"></i> 
+                                    <strong>15 exámenes</strong> sin calificar
+                                </div>
+                                <button class="btn btn-outline-danger btn-sm w-100 mt-2">Ir a calificar ahora</button>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
 </html>
