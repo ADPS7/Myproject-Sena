@@ -3,6 +3,7 @@ import 'package:app/presentation/view/notaPro.dart';
 import 'package:flutter/material.dart';
 import '../widget/login_widget.dart';
 import 'asistenciateaacher.dart';
+import 'cursosteacher.dart';
 
 class HomeTeacher extends StatelessWidget {
   final Map<String, dynamic> user;
@@ -209,8 +210,17 @@ class HomeTeacher extends StatelessWidget {
                   const Text("GESTIÓN ACADÉMICA",
                       style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8), letterSpacing: 1.5)),
                   const SizedBox(height: 16),
-                  _buildDashboardItem(Icons.book_outlined, "Mis Cursos", "Gestiona tus fichas y grupos", 
-                    () {}),
+                  _buildDashboardItem(
+                    Icons.book_outlined, 
+                    "Mis Cursos", 
+                    "Gestiona tus fichas y grupos", 
+                    () => Navigator.push(
+                      context, 
+                      MaterialPageRoute(
+                        builder: (context) => MyCoursesTeacherScreen(user: user),
+                      ),
+                    ),
+                  ),
                   _buildDashboardItem(Icons.assignment_turned_in_outlined, "Calificar Notas", "Registro de evaluaciones", 
                     () => Navigator.push(context, MaterialPageRoute(builder: (context) => NotasProfesorView(idUsuario: user['id_usuario'] ?? 0)))),
                   _buildDashboardItem(Icons.fact_check_outlined, "Control de Asistencia", "Reporte de faltas y retardos", 
