@@ -880,6 +880,90 @@ def get_estudiantes_sin_curso():
         return jsonify(estudiantes), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/admin/stats', methods=['GET'])
+def get_admin_stats():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        cursor.execute("SELECT COUNT(*) as total FROM Cursos")
+        total_cursos = cursor.fetchone()['total']
+
+        cursor.execute("SELECT COUNT(*) as total FROM Usuarios")
+        total_usuarios = cursor.fetchone()['total']
+
+        cursor.close()
+        connection.close()
+
+        return jsonify({
+            "totalCursos": total_cursos,
+            "totalUsuarios": total_usuarios
+        }), 200
+
+    except Exception as e:
+        print(f"Error al obtener estadísticas: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/student_stats/<int:id_usuario>', methods=['GET'])
+def get_student_stats(id_usuario):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # 1. Obtener el id_curso al que pertenece el estudiante
+        query_curso = "SELECT id_curso FROM Alumnos WHERE id_usuario = %s"
+        cursor.execute(query_curso, (id_usuario,))
+        alumno = cursor.fetchone()
+        
+        id_curso = alumno['id_curso'] if alumno else None
+
+        # 2. Contar cuántos módulos tiene ese curso en total
+        total_modulos = 0
+        if id_curso:
+            cursor.execute("SELECT COUNT(*) as total FROM Modulos WHERE id_curso = %s", (id_curso,))
+            res_modulos = cursor.fetchone()
+            total_modulos = res_modulos['total'] or 0
+
+        # 3. Contar cuántos módulos ya tienen nota para este estudiante
+        # (Si tiene nota en la tabla Notas, se considera realizado)
+        cursor.execute("SELECT COUNT(DISTINCT id_modulo) as hechos FROM Notas WHERE id_usuario = %s", (id_usuario,))
+        res_hechos = cursor.fetchone()
+        modulos_hechos = res_hechos['hechos'] or 0
+
+        # 4. Cálculo del porcentaje de módulos
+        porcentaje_modulos = (modulos_hechos / total_modulos * 100) if total_modulos > 0 else 0
+
+        # 5. Lógica de Asistencia (que ya tenías funcionando)
+        cursor.execute("SELECT asistio FROM Asistencia WHERE id_usuario = %s", (id_usuario,))
+        registros_asist = cursor.fetchall()
+        asistencias_si = sum(1 for r in registros_asist if r['asistio'] == 'SI')
+        porcentaje_asist = (asistencias_si / len(registros_asist) * 100) if len(registros_asist) > 0 else 0
+
+        # 6. Notas para el promedio
+        cursor.execute("SELECT nota FROM Notas WHERE id_usuario = %s", (id_usuario,))
+        notas = cursor.fetchall()
+
+        # PRINT DE DEPURACIÓN EN CONSOLA
+        print(f"\n--- ESTADÍSTICAS MÓDULOS (ID: {id_usuario}) ---")
+        print(f" > Módulos del curso: {total_modulos}")
+        print(f" > Módulos con nota: {modulos_hechos}")
+        print(f" > Avance: {porcentaje_modulos:.1f}%")
+        print("------------------------------------------\n")
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            "success": True,
+            "notas": notas,
+            "asistencia_porcentaje": f"{round(porcentaje_asist, 1)}%",
+            "modulos_completados": f"{round(porcentaje_modulos, 1)}%" # Se envía como porcentaje
+        })
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({"success": False, "message": str(e)}), 500
     
 
 if __name__ == '__main__':
