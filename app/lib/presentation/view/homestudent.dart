@@ -1,19 +1,37 @@
 import 'package:flutter/material.dart';
-import '../widget/login_widget.dart'; // Asegúrate de que la ruta sea correcta
+import '../../services/api_service.dart';
+import '../widget/login_widget.dart';
 import 'asiststudent.dart';
 import 'NotasEstudiantes.dart';
 import 'cursosStudente.dart';
 import 'modulostudent.dart';
 
-class StudentHomeScreen extends StatelessWidget {
+class StudentHomeScreen extends StatefulWidget {
   final Map<String, dynamic> user;
   const StudentHomeScreen({super.key, required this.user});
 
-  // Colores del tema Admin aplicados a Estudiante
+  @override
+  State<StudentHomeScreen> createState() => _StudentHomeScreenState();
+}
+
+class _StudentHomeScreenState extends State<StudentHomeScreen> {
+  final ApiService _apiService = ApiService();
+  
+  // Usamos un Future que puede ser nulo inicialmente para evitar errores de inicialización
+  Future<Map<String, dynamic>>? _studentStatsFuture;
+
+  // Colores del tema
   final Color primaryPurple = const Color(0xFF7C4DFF);
   final Color darkBlue = const Color(0xFF1A202C);
   final Color bgGrey = const Color(0xFFF8FAFC);
   final Color borderGrey = const Color(0xFFE2E8F0);
+
+  @override
+  void initState() {
+    super.initState();
+    // Inicializamos la petición al servidor usando el id del usuario logueado
+    _studentStatsFuture = _apiService.getStudentStats(widget.user['id_usuario']);
+  }
 
   void _cerrarSesion(BuildContext context) {
     Navigator.pushAndRemoveUntil(
@@ -52,13 +70,9 @@ class StudentHomeScreen extends StatelessWidget {
                 child: const Icon(Icons.person, color: Colors.white, size: 45),
               ),
               const SizedBox(height: 15),
-              Text(user['nombres'] ?? 'Estudiante',
-                  style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5)),
-              const SizedBox(height: 10),
-              Text(user['correo'] ?? "No email",
+              Text(widget.user['nombres'] ?? 'Estudiante',
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
+              Text(widget.user['correo'] ?? "No email",
                   style: TextStyle(color: Colors.grey[600])),
               const SizedBox(height: 30),
               SizedBox(
@@ -69,10 +83,8 @@ class StudentHomeScreen extends StatelessWidget {
                       backgroundColor: Colors.redAccent,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 18),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12))),
-                  child: const Text("CERRAR SESIÓN",
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  child: const Text("CERRAR SESIÓN", style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(height: 20),
@@ -80,69 +92,6 @@ class StudentHomeScreen extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildStatCard(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: borderGrey, width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: primaryPurple, size: 20),
-          const Spacer(),
-          Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
-          Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDashboardItem(
-      IconData icon, String title, String subtitle, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: borderGrey, width: 1.5),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                  color: primaryPurple.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(15)),
-              child: Icon(icon, color: primaryPurple, size: 24),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: darkBlue)),
-                  Text(subtitle,
-                      style: TextStyle(color: Colors.grey[500], fontSize: 12)),
-                ],
-              ),
-            ),
-            const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFFCBD5E1)),
-          ],
-        ),
-      ),
     );
   }
 
@@ -154,7 +103,7 @@ class StudentHomeScreen extends StatelessWidget {
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // Header del Estudiante
+            // Header
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -166,7 +115,7 @@ class StudentHomeScreen extends StatelessWidget {
                       children: [
                         Text("PANEL ESTUDIANTE", 
                           style: TextStyle(color: primaryPurple, fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 1.2)),
-                        Text(user['nombres']?.split(' ')[0] ?? 'Hola', 
+                        Text(widget.user['nombres']?.split(' ')[0] ?? 'Hola', 
                           style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -1)),
                       ],
                     ),
@@ -183,35 +132,63 @@ class StudentHomeScreen extends StatelessWidget {
               ),
             ),
 
-            // Tarjetas de Resumen (Stats)
+            // Tarjetas de Resumen con Lógica de Cálculo de Promedio
             SliverToBoxAdapter(
               child: Container(
                 height: 120,
                 margin: const EdgeInsets.symmetric(vertical: 24),
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  children: [
-                    SizedBox(width: 140, child: _buildStatCard("Promedio", "4.5", Icons.auto_graph_rounded)),
-                    const SizedBox(width: 16),
-                    SizedBox(width: 140, child: _buildStatCard("Asistencias", "92%", Icons.calendar_today_rounded)),
-                    const SizedBox(width: 16),
-                    SizedBox(width: 140, child: _buildStatCard("Cursos", "5", Icons.school_rounded)),
-                  ],
+                child: FutureBuilder<Map<String, dynamic>>(
+                  future: _studentStatsFuture,
+                  builder: (context, snapshot) {
+                    String promedio = "0.0";
+                    String asistenciaPerc = "--%";
+                    String modulosRealizados = "0";
+                    bool loading = snapshot.connectionState == ConnectionState.waiting;
+
+                    if (snapshot.hasData && snapshot.data!['success'] == true) {
+                      var data = snapshot.data!;
+                      
+                      // 1. Cálculo de Promedio de Notas (según tabla Notas, columna nota)
+                      List notas = data['notas'] ?? [];
+                      if (notas.isNotEmpty) {
+                        double suma = 0;
+                        for (var item in notas) {
+                          // Usamos 'nota' para coincidir con tu esquema SQL
+                          suma += double.tryParse(item['nota'].toString()) ?? 0.0;
+                        }
+                        promedio = (suma / notas.length).toStringAsFixed(1);
+                      }
+
+                      // 2. Otros datos (asumiendo que los envías desde Python)
+                      asistenciaPerc = data['asistencia_porcentaje']?.toString() ?? "--%";
+                      modulosRealizados = data['modulos_completados']?.toString() ?? "0";
+                    }
+
+                    return ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      children: [
+                        _buildStatCard("Promedio", promedio, Icons.auto_graph_rounded, loading),
+                        const SizedBox(width: 16),
+                        _buildStatCard("Asistencias", asistenciaPerc, Icons.calendar_today_rounded, loading),
+                        const SizedBox(width: 16),
+                        _buildStatCard("Módulos", modulosRealizados, Icons.view_module_rounded, loading),
+                      ],
+                    );
+                  },
                 ),
               ),
             ),
 
-            // Acciones del Estudiante
+            // Menú de Acciones
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  const Text("ACADEMIA",
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8), letterSpacing: 1.5)),
+                  const Text("ACADEMIA", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8), letterSpacing: 1.5)),
                   const SizedBox(height: 16),
                   _buildDashboardItem(Icons.grade_outlined, "Mis Notas", "Calificaciones y retroalimentación", 
-                    () => Navigator.push(context, MaterialPageRoute(builder: (context) => NotasEstudiantesScreen(idAlumno: user['id_usuario'])))),
+                    () => Navigator.push(context, MaterialPageRoute(builder: (context) => NotasEstudiantesScreen(idAlumno: widget.user['id_usuario'])))),
                   _buildDashboardItem(Icons.how_to_reg_outlined, "Mi Asistencia", "Registro de faltas e ingresos", 
                     () => Navigator.push(context, MaterialPageRoute(builder: (context) => AttendanceScreen()))),
                   _buildDashboardItem(Icons.library_books_outlined, "Mis Cursos", "Programas en los que estás inscrito", 
@@ -226,7 +203,6 @@ class StudentHomeScreen extends StatelessWidget {
         ),
       ),
       
-      // Bottom Bar del Estudiante
       bottomNavigationBar: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
@@ -244,6 +220,64 @@ class StudentHomeScreen extends StatelessWidget {
             BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Inicio"),
             BottomNavigationBarItem(icon: Icon(Icons.notifications_none_rounded), label: "Avisos"),
             BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: "Ajustes"),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String label, String value, IconData icon, bool loading) {
+    return Container(
+      width: 140,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderGrey, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: primaryPurple, size: 20),
+          const Spacer(),
+          loading 
+            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+            : Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+          Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDashboardItem(IconData icon, String title, String subtitle, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: borderGrey, width: 1.5),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: primaryPurple.withOpacity(0.08), borderRadius: BorderRadius.circular(15)),
+              child: Icon(icon, color: primaryPurple, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: darkBlue)),
+                  Text(subtitle, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFFCBD5E1)),
           ],
         ),
       ),

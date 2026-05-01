@@ -400,6 +400,21 @@ Future<Map<String, dynamic>> getMyModules() async {
       };
     }
   }
-  
+
+  Future<Map<String, dynamic>> getStudentStats(int idUsuario) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/student_stats/$idUsuario'),
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        return {'success': false, 'message': 'Error del servidor'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión: $e'};
+    }
+  }
   
 }
