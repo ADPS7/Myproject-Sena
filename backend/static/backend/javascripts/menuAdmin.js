@@ -8,6 +8,11 @@ function mostrarvistaUsuarioAdmin() {
     inicio = document.getElementById("mostrarInicioAdmin").style = "display: none;"
     usuario = document.getElementById("mostrarUsuarioAdmin").style = "display: block;"
 }
+function mostrarvistaModulosAdmin() {
+    inicio = document.getElementById("mostrarInicioAdmin").style = "display: none;"
+    usuario = document.getElementById("mostrarUsuarioAdmin").style = "display: none;"
+    modulo = document.getElementById("mostrarModulosAdmin").style = "display:block;"
+}
 
 // Carga de datos en Modales
 document.addEventListener('DOMContentLoaded', function() {

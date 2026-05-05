@@ -29,7 +29,7 @@
                     <small class="menu-label">Gestión</small>
                     <a onclick="mostrarvistaInicioAdmin()" class="nav-link-item active"><i class="bi bi-house"></i> Inicio</a>
                     <a href="#" class="nav-link-item"><i class="bi bi-journal-bookmark"></i> Cursos</a>
-                    <a href="#" class="nav-link-item"><i class="bi bi-stack"></i> Módulos</a>
+                    <a onclick="mostrarvistaModulosAdmin()" class="nav-link-item"><i class="bi bi-stack"></i> Módulos</a>
                     <small class="menu-label mt-3">Control</small>
                     <a onclick="mostrarvistaUsuarioAdmin()" class="nav-link-item"><i class="bi bi-people"></i> Usuarios</a>
                     <a href="#" class="nav-link-item"><i class="bi bi-calendar-check"></i> Asistencia</a>
@@ -52,6 +52,9 @@
                 </div>
                 <div id="mostrarUsuarioAdmin" style="display: none;">
                     {% include "view/Admin/usuariosAdmin.html" %}
+                </div>
+                <div id="mostrarModulosAdmin" style="display: none;">
+                    {% include "view/Admin/modulosAdmin.html" %}
                 </div>
             
 
