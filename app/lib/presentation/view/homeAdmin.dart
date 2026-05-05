@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../widget/login_widget.dart';
+import 'asignar_estudiantes.dart';
 import 'asistadmin.dart';
 import 'cursoAdmin.dart';
 import 'modulosAdmin.dart';
@@ -188,6 +189,13 @@ class _HomeadminState extends State<Homeadmin> {
                   _buildDashboardItem(Icons.account_tree_outlined, "Módulos Educativos", "Estructura de contenidos", 
                     () async {
                       await Navigator.push(context, MaterialPageRoute(builder: (context) => const ModulosScreen()));
+                      _refreshData();
+                    }
+                  ),
+                  
+                  _buildDashboardItem(Icons.school_outlined, "Asignar Estudiantes", "Solo alumnos sin curso", 
+                    () async {
+                      await Navigator.push(context, MaterialPageRoute(builder: (context) => const AsignarEstudiantesScreen()));
                       _refreshData();
                     }
                   ),
