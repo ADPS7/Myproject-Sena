@@ -18,27 +18,29 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <form action="/guardar_modulo" method="POST">
+                <form id="formAgregarModulo">
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Nombre del Módulo</label>
-                        <input type="text" name="nombre" class="form-control rounded-3" placeholder="Nombre del curso" required>
+                        <input type="text" id="nombre_modulo" class="form-control rounded-3" required>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label small fw-bold">Fecha Inicio</label>
-                            <input type="date" name="fecha_inicio" class="form-control rounded-3" required>
+                            <input type="date" id="fecha_inicio" class="form-control rounded-3" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label small fw-bold">Fecha Fin</label>
-                            <input type="date" name="fecha_fin" class="form-control rounded-3" required>
+                            <input type="date" id="fecha_fin" class="form-control rounded-3" required>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-bold">Seleccionar Curso</label>
-                        <select name="id_curso" class="form-select rounded-3">
-                            <option selected disabled>Elegir curso...</option>
-                            <option value="1">ADSO - Ficha 3064412</option>
-                        </select>
+                        <label for="id_curso_modulo" class="form-label small fw-bold">Seleccionar Curso</label>
+                        <select id="id_curso_modulo" class="form-select rounded-3 shadow-sm" required>
+                            <option value="" selected disabled>Cargando cursos...</option>
+                            </select>
+                        <div class="form-text text-muted small">
+                            El sistema guardará el ID del curso seleccionado.
+                        </div>
                     </div>
                     <div class="d-grid mt-4">
                         <button type="submit" class="btn btn-primary py-2 rounded-3 fw-bold">
@@ -50,3 +52,26 @@
         </div>
     </div>
 </div>
+
+<div class="card border-0 shadow-sm rounded-4 mt-4">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Módulo</th>
+                        <th>Curso Asignado</th>
+                        <th>Fecha Inicio</th>
+                        <th>Fecha Fin</th>
+                        <th class="text-end pe-4">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-modulos-body">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{{url_for('static', filename='backend/javascripts/modulosAdmin.js')}}"></script>

@@ -762,6 +762,7 @@ def get_modulos():
         """
         cursor.execute(query)
         modulos = cursor.fetchall()
+        print(modulos)
         
         cursor.close()
         conn.close()
@@ -1004,7 +1005,7 @@ def get_student_stats(id_usuario):
         print(f"Error: {str(e)}")
         return jsonify({"success": False, "message": str(e)}), 500
     
-    
+
 @app.route('/get_usuarios/<rol_nombre>')
 def get_usuarios(rol_nombre):
     db = None
