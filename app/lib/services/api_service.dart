@@ -359,6 +359,31 @@ Future<Map<String, dynamic>> getMyModules() async {
     }
   }
 
+  Future<List<dynamic>> getEstudiantesPorCurso(int idCurso) async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/cursos/$idCurso/estudiantes'));
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> desasignarAlumno(int idUsuario) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/desasignar-alumno'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'id_usuario': idUsuario}),
+      );
+      return json.decode(response.body);
+    } catch (e) {
+      return {"success": false, "error": "Error de conexión"};
+    }
+  }
+
   Future<Map<String, dynamic>> asignarAlumno(int idUsuario, int idCurso) async {
     try {
       final response = await http.post(
