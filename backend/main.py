@@ -129,7 +129,7 @@ def dashboard():
     user = session['usuario']
     rol = user.get('rol').lower()
     if rol == 'administrador' or user.get('id_rol') == 1:
-        return render_template('view/Admin/inicioAdmin.html', user=user)
+        return render_template('view/Admin/menuAdmin.html', user=user)
     
     elif rol == 'profesor' or user.get('id_rol') == 3:
         return render_template('view/profesor/inicioProfesor.html', user=user)

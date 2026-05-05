@@ -1,0 +1,159 @@
+<h2 class="fw-bold h4 mb-4">Gestión de Usuarios</h2>
+<div class="row g-3">
+    
+    <div class="col-12 col-md-4">
+        <div class="card-stat bg-white p-4 rounded-4 border-0 shadow-sm">
+            <div class="d-flex align-items-center mb-3">
+                <div class="icon-shape bg-danger-subtle text-danger rounded-3 p-2 me-3">
+                    <i class="bi bi-shield-lock-fill fs-3"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0">Administradores</h5>
+                    <p class="text-muted small mb-0">Gestión de sistema</p>
+                </div>
+            </div>
+            <hr class="opacity-25">
+            <button type="button" class="btn btn-outline-danger w-100 rounded-3 d-flex align-items-center justify-content-center gap-2" 
+                    data-bs-toggle="modal" data-bs-target="#modalAdmins">
+                <i class="bi bi-eye-fill"></i> Ver administradores
+            </button>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <div class="card-stat bg-white p-4 rounded-4 border-0 shadow-sm">
+            <div class="d-flex align-items-center mb-3">
+                <div class="icon-shape bg-primary-subtle text-primary rounded-3 p-2 me-3">
+                    <i class="bi bi-person-workspace fs-3"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0">Profesores</h5>
+                    <p class="text-muted small mb-0">Gestión académica</p>
+                </div>
+            </div>
+            <hr class="opacity-25">
+            <button type="button" class="btn btn-outline-primary w-100 rounded-3 d-flex align-items-center justify-content-center gap-2" 
+                    data-bs-toggle="modal" data-bs-target="#modalProfesores">
+                <i class="bi bi-eye-fill"></i> Ver profesores
+            </button>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <div class="card-stat bg-white p-4 rounded-4 border-0 shadow-sm">
+            <div class="d-flex align-items-center mb-3">
+                <div class="icon-shape bg-success-subtle text-success rounded-3 p-2 me-3">
+                    <i class="bi bi-mortarboard-fill fs-3"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0">Estudiantes</h5>
+                    <p class="text-muted small mb-0">Aprendices SENA</p>
+                </div>
+            </div>
+            <hr class="opacity-25">
+            <button type="button" class="btn btn-outline-success w-100 rounded-3 d-flex align-items-center justify-content-center gap-2" 
+                    data-bs-toggle="modal" data-bs-target="#modalEstudiantes">
+                <i class="bi bi-eye-fill"></i> Ver estudiantes
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAdmins" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-danger text-white rounded-top-4">
+                <h5 class="modal-title fw-bold"><i class="bi bi-shield-lock-fill me-2"></i> Administradores</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light text-muted small">
+                            <tr>
+                                <th class="ps-4">NOMBRE</th>
+                                <th>CORREO</th>
+                                <th class="text-end pe-4">ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="ps-4 fw-medium">Marcos David</td>
+                                <td>admin@edullinas.com</td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-sm btn-light text-primary"><i class="bi bi-pencil"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalProfesores" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-primary text-white rounded-top-4">
+                <h5 class="modal-title fw-bold"><i class="bi bi-person-workspace me-2"></i> Profesores</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light text-muted small">
+                            <tr>
+                                <th class="ps-4">PROFESOR</th>
+                                <th>ÁREA</th>
+                                <th class="text-end pe-4">ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="ps-4 fw-medium">Ing. Roberto Gómez</td>
+                                <td>Desarrollo Web</td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-sm btn-light text-primary"><i class="bi bi-pencil"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEstudiantes" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-success text-white rounded-top-4">
+                <h5 class="modal-title fw-bold"><i class="bi bi-mortarboard-fill me-2"></i> Estudiantes</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light text-muted small">
+                            <tr>
+                                <th class="ps-4">ESTUDIANTE</th>
+                                <th>FICHA</th>
+                                <th class="text-end pe-4">ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="ps-4 fw-medium">Juan Perez</td>
+                                <td>2560664 - ADSO</td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-sm btn-light text-primary"><i class="bi bi-pencil"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
