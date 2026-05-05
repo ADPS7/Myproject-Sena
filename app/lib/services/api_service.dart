@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'aut_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.101.79:5000 ';
+  static const String baseUrl = 'http://10.2.125.96:5000 ';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,  
@@ -356,6 +356,31 @@ Future<Map<String, dynamic>> getMyModules() async {
       return [];
     } catch (e) {
       return [];
+    }
+  }
+
+  Future<List<dynamic>> getEstudiantesPorCurso(int idCurso) async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/cursos/$idCurso/estudiantes'));
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> desasignarAlumno(int idUsuario) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/desasignar-alumno'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'id_usuario': idUsuario}),
+      );
+      return json.decode(response.body);
+    } catch (e) {
+      return {"success": false, "error": "Error de conexión"};
     }
   }
 

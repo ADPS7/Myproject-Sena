@@ -881,6 +881,45 @@ def get_estudiantes_sin_curso():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/cursos/<int:id_curso>/estudiantes', methods=['GET'])
+def get_estudiantes_por_curso(id_curso):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT u.id_usuario, u.nombres, u.apellidos, u.correo
+            FROM Usuarios u
+            JOIN Alumnos a ON u.id_usuario = a.id_usuario
+            WHERE a.id_curso = %s AND u.id_rol = 2
+        """
+        cursor.execute(query, (id_curso,))
+        estudiantes = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify(estudiantes), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/desasignar-alumno', methods=['POST'])
+def desasignar_alumno():
+    try:
+        data = request.json
+        id_usuario = data.get('id_usuario')
+
+        if not id_usuario:
+            return jsonify({"error": "id_usuario requerido"}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM Alumnos WHERE id_usuario = %s", (id_usuario,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({"success": True, "message": "Estudiante desasignado correctamente"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/admin/stats', methods=['GET'])
 def get_admin_stats():
     try:
