@@ -17,6 +17,8 @@
         </button>
     </div>
 </div>
+
+<!--modal añadir modulo-->
 <div class="modal fade" id="modalAgregarModulo" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">
@@ -56,6 +58,42 @@
                             Guardar Módulo
                         </button>
                     </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--modal editar modulo-->
+<div class="modal fade" id="modalEditarModulo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-warning text-dark rounded-top-4">
+                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i> Editar Módulo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formEditarModulo">
+                    <input type="hidden" id="edit_id_modulo">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nombre del Módulo</label>
+                        <input type="text" id="edit_nombre_modulo" class="form-control" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Fecha Inicio</label>
+                            <input type="date" id="edit_fecha_inicio" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Fecha Fin</label>
+                            <input type="date" id="edit_fecha_fin" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Curso</label>
+                        <select id="edit_id_curso_modulo" class="form-select" required></select>
+                    </div>
+                    <button type="submit" class="btn btn-warning w-100 fw-bold">Actualizar</button>
                 </form>
             </div>
         </div>

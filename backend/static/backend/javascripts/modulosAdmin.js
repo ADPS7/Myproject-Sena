@@ -1,22 +1,18 @@
 function llenarSelectCursos() {
-    const select = document.getElementById('id_curso_modulo');
+    const selectAgregar = document.getElementById('id_curso_modulo');
+    const selectEditar = document.getElementById('edit_id_curso_modulo');
 
-    fetch('/cursos') // Tu ruta de Python que devuelve [id_curso, nombre]
+    fetch('/cursos')
         .then(res => res.json())
         .then(cursos => {
-            // Limpiamos y preparamos el select
-            select.innerHTML = '<option value="" selected disabled>Seleccione un curso...</option>';
-
+            let opciones = '<option value="" selected disabled>Seleccione un curso...</option>';
             cursos.forEach(curso => {
-                const option = document.createElement('option');
-                option.value = curso.id_curso;  // Esto es lo que se guarda en SQL
-                option.textContent = curso.nombre; // Esto es lo que ve el usuario
-                select.appendChild(option);
+                // Importante: Usar el ID como value
+                opciones += `<option value="${curso.id_curso}">${curso.nombre}</option>`;
             });
-        })
-        .catch(err => {
-            console.error('Error al cargar cursos:', err);
-            select.innerHTML = '<option value="" disabled>Error al cargar cursos</option>';
+
+            if (selectAgregar) selectAgregar.innerHTML = opciones;
+            if (selectEditar) selectEditar.innerHTML = opciones;
         });
 }
 
@@ -118,7 +114,7 @@ function renderizarTabla(lista) {
                 <td>${formatear(modulo.fecha_inicio)}</td>
                 <td>${formatear(modulo.fecha_fin)}</td>
                 <td class="text-end pe-4">
-                    <button class="btn btn-sm btn-light border text-primary"><i class="bi bi-pencil"></i></button>
+                    <button onclick="prepararEdicion(${modulo.id_modulo})" class="btn btn-sm btn-light border text-primary shadow-sm"><i class="bi bi-pencil"></i></button>
                     <button class="btn btn-sm btn-light border text-danger ms-1"><i class="bi bi-trash"></i></button>
                 </td>
             </tr>`;
@@ -145,3 +141,63 @@ document.getElementById('inputBusqueda').addEventListener('input', function(e) {
 document.addEventListener('DOMContentLoaded', cargarModulos);
 
 //editar
+// 1. CARGAR DATOS EN EL MODAL
+function prepararEdicion(id) {
+    // Buscamos el módulo en nuestra lista global
+    const modulo = todosLosModulos.find(m => m.id_modulo === id);
+
+    if (modulo) {
+        document.getElementById('edit_id_modulo').value = modulo.id_modulo;
+        document.getElementById('edit_nombre_modulo').value = modulo.nombre;
+        
+        // Convertir fechas al formato YYYY-MM-DD que aceptan los inputs
+        const fInicio = new Date(modulo.fecha_inicio).toISOString().split('T')[0];
+        const fFin = new Date(modulo.fecha_fin).toISOString().split('T')[0];
+        
+        document.getElementById('edit_fecha_inicio').value = fInicio;
+        document.getElementById('edit_fecha_fin').value = fFin;
+        
+        // ASIGNAR EL CURSO ACTUAL
+        // Asegúrate de que 'id_curso' sea el nombre que viene en tu JSON de Python
+        const selectCurso = document.getElementById('edit_id_curso_modulo');
+        selectCurso.value = modulo.id_curso; 
+
+        // Mostrar modal
+        const modalEdit = new bootstrap.Modal(document.getElementById('modalEditarModulo'));
+        modalEdit.show();
+    }
+}
+
+// 2. ENVIAR DATOS A PYTHON (Ajustado a tu ruta actual)
+document.getElementById('formEditarModulo').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const id = document.getElementById('edit_id_modulo').value;
+    const datos = {
+        id_modulo: id, // Lo incluimos por si tu Python lo requiere en el body
+        nombre: document.getElementById('edit_nombre_modulo').value,
+        fecha_inicio: document.getElementById('edit_fecha_inicio').value,
+        fecha_fin: document.getElementById('edit_fecha_fin').value,
+        id_curso: document.getElementById('edit_id_curso_modulo').value
+    };
+
+    fetch(`/modulos/editar/${id}`, { // Asegúrate que esta sea tu ruta de Python
+        method: 'PUT', // O POST, según como lo tengas en Python
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                title: '¡Actualizado!',
+                text: 'El módulo se ha modificado con éxito.',
+                icon: 'success',
+                confirmButtonColor: '#ffc107'
+            });
+            bootstrap.Modal.getInstance(document.getElementById('modalEditarModulo')).hide();
+            cargarModulos(); // Refrescamos la tabla
+        }
+    })
+    .catch(err => Swal.fire('Error', 'No se pudo actualizar', 'error'));
+});
