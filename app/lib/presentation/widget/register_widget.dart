@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
+import 'login_widget.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -116,7 +117,7 @@ class _RegisterViewState extends State<RegisterView> {
                           controller: fechaController, 
                           icon: Icons.calendar_today_outlined,
                           readOnly: true,
-                          onTap: () => {}, // Lógica de fecha aquí
+                          onTap: () => _selectDate(context),
                         ),
                         const SizedBox(height: 15),
                         _customInput(
@@ -170,19 +171,123 @@ class _RegisterViewState extends State<RegisterView> {
   }
 
   Widget _buildRegisterButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: ElevatedButton(
-        onPressed: isLoading ? null : () => {}, // Lógica de registro aquí
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF7C4DFF),
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 0,
-        ),
-        child: isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text("Registrarse", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+  return SizedBox(
+    width: double.infinity,
+    height: 56,
+    child: ElevatedButton(
+      onPressed: isLoading ? null : _registerUser,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF7C4DFF),
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 0,
+      ),
+      child: isLoading 
+          ? const CircularProgressIndicator(color: Colors.white)
+          : const Text("Registrarse", 
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+    ),
+  );
+}
+// Agrega esto dentro de la clase _RegisterViewState
+
+Future<void> _selectDate(BuildContext context) async {
+  final DateTime? picked = await showDatePicker(
+    context: context,
+    initialDate: DateTime(2005, 1, 1),
+    firstDate: DateTime(1950),
+    lastDate: DateTime.now(),
+  );
+
+  if (picked != null) {
+    setState(() {
+      fechaController.text = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+    });
+  }
+}
+
+// ==================== LÓGICA DE REGISTRO ====================
+Future<void> _registerUser() async {
+  // Validaciones básicas
+  if (nombresController.text.trim().isEmpty ||
+      apellidosController.text.trim().isEmpty ||
+      emailController.text.trim().isEmpty ||
+      fechaController.text.isEmpty ||
+      passwordController.text.trim().isEmpty) {
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Por favor completa todos los campos"),
+        backgroundColor: Colors.red,
       ),
     );
+    return;
   }
+
+  // Validación simple de email
+  if (!emailController.text.contains('@')) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Ingresa un correo válido"),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
+  }
+
+  if (passwordController.text.length < 5) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("La contraseña debe tener al menos 6 caracteres"),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
+  }
+
+  setState(() => isLoading = true);
+
+  try {
+    final result = await ApiService().createUser(
+      nombres: nombresController.text.trim(),
+      apellidos: apellidosController.text.trim(),
+      correo: emailController.text.trim(),
+      fechaNacimiento: fechaController.text,
+      clave: passwordController.text,
+    );
+
+    if (result['message'] != null && result['message'].toString().contains("exitosamente")) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("¡Registro exitoso! Ahora puedes iniciar sesión"),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      if (mounted) {
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(builder: (context) => const LoginView()),
+    (route) => false,   // Elimina todas las pantallas anteriores
+  );
+}
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['error']?.toString() ?? "Error al registrar usuario"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Error de conexión: $e"),
+        backgroundColor: Colors.red,
+      ),
+    );
+  } finally {
+    setState(() => isLoading = false);
+  }
+}
 }
