@@ -4,6 +4,7 @@ import '../../services/api_service.dart';
 import '../view/homeAdmin.dart';
 import '../view/homeTeacher.dart';
 import '../view/homestudent.dart';
+import 'register_widget.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -196,8 +197,11 @@ class _LoginViewState extends State<LoginView> {
                     const SizedBox(height: 35),
                     
                     // Enlace a Registro
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
+                   GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const RegisterView()),
+                      ),
                       child: RichText(
                         text: const TextSpan(
                           text: "¿No tienes una cuenta? ",
