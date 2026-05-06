@@ -26,16 +26,15 @@
                     <img src="{{ url_for('static', filename='frontend/images/instituto-removebg-preview.png') }}" class="img-fluid logo-img">
                 </div>
                 <div class="nav flex-column flex-grow-1 px-2">
-                    <small class="menu-label">Gestión</small>
-                    <a onclick="mostrarvistaInicioAdmin()" class="nav-link-item active"><i class="bi bi-house"></i> Inicio</a>
-                    <a href="#" class="nav-link-item"><i class="bi bi-journal-bookmark"></i> Cursos</a>
-                    <a onclick="mostrarvistaModulosAdmin()" class="nav-link-item"><i class="bi bi-stack"></i> Módulos</a>
-                    <a onclick="mostrarvistaCursosAdmin()" class="nav-link-item"><i class="bi bi-journal-bookmark"></i> Cursos</a>
-                    <a href="#" class="nav-link-item"><i class="bi bi-stack"></i> Módulos</a>
-                    <small class="menu-label mt-3">Control</small>
-                    <a onclick="mostrarvistaUsuarioAdmin()" class="nav-link-item"><i class="bi bi-people"></i> Usuarios</a>
-                    <a href="#" class="nav-link-item"><i class="bi bi-calendar-check"></i> Asistencia</a>
-                </div>
+    <small class="menu-label">GESTIÓN</small>
+    <a onclick="mostrarvistaInicioAdmin()" class="nav-link-item active"><i class="bi bi-house"></i> Inicio</a>
+    <a onclick="mostrarvistaCursosAdmin()" class="nav-link-item"><i class="bi bi-journal-bookmark"></i> Cursos</a>
+    <a onclick="mostrarvistaModulosAdmin()" class="nav-link-item"><i class="bi bi-stack"></i> Módulos</a>
+    
+    <small class="menu-label mt-3">CONTROL</small>
+    <a onclick="mostrarvistaUsuarioAdmin()" class="nav-link-item"><i class="bi bi-people"></i> Usuarios</a>
+    <a href="#" class="nav-link-item"><i class="bi bi-calendar-check"></i> Asistencia</a>
+</div>
                 <div class="sidebar-footer mt-auto pt-3">
                     <div class="user-pill mb-3">
                         <div class="avatar">{{ user.nombres[0] }}</div>
@@ -59,8 +58,8 @@
                     {% include "view/Admin/modulosAdmin.html" %}
                 </div>
                 <div id="mostrarCursosAdmin" style="display: none;">
-        {% include "view/Admin/cursosAdmin.html" %}
-    </div>
+                    {% include "view/Admin/cursosAdmin.html" %}
+                </div>
             
 
             </main>

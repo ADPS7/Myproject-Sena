@@ -113,3 +113,17 @@ body {
 .card-stat:hover {
     transform: translateY(-3px);
 }
+
+/* FIX PARA EVITAR SUPERPOSICIÓN DE VISTAS */
+#mostrarInicioAdmin,
+#mostrarUsuarioAdmin,
+#mostrarModulosAdmin,
+#mostrarCursosAdmin {
+    width: 100%;
+    position: relative;
+}
+
+/* Opcional pero recomendado */
+.main-content > div {
+    width: 100%;
+}
