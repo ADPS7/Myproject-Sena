@@ -115,7 +115,7 @@ function renderizarTabla(lista) {
                 <td>${formatear(modulo.fecha_fin)}</td>
                 <td class="text-end pe-4">
                     <button onclick="prepararEdicion(${modulo.id_modulo})" class="btn btn-sm btn-light border text-primary shadow-sm"><i class="bi bi-pencil"></i></button>
-                    <button class="btn btn-sm btn-light border text-danger ms-1"><i class="bi bi-trash"></i></button>
+                    <button onclick="confirmarEliminacion(${modulo.id_modulo})" class="btn btn-sm btn-light border text-danger ms-1 shadow-sm"><i class="bi bi-trash"></i></button>
                 </td>
             </tr>`;
         tablaBody.innerHTML += fila;
@@ -201,3 +201,43 @@ document.getElementById('formEditarModulo').addEventListener('submit', function(
     })
     .catch(err => Swal.fire('Error', 'No se pudo actualizar', 'error'));
 });
+
+//eliminar modulo
+function confirmarEliminacion(id) {
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: "El módulo se eliminará permanentemente. Esta acción no se puede deshacer.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33', // Rojo
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true // Pone el botón de cancelar a la izquierda
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Llamada a la ruta que me pasaste
+            fetch(`/modulos/eliminar/${id}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire(
+                        '¡Eliminado!',
+                        'El módulo ha sido borrado.',
+                        'success'
+                    );
+                    // Actualizamos la tabla para que el módulo desaparezca visualmente
+                    cargarModulos(); 
+                } else {
+                    Swal.fire('Error', 'No se pudo eliminar: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Error de red', 'No se pudo contactar con el servidor.', 'error');
+            });
+        }
+    });
+}
