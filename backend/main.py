@@ -762,6 +762,7 @@ def get_modulos():
         """
         cursor.execute(query)
         modulos = cursor.fetchall()
+        print(modulos)
         
         cursor.close()
         conn.close()
@@ -1003,6 +1004,40 @@ def get_student_stats(id_usuario):
     except Exception as e:
         print(f"Error: {str(e)}")
         return jsonify({"success": False, "message": str(e)}), 500
+    
+
+@app.route('/get_usuarios/<rol_nombre>')
+def get_usuarios(rol_nombre):
+    db = None
+    cursor = None
+    try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+        
+        # Consulta SQL con JOIN para filtrar por el nombre del Rol
+        query = """
+            SELECT u.nombres, u.apellidos, u.correo 
+            FROM Usuarios u
+            JOIN Roles r ON u.id_rol = r.id_rol
+            WHERE r.nombre = %s
+        """
+        cursor.execute(query, (rol_nombre,))
+        usuarios = cursor.fetchall()
+        
+        # Formateamos para que el JS reciba "nombre_completo"
+        resultado = []
+        for u in usuarios:
+            resultado.append({
+                "nombre_completo": f"{u['nombres']} {u['apellidos']}",
+                "correo": u['correo']
+            })
+            
+        return jsonify(resultado)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if db: db.close()
     
 
 if __name__ == '__main__':
