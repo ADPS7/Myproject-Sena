@@ -30,6 +30,8 @@
                     <a onclick="mostrarvistaInicioAdmin()" class="nav-link-item active"><i class="bi bi-house"></i> Inicio</a>
                     <a href="#" class="nav-link-item"><i class="bi bi-journal-bookmark"></i> Cursos</a>
                     <a onclick="mostrarvistaModulosAdmin()" class="nav-link-item"><i class="bi bi-stack"></i> Módulos</a>
+                    <a onclick="mostrarvistaCursosAdmin()" class="nav-link-item"><i class="bi bi-journal-bookmark"></i> Cursos</a>
+                    <a href="#" class="nav-link-item"><i class="bi bi-stack"></i> Módulos</a>
                     <small class="menu-label mt-3">Control</small>
                     <a onclick="mostrarvistaUsuarioAdmin()" class="nav-link-item"><i class="bi bi-people"></i> Usuarios</a>
                     <a href="#" class="nav-link-item"><i class="bi bi-calendar-check"></i> Asistencia</a>
@@ -56,6 +58,9 @@
                 <div id="mostrarModulosAdmin" style="display: none;">
                     {% include "view/Admin/modulosAdmin.html" %}
                 </div>
+                <div id="mostrarCursosAdmin" style="display: none;">
+        {% include "view/Admin/cursosAdmin.html" %}
+    </div>
             
 
             </main>
@@ -64,5 +69,15 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{url_for('static', filename='backend/javascripts/menuAdmin.js')}}"></script>
+    <script src="{{url_for('static', filename='backend/javascripts/cursosAdmin.js')}}"></script>
+    <script>
+// Función que se llamará cada vez que se muestre la vista de Cursos
+function inicializarCursosAdmin() {
+    const tabla = document.getElementById('tbodyCursos');
+    if (tabla) {
+        cargarCursos();   // ← Esta es la función del archivo cursosAdmin.js
+    }
+}
+</script>
 </body>
 </html>

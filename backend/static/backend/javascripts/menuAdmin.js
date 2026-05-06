@@ -1,4 +1,3 @@
-
 function mostrarvistaInicioAdmin() {
     modulo = document.getElementById("mostrarModulosAdmin").style = "display:none;"
     usuario = document.getElementById("mostrarUsuarioAdmin").style = "display: none;"
