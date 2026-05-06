@@ -153,4 +153,46 @@
     </div>
 </div>
 
+<!--editar usuario-->
+<div class="modal fade" id="modalEditarUsuario" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-dark text-white rounded-top-4">
+                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Editar Usuario</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditarUsuario">
+                <div class="modal-body p-4">
+                    <input type="hidden" id="edit_user_id">
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">NOMBRES</label>
+                            <input type="text" id="edit_nombres" class="form-control rounded-3" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">APELLIDOS</label>
+                            <input type="text" id="edit_apellidos" class="form-control rounded-3" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">CORREO ELECTRÓNICO</label>
+                        <input type="email" id="edit_correo" class="form-control rounded-3" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">FECHA DE NACIMIENTO</label>
+                        <input type="date" id="edit_fecha_nacimiento" class="form-control rounded-3" required>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-dark rounded-3 px-4">Actualizar Datos</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script src="{{url_for('static', filename='backend/javascripts/usuarioAdmin.js')}}"></script>
