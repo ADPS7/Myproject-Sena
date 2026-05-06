@@ -1,129 +1,60 @@
-<!-- /view/Admin/cursosAdmin.html -->
-<h2 class="fw-bold h4 mb-4">Gestión de Cursos</h2>
-
-<div class="row g-3 mb-4">
-    <!-- Botón Nuevo Curso -->
-    <div class="col-12">
-        <button class="btn btn-primary rounded-3 d-flex align-items-center gap-2 shadow-sm" 
-                data-bs-toggle="modal" data-bs-target="#modalNuevoCurso">
-            <i class="bi bi-plus-circle"></i>
-            <span>Nuevo Curso</span>
+<div class="p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold h4 mb-0">Gestión de Cursos</h2>
+        <button class="btn btn-primary d-flex align-items-center gap-2" onclick="abrirModalNuevoCurso()">
+            <i class="bi bi-plus-circle"></i> 
+            Nuevo Curso
         </button>
     </div>
-</div>
 
-<div class="card border-0 shadow-sm rounded-4">
-    <div class="card-header bg-white border-0 pt-3 pb-0">
-        <div class="d-flex flex-column flex-md-row gap-3 align-items-md-center">
-            <div class="flex-grow-1">
-                <input type="text" id="buscarCurso" 
-                       class="form-control rounded-3" 
-                       placeholder="🔍 Buscar por nombre, código o área...">
-            </div>
-            <div>
-                <select class="form-select rounded-3" id="filtroArea">
-                    <option value="">Todas las áreas</option>
-                    <option value="desarrollo">Desarrollo Web</option>
-                    <option value="redes">Redes y Telecomunicaciones</option>
-                    <option value="programacion">Programación</option>
-                    <option value="diseño">Diseño Gráfico</option>
-                </select>
-            </div>
+    <!-- Buscador -->
+    <div class="mb-4">
+        <div class="input-group">
+            <input type="text" id="buscarCurso" class="form-control rounded-3" 
+                   placeholder="Buscar por nombre del curso..." onkeyup="filtrarCursos()">
+            <button class="btn btn-outline-secondary" onclick="filtrarCursos()">
+                <i class="bi bi-search"></i>
+            </button>
         </div>
     </div>
-    
-    <div class="card-body p-0">
+
+    <!-- Tabla de Cursos -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0" id="tablaCursos">
                 <thead class="bg-light">
                     <tr>
-                        <th class="ps-4">CÓDIGO</th>
-                        <th>NOMBRE DEL CURSO</th>
-                        <th>ÁREA</th>
-                        <th class="text-center">MÓDULOS</th>
-                        <th class="text-center">ESTUDIANTES</th>
-                        <th class="text-end pe-4">ACCIONES</th>
+                        <th class="ps-4">ID</th>
+                        <th>Nombre del Curso</th>
+                        <th class="text-end pe-4">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="tbodyCursos">
-                    <!-- Datos de ejemplo -->
-                    <tr>
-                        <td class="ps-4 fw-medium">DW-101</td>
-                        <td>Desarrollo Web Full Stack</td>
-                        <td>Desarrollo Web</td>
-                        <td class="text-center"><span class="badge bg-primary">8</span></td>
-                        <td class="text-center">24</td>
-                        <td class="text-end pe-4">
-                            <button class="btn btn-sm btn-light text-primary me-1" onclick="editarCurso(1)">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-light text-danger" onclick="eliminarCurso(1)">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="ps-4 fw-medium">PY-205</td>
-                        <td>Python para Ciencia de Datos</td>
-                        <td>Programación</td>
-                        <td class="text-center"><span class="badge bg-primary">6</span></td>
-                        <td class="text-center">18</td>
-                        <td class="text-end pe-4">
-                            <button class="btn btn-sm btn-light text-primary me-1" onclick="editarCurso(2)">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-light text-danger" onclick="eliminarCurso(2)">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
+                    <!-- Llenado por JavaScript -->
                 </tbody>
             </table>
         </div>
     </div>
 </div>
 
-<!-- Modal Nuevo/Editar Curso -->
-<div class="modal fade" id="modalNuevoCurso" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4">
-            <div class="modal-header bg-primary text-white rounded-top-4">
+<!-- Modal -->
+<div class="modal fade" id="modalCurso" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4">
+            <div class="modal-header border-0">
                 <h5 class="modal-title fw-bold" id="modalTitle">Nuevo Curso</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="formCurso">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">Código del Curso</label>
-                            <input type="text" class="form-control rounded-3" id="codigo" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">Nombre del Curso</label>
-                            <input type="text" class="form-control rounded-3" id="nombre" required>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-medium">Área / Programa</label>
-                            <select class="form-select rounded-3" id="area" required>
-                                <option value="">Seleccione un área</option>
-                                <option value="Desarrollo Web">Desarrollo Web</option>
-                                <option value="Programación">Programación</option>
-                                <option value="Redes">Redes y Telecomunicaciones</option>
-                                <option value="Diseño">Diseño Gráfico</option>
-                            </select>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-medium">Descripción</label>
-                            <textarea class="form-control rounded-3" rows="3" id="descripcion"></textarea>
-                        </div>
-                    </div>
-                </form>
+                <input type="hidden" id="idCurso">
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Nombre del Curso</label>
+                    <input type="text" id="nombreCurso" class="form-control rounded-3" required>
+                </div>
             </div>
             <div class="modal-footer border-0">
                 <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary rounded-3" onclick="guardarCurso()">
-                    <i class="bi bi-save"></i> Guardar Curso
-                </button>
+                <button type="button" class="btn btn-primary rounded-3" onclick="guardarCurso()">Guardar Curso</button>
             </div>
         </div>
     </div>
