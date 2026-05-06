@@ -1014,9 +1014,9 @@ def get_usuarios(rol_nombre):
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
         
-        # Consulta SQL con JOIN para filtrar por el nombre del Rol
+        # Agregamos id_usuario, nombres, apellidos y fecha_nacimiento a la consulta
         query = """
-            SELECT u.nombres, u.apellidos, u.correo 
+            SELECT u.id_usuario, u.nombres, u.apellidos, u.correo, u.fecha_nacimiento 
             FROM Usuarios u
             JOIN Roles r ON u.id_rol = r.id_rol
             WHERE r.nombre = %s
@@ -1024,12 +1024,16 @@ def get_usuarios(rol_nombre):
         cursor.execute(query, (rol_nombre,))
         usuarios = cursor.fetchall()
         
-        # Formateamos para que el JS reciba "nombre_completo"
         resultado = []
         for u in usuarios:
             resultado.append({
+                "id_usuario": u['id_usuario'],
+                "nombres": u['nombres'],
+                "apellidos": u['apellidos'],
                 "nombre_completo": f"{u['nombres']} {u['apellidos']}",
-                "correo": u['correo']
+                "correo": u['correo'],
+                # Convertimos la fecha a string para que JS no tenga problemas
+                "fecha_nacimiento": u['fecha_nacimiento'].strftime('%Y-%m-%d') if u['fecha_nacimiento'] else ""
             })
             
         return jsonify(resultado)
