@@ -1013,10 +1013,8 @@ def get_usuarios(rol_nombre):
     try:
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
-        
-        # Consulta SQL con JOIN para filtrar por el nombre del Rol
         query = """
-            SELECT u.nombres, u.apellidos, u.correo 
+            SELECT u.id_usuario, u.nombres, u.apellidos, u.correo, u.fecha_nacimiento, u.id_rol 
             FROM Usuarios u
             JOIN Roles r ON u.id_rol = r.id_rol
             WHERE r.nombre = %s
@@ -1024,14 +1022,17 @@ def get_usuarios(rol_nombre):
         cursor.execute(query, (rol_nombre,))
         usuarios = cursor.fetchall()
         
-        # Formateamos para que el JS reciba "nombre_completo"
         resultado = []
         for u in usuarios:
             resultado.append({
+                "id_usuario": u['id_usuario'],
+                "nombres": u['nombres'],
+                "apellidos": u['apellidos'],
                 "nombre_completo": f"{u['nombres']} {u['apellidos']}",
-                "correo": u['correo']
+                "correo": u['correo'],
+                "id_rol": u['id_rol'],
+                "fecha_nacimiento": u['fecha_nacimiento'].strftime('%Y-%m-%d') if u['fecha_nacimiento'] else ""
             })
-            
         return jsonify(resultado)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -1039,20 +1040,50 @@ def get_usuarios(rol_nombre):
         if cursor: cursor.close()
         if db: db.close()
 
-@app.route('/actualizar_usuario/<int:user_id>', methods=['POST'])
-def actualizar_usuario(user_id):
-    data = request.get_json()
-    nombre = data.get('nombre')
-    correo = data.get('correo')
-    
+@app.route('/actualizar_usuario/<int:id_usuario>', methods=['POST'])
+def actualizar_usuario(id_usuario):
+    db = None
+    cursor = None
     try:
-        # Aquí haces tu UPDATE en SQL
-        # cursor.execute("UPDATE usuarios SET nombre_completo=%s, correo=%s WHERE id_usuario=%s", (nombre, correo, user_id))
-        # db.commit()
-        return jsonify({'status': 'success', 'message': 'Usuario actualizado'})
+        datos = request.get_json()
+        db = get_db_connection()
+        cursor = db.cursor()
+        query = """
+            UPDATE Usuarios 
+            SET nombres = %s, apellidos = %s, correo = %s, fecha_nacimiento = %s, id_rol = %s 
+            WHERE id_usuario = %s
+        """
+        valores = (datos['nombres'], datos['apellidos'], datos['correo'], 
+                   datos['fecha_nacimiento'], datos['id_rol'], id_usuario)
+        cursor.execute(query, valores)
+        db.commit()
+        return jsonify({"status": "success"})
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
-    
+        if db: db.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if db: db.close()
+
+@app.route('/eliminar_usuario/<int:id_usuario>', methods=['DELETE'])
+def eliminar_usuario(id_usuario):
+    db = None
+    cursor = None
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+        
+        # Eliminación directa por ID
+        cursor.execute("DELETE FROM Usuarios WHERE id_usuario = %s", (id_usuario,))
+        db.commit()
+        
+        return jsonify({"status": "success"})
+    except Exception as e:
+        if db: db.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if db: db.close()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
