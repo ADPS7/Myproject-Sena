@@ -1038,6 +1038,20 @@ def get_usuarios(rol_nombre):
     finally:
         if cursor: cursor.close()
         if db: db.close()
+
+@app.route('/actualizar_usuario/<int:user_id>', methods=['POST'])
+def actualizar_usuario(user_id):
+    data = request.get_json()
+    nombre = data.get('nombre')
+    correo = data.get('correo')
+    
+    try:
+        # Aquí haces tu UPDATE en SQL
+        # cursor.execute("UPDATE usuarios SET nombre_completo=%s, correo=%s WHERE id_usuario=%s", (nombre, correo, user_id))
+        # db.commit()
+        return jsonify({'status': 'success', 'message': 'Usuario actualizado'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
     
 
 if __name__ == '__main__':
