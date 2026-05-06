@@ -77,6 +77,8 @@ document.getElementById('formAgregarModulo').addEventListener('submit', function
         });
     });
 });
+// Variable global para guardar los datos y no tener que llamar a la DB cada vez que escribes
+let todosLosModulos = [];
 
 function cargarModulos() {
     const tablaBody = document.getElementById('tabla-modulos-body');
@@ -85,45 +87,61 @@ function cargarModulos() {
     fetch('/modulos')
         .then(response => response.json())
         .then(modulos => {
-            tablaBody.innerHTML = ''; 
-
-            if (!modulos || modulos.length === 0) {
-                tablaBody.innerHTML = '<tr><td colspan="5" class="text-center p-4">No hay módulos registrados</td></tr>';
-                return;
-            }
-
-            modulos.forEach(modulo => {
-                const partes = modulo.fecha_inicio.split('-');
-                alert(partes)
-                alert(partes[2])
-                
-
-                // Insertamos los datos tal cual vienen de la base de datos
-                const fila = `
-                    <tr>
-                        <td class="ps-4 fw-bold">${modulo.nombre}</td>
-                        <td>${modulo.nombre_curso}</td>
-                        <td>${modulo.fecha_inicio}</td>
-                        
-                        <td>${modulo.fecha_fin}</td>
-                        <td class="text-end pe-4">
-                            <button class="btn btn-sm btn-light border text-primary">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-light border text-danger ms-1">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-                tablaBody.innerHTML += fila;
-            });
-        })
-        .catch(error => {
-            console.error('Error al cargar módulos:', error);
-            tablaBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error al conectar con el servidor</td></tr>';
+            todosLosModulos = modulos; // Guardamos la copia original
+            renderizarTabla(modulos);  // Llamamos a una función que dibuja la tabla
         });
 }
 
-// Ejecutar al cargar la página
+// Función que dibuja las filas (la separamos para poder reutilizarla al filtrar)
+function renderizarTabla(lista) {
+    const tablaBody = document.getElementById('tabla-modulos-body');
+    tablaBody.innerHTML = '';
+
+    if (lista.length === 0) {
+        tablaBody.innerHTML = '<tr><td colspan="5" class="text-center p-4">No se encontraron resultados</td></tr>';
+        return;
+    }
+
+    lista.forEach(modulo => {
+        // Tu lógica de formateo de fecha que ya definimos
+        const formatear = (f) => {
+            try {
+                let d = new Date(f);
+                return `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}/${d.getUTCFullYear()}`;
+            } catch(e) { return f; }
+        };
+
+        const fila = `
+            <tr>
+                <td class="ps-4 fw-bold">${modulo.nombre}</td>
+                <td class="text-secondary">${modulo.nombre_curso}</td>
+                <td>${formatear(modulo.fecha_inicio)}</td>
+                <td>${formatear(modulo.fecha_fin)}</td>
+                <td class="text-end pe-4">
+                    <button class="btn btn-sm btn-light border text-primary"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-light border text-danger ms-1"><i class="bi bi-trash"></i></button>
+                </td>
+            </tr>`;
+        tablaBody.innerHTML += fila;
+    });
+}
+
+// LÓGICA DEL BUSCADOR
+document.getElementById('inputBusqueda').addEventListener('input', function(e) {
+    const termino = e.target.value.toLowerCase(); // Lo que el usuario escribe en minúsculas
+
+    const filtrados = todosLosModulos.filter(modulo => {
+        const nombreM = modulo.nombre.toLowerCase();
+        const nombreC = modulo.nombre_curso.toLowerCase();
+        
+        // Retorna verdadero si el término está en el nombre del módulo O en el del curso
+        return nombreM.includes(termino) || nombreC.includes(termino);
+    });
+
+    renderizarTabla(filtrados); // Redibujamos la tabla con los resultados filtrados
+});
+
+// Inicializar
 document.addEventListener('DOMContentLoaded', cargarModulos);
+
+//editar
