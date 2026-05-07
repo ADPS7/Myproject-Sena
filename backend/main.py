@@ -1112,5 +1112,87 @@ def actualizar_perfil(id_usuario):
         print(f"Error actualizando perfil: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route('/usuarios', methods=['GET'])
+def obtener_todos_usuarios():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+            SELECT 
+                u.id_usuario,
+                u.nombres,
+                u.apellidos,
+                u.correo,
+                r.nombre AS rol
+            FROM Usuarios u
+            JOIN Roles r ON u.id_rol = r.id_rol
+        """
+
+        cursor.execute(query)
+        usuarios = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            "success": True,
+            "usuarios": usuarios
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route('/usuarios/<int:id_usuario>/rol', methods=['PUT'])
+def actualizar_rol(id_usuario):
+    try:
+        data = request.json
+        rol = data.get('rol')
+
+        roles = {
+            'admin': 1,
+            'estudiante': 2,
+            'profesor': 3
+        }
+
+        if rol not in roles:
+            return jsonify({
+                "success": False,
+                "error": "Rol inválido"
+            }), 400
+
+        id_rol = roles[rol]
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        query = """
+            UPDATE Usuarios
+            SET id_rol = %s
+            WHERE id_usuario = %s
+        """
+
+        cursor.execute(query, (id_rol, id_usuario))
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            "success": True,
+            "message": "Rol actualizado correctamente"
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

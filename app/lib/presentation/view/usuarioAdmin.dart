@@ -168,7 +168,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                   ],
                   onChanged: (value) {
                     if (value != null) {
-                      cambiarRol(usuario['id'], value);
+                      cambiarRol(usuario['id_usuario'], value);
                     }
                   },
                 ),
