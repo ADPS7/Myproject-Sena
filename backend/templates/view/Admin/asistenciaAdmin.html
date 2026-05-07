@@ -1,13 +1,14 @@
+<!-- Enlace a los estilos CSS personalizados -->
 <link rel="stylesheet" href="{{url_for('static', filename='frontend/style/asistenciaAdmin.css')}}">
 
-<div class="container-fluid py-4">
+<div class="container-fluid py-4" id="main-container">
     <!-- Encabezado y Buscador -->
-    <div class="row align-items-center mb-5 g-3">
+    <div id="header-section" class="row align-items-center mb-5 g-3">
         <div class="col-12 col-md-6">
-            <h2 class="fw-bold h3 mb-1 text-dark">Asistencias</h2>
-            <p class="text-muted mb-0">Panel de visualización de cursos activos.</p>
+            <h2 class="fw-bold h3 mb-1 text-dark" id="view-title">Asistencias</h2>
+            <p class="text-muted mb-0" id="view-subtitle">Panel de visualización de cursos activos.</p>
         </div>
-        <div class="col-12 col-md-6">
+        <div class="col-12 col-md-6" id="search-wrapper">
             <div class="input-group search-container">
                 <span class="input-group-text bg-white border-0 ps-3">
                     <i class="bi bi-search text-muted"></i>
@@ -17,10 +18,11 @@
         </div>
     </div>
 
-    <!-- Contenedor de Cursos -->
+    <!-- Contenedor Dinámico de Tarjetas -->
     <div class="row g-4" id="contenedor-asistencias-cursos">
-        <!-- Se carga dinámicamente -->
+        <!-- Aquí se inyectan primero los Cursos y luego los Módulos -->
     </div>
 </div>
 
+<!-- Enlace al Script Externo -->
 <script src="{{url_for('static', filename='backend/javascripts/asistenciaAdmin.js')}}"></script>
