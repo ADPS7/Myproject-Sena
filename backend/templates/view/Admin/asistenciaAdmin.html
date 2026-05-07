@@ -1,0 +1,15 @@
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold h4 mb-0">Gestión de Cursos</h2>
+        <button class="btn btn-primary rounded-pill px-4" onclick="abrirModalCrearCurso()">
+            <i class="bi bi-plus-lg me-2"></i>Nuevo Curso
+        </button>
+    </div>
+
+    <!-- Contenedor donde se cargarán los cursos dinámicamente -->
+    <div class="row g-3" id="contenedor-cursos">
+        <!-- Los cursos se inyectarán aquí desde el JavaScript -->
+    </div>
+</div>
+
+<script src="{{url_for('static', filename='backend/javascripts/asistenciasAdmin.js')}}"></script>
