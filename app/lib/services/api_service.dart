@@ -467,5 +467,74 @@ Future<Map<String, dynamic>> getMyModules() async {
     return {"success": false, "error": "Error de conexión"};
   }
 }
+
+// Estos son los metodos del archibo usuarioAdmin.dart que hacen uso de los servicios del ApiService, por eso se encuentran aqui para no perder el contexto de su uso
+ 
+ // primer metodo
+
+Future<Map<String, dynamic>> obtenerUsuarios() async {
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/usuarios'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      return {
+        'success': true,
+        'usuarios': data,
+      };
+    } else {
+      return {
+        'success': false,
+        'message': 'Error al obtener usuarios',
+      };
+    }
+  } catch (e) {
+    return {
+      'success': false,
+      'message': e.toString(),
+    };
+  }
+}
+
+// segundo metodo
+
+Future<Map<String, dynamic>> actualizarRol(
+  int userId,
+  String rol,
+) async {
+  try {
+    final response = await http.put(
+      Uri.parse('$baseUrl/usuarios/$userId/rol'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'rol': rol,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return {
+        'success': true,
+      };
+    } else {
+      return {
+        'success': false,
+        'message': 'No se pudo actualizar el rol',
+      };
+    }
+  } catch (e) {
+    return {
+      'success': false,
+      'message': e.toString(),
+    };
+  }
+}
   
 }

@@ -6,6 +6,7 @@ import 'asignar_estudiantes.dart';
 import 'asistadmin.dart';
 import 'cursoAdmin.dart';
 import 'modulosAdmin.dart';
+import 'usuarioAdmin.dart';
 
 class Homeadmin extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -203,8 +204,8 @@ class _HomeadminState extends State<Homeadmin> {
                   
                   _buildDashboardItem(Icons.badge_outlined, "Control de Usuarios", "Roles y permisos", 
                     () async {
-                      // await Navigator.push(context, MaterialPageRoute(builder: (context) => const UsuariosScreen()));
-                      // _refreshData(); 
+                      await Navigator.push(context, MaterialPageRoute(builder: (context) => const UsuariosScreen()));
+                      _refreshData(); 
                     }
                   ),
                   
