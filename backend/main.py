@@ -142,8 +142,7 @@ def get_asistencias(id_usuario):
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        
-       
+
         query = """
             SELECT 
                 a.fecha,
@@ -1038,7 +1037,87 @@ def get_usuarios(rol_nombre):
     finally:
         if cursor: cursor.close()
         if db: db.close()
-    
+
+# Endpoints para profesor
+@app.route('/profesor/<int:teacher_id>/modulos', methods=['GET'])
+def get_teacher_modules(teacher_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+            SELECT m.id_modulo, m.nombre, c.nombre as curso_nombre
+            FROM Modulos m
+            JOIN Cursos c ON m.id_curso = c.id_curso
+            JOIN Profesor p ON p.id_curso = c.id_curso
+            WHERE p.id_usuario = %s
+        """
+        cursor.execute(query, (teacher_id,))
+        modulos = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({"success": True, "modulos": modulos}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/modulo/<int:module_id>/estudiantes', methods=['GET'])
+def get_students_by_module(module_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+            SELECT u.id_usuario, u.nombres, u.apellidos, u.correo
+            FROM Usuarios u
+            JOIN Alumnos a ON u.id_usuario = a.id_usuario
+            JOIN Modulos m ON m.id_curso = a.id_curso
+            WHERE m.id_modulo = %s AND u.id_rol = 2
+        """
+        cursor.execute(query, (module_id,))
+        estudiantes = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({"success": True, "estudiantes": estudiantes}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/asistencia/bulk', methods=['POST'])
+def save_bulk_attendance():
+    try:
+        data = request.json
+        asistencias = data.get('asistencias', [])
+
+        if not asistencias:
+            return jsonify({"success": False, "error": "No hay asistencias para guardar"}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        for asistencia in asistencias:
+            id_usuario = asistencia['id_usuario']
+            id_modulo = asistencia['id_modulo']
+            asistio = asistencia['asistio']
+            fecha = asistencia['fecha']
+
+            # Insertar o actualizar asistencia
+            query = """
+                INSERT INTO Asistencia (id_usuario, id_modulo, fecha, asistio)
+                VALUES (%s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE asistio = VALUES(asistio)
+            """
+            cursor.execute(query, (id_usuario, id_modulo, fecha, asistio))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({"success": True, "message": "Asistencias guardadas correctamente"}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

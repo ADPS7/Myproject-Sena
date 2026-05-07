@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../widget/login_widget.dart';
 import 'asistenciateaacher.dart';
 import 'cursosteacher.dart';
+import 'teacher_attendance.dart';
 
 class HomeTeacher extends StatelessWidget {
   final Map<String, dynamic> user;
@@ -223,8 +224,8 @@ class HomeTeacher extends StatelessWidget {
                   ),
                   _buildDashboardItem(Icons.assignment_turned_in_outlined, "Calificar Notas", "Registro de evaluaciones", 
                     () => Navigator.push(context, MaterialPageRoute(builder: (context) => NotasProfesorView(idUsuario: user['id_usuario'] ?? 0)))),
-                  _buildDashboardItem(Icons.fact_check_outlined, "Control de Asistencia", "Reporte de faltas y retardos", 
-                    () => Navigator.push(context, MaterialPageRoute(builder: (context) => AsistsTeacher(idUsuario: user['id_usuario'] ?? 0)))),
+                  _buildDashboardItem(Icons.fact_check_outlined, "Tomar Asistencia", "Marcar asistencia de estudiantes", 
+                    () => Navigator.push(context, MaterialPageRoute(builder: (context) => const TeacherAttendanceScreen()))),
                   _buildDashboardItem(Icons.folder_shared_outlined, "Material de Apoyo", "Subir guías y talleres", 
                     () {}),
                   const SizedBox(height: 40),

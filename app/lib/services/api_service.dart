@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'aut_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.124.208:5000 ';
+  static const String baseUrl = 'http://10.2.125.58:5000 ';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,  
@@ -441,5 +441,42 @@ Future<Map<String, dynamic>> getMyModules() async {
       return {'success': false, 'message': 'Error de conexión: $e'};
     }
   }
-  
+
+  // Métodos para profesor
+  Future<Map<String, dynamic>> getTeacherModules(int teacherId) async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/profesor/$teacherId/modulos'));
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      return {"success": false, "modulos": []};
+    } catch (e) {
+      return {"success": false, "error": "Error de conexión", "modulos": []};
+    }
+  }
+
+  Future<Map<String, dynamic>> getStudentsByModule(int moduleId) async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/modulo/$moduleId/estudiantes'));
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      return {"success": false, "estudiantes": []};
+    } catch (e) {
+      return {"success": false, "error": "Error de conexión", "estudiantes": []};
+    }
+  }
+
+  Future<Map<String, dynamic>> saveBulkAttendance(List<Map<String, dynamic>> attendanceData) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/asistencia/bulk'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'asistencias': attendanceData}),
+      );
+      return json.decode(response.body);
+    } catch (e) {
+      return {"success": false, "error": "Error de conexión: $e"};
+    }
+  }
 }

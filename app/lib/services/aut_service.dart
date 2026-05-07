@@ -19,9 +19,9 @@ class AuthService {
     return prefs.getInt(_keyUserId);
   }
 
-  // Cerrar sesión
-  static Future<void> logout() async {
+  // Obtener el rol del usuario logueado
+  static Future<String?> getUserRole() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    return prefs.getString(_keyUserRole);
   }
 }
