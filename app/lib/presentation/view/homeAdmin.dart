@@ -195,7 +195,7 @@ class _HomeadminState extends State<Homeadmin> {
                     }
                   ),
                   
-                  _buildDashboardItem(Icons.school_outlined, "Asignar Estudiantes", "Solo alumnos sin curso", 
+                  _buildDashboardItem(Icons.school_outlined, "Asignar Usuarios", "Asignacion de estudiantes y profesores", 
                     () async {
                       await Navigator.push(context, MaterialPageRoute(builder: (context) => const AsignarEstudiantesScreen()));
                       _refreshData();

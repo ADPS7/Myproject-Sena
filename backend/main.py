@@ -901,6 +901,135 @@ def get_estudiantes_por_curso(id_curso):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/profesores-sin-curso', methods=['GET'])
+def getProfesoresSinCurso():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT u.id_usuario, u.nombres, u.apellidos, u.correo
+            FROM Usuarios u
+            LEFT JOIN Profesor p ON u.id_usuario = p.id_usuario
+            WHERE u.id_rol = 3 AND p.id_usuario IS NULL
+        """
+        cursor.execute(query)
+        profesores = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify(profesores), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/cursos/<int:id_curso>/profesores', methods=['GET'])
+def getProfesoresPorCurso(id_curso):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT u.id_usuario, u.nombres, u.apellidos, u.correo, p.id_profesor
+            FROM Usuarios u
+            JOIN Profesor p ON u.id_usuario = p.id_usuario
+            WHERE p.id_curso = %s AND u.id_rol = 3
+        """
+        cursor.execute(query, (id_curso,))
+        profesores = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify(profesores), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/profesores-disponibles/<int:id_curso>', methods=['GET'])
+def getProfesoresDisponiblesPorCurso(id_curso):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT u.id_usuario, u.nombres, u.apellidos, u.correo
+            FROM Usuarios u
+            WHERE u.id_rol = 3
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM Profesor p
+                  WHERE p.id_usuario = u.id_usuario
+                    AND p.id_curso = %s
+              )
+        """
+        cursor.execute(query, (id_curso,))
+        profesores = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify(profesores), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/asignar-profesor', methods=['POST'])
+def asignarProfesor():
+    try:
+        data = request.json
+        id_usuario = data.get('id_usuario')
+        id_curso = data.get('id_curso')
+
+        if not id_usuario or not id_curso:
+            return jsonify({"error": "id_usuario e id_curso requeridos"}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT id_rol FROM Usuarios WHERE id_usuario = %s", (id_usuario,))
+        usuario = cursor.fetchone()
+        if not usuario or usuario[0] != 3:
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Usuario no encontrado o no es profesor"}), 400
+
+        cursor.execute("SELECT id_profesor FROM Profesor WHERE id_usuario = %s AND id_curso = %s", (id_usuario, id_curso))
+        if cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "El profesor ya está asignado a este curso"}), 409
+
+        cursor.execute("INSERT INTO Profesor (id_usuario, id_curso) VALUES (%s, %s)", (id_usuario, id_curso))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({"success": True, "message": "Profesor asignado al curso exitosamente"}), 200
+    except mysql.connector.IntegrityError as e:
+        return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/desasignar-profesor', methods=['POST'])
+def desasignarProfesor():
+    try:
+        data = request.json
+        id_usuario = data.get('id_usuario')
+        id_curso = data.get('id_curso')
+
+        if not id_usuario:
+            return jsonify({"error": "id_usuario requerido"}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        if id_curso:
+            cursor.execute("DELETE FROM Profesor WHERE id_usuario = %s AND id_curso = %s", (id_usuario, id_curso))
+        else:
+            cursor.execute("DELETE FROM Profesor WHERE id_usuario = %s", (id_usuario,))
+
+        deleted = cursor.rowcount
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        if deleted == 0:
+            return jsonify({"error": "No se encontró la asignación del profesor"}), 404
+
+        return jsonify({"success": True, "message": "Profesor desasignado correctamente"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/desasignar-alumno', methods=['POST'])
 def desasignar_alumno():
     try:

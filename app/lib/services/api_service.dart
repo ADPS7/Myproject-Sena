@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'aut_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.139.161:5000 ';
+  static const String baseUrl = 'http://192.168.1.5:5000';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,  
@@ -359,6 +359,18 @@ Future<Map<String, dynamic>> getMyModules() async {
     }
   }
 
+  Future<List<dynamic>> getProfesores() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/profesores'));
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
   Future<List<dynamic>> getEstudiantesPorCurso(int idCurso) async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/cursos/$idCurso/estudiantes'));
@@ -368,6 +380,73 @@ Future<Map<String, dynamic>> getMyModules() async {
       return [];
     } catch (e) {
       return [];
+    }
+  }
+
+  Future<List<dynamic>> getProfesoresSinCurso() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/profesores-sin-curso'));
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<List<dynamic>> getProfesoresPorCurso(int idCurso) async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/cursos/$idCurso/profesores'));
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<List<dynamic>> getProfesoresDisponiblesPorCurso(int idCurso) async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/profesores-disponibles/$idCurso'));
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> desasignarProfesor(int idUsuario, int? idCurso) async {
+    try {
+      final body = {'id_usuario': idUsuario};
+      if (idCurso != null) {
+        body['id_curso'] = idCurso;
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/desasignar-profesor'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(body),
+      );
+      return json.decode(response.body);
+    } catch (e) {
+      return {"success": false, "error": "Error de conexión"};
+    }
+  }
+
+  Future<Map<String, dynamic>> asignarProfesor(int idUsuario, int idCurso) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/asignar-profesor'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'id_usuario': idUsuario, 'id_curso': idCurso}),
+      );
+      return json.decode(response.body);
+    } catch (e) {
+      return {"success": false, "error": "Error de conexión"};
     }
   }
 
