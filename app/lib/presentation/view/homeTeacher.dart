@@ -2,6 +2,7 @@ import 'package:app/presentation/view/asistsTeacher.dart';
 import 'package:app/presentation/view/notaPro.dart'; 
 import 'package:flutter/material.dart';
 import '../widget/login_widget.dart';
+import 'AjustesScreen.dart';
 import 'asistenciateaacher.dart';
 import 'cursosteacher.dart';
 
@@ -235,7 +236,7 @@ class HomeTeacher extends StatelessWidget {
         ),
       ),
       
-      bottomNavigationBar: Container(
+        bottomNavigationBar: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -248,6 +249,16 @@ class HomeTeacher extends StatelessWidget {
           unselectedItemColor: Colors.grey[400],
           currentIndex: 0,
           type: BottomNavigationBarType.fixed,
+          onTap: (index) {
+            if (index == 2) { // Ajustes
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AjustesScreen(user: user),
+                ),
+              );
+            }
+          },
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.grid_view_rounded), label: "Inicio"),
             BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline_rounded), label: "Mensajes"),

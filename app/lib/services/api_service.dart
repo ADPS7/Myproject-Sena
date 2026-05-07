@@ -441,5 +441,31 @@ Future<Map<String, dynamic>> getMyModules() async {
       return {'success': false, 'message': 'Error de conexión: $e'};
     }
   }
+
+  Future<Map<String, dynamic>> actualizarPerfil({
+  required int idUsuario,
+  required String nombres,
+  required String apellidos,
+  required String correo,
+  required String fechaNacimiento,
+}) async {
+  try {
+    final response = await http.put(
+      Uri.parse('$baseUrl/actualizar_perfil/$idUsuario'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'nombres': nombres,
+        'apellidos': apellidos,
+        'correo': correo,
+        'fecha_nacimiento': fechaNacimiento,
+      }),
+    );
+
+    return json.decode(response.body);
+  } catch (e) {
+    print("Error en actualizarPerfil: $e");
+    return {"success": false, "error": "Error de conexión"};
+  }
+}
   
 }

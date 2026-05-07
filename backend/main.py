@@ -93,7 +93,7 @@ def login():
         cursor = conn.cursor(dictionary=True)
         
         query = """
-                SELECT u.id_usuario, u.nombres, u.apellidos, u.correo, u.id_rol, r.nombre as rol 
+                SELECT u.id_usuario, u.nombres, u.apellidos, u.correo, u.fecha_nacimiento, u.id_rol, r.nombre as rol 
                 FROM usuarios u 
                 JOIN roles r ON u.id_rol = r.id_rol 
                 WHERE u.correo = %s AND u.clave = %s
@@ -951,45 +951,35 @@ def get_student_stats(id_usuario):
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
-        # 1. Obtener el id_curso al que pertenece el estudiante
-        query_curso = "SELECT id_curso FROM Alumnos WHERE id_usuario = %s"
-        cursor.execute(query_curso, (id_usuario,))
+        # 1. Obtener curso del estudiante
+        cursor.execute("SELECT id_curso FROM Alumnos WHERE id_usuario = %s", (id_usuario,))
         alumno = cursor.fetchone()
-        
         id_curso = alumno['id_curso'] if alumno else None
 
-        # 2. Contar cuántos módulos tiene ese curso en total
+        # 2. Total de módulos del curso
         total_modulos = 0
         if id_curso:
             cursor.execute("SELECT COUNT(*) as total FROM Modulos WHERE id_curso = %s", (id_curso,))
-            res_modulos = cursor.fetchone()
-            total_modulos = res_modulos['total'] or 0
+            res = cursor.fetchone()
+            total_modulos = res['total'] or 0
 
-        # 3. Contar cuántos módulos ya tienen nota para este estudiante
-        # (Si tiene nota en la tabla Notas, se considera realizado)
+        # 3. Módulos con nota (completados)
         cursor.execute("SELECT COUNT(DISTINCT id_modulo) as hechos FROM Notas WHERE id_usuario = %s", (id_usuario,))
         res_hechos = cursor.fetchone()
         modulos_hechos = res_hechos['hechos'] or 0
 
-        # 4. Cálculo del porcentaje de módulos
+        # 4. Porcentaje
         porcentaje_modulos = (modulos_hechos / total_modulos * 100) if total_modulos > 0 else 0
 
-        # 5. Lógica de Asistencia (que ya tenías funcionando)
+        # 5. Asistencia
         cursor.execute("SELECT asistio FROM Asistencia WHERE id_usuario = %s", (id_usuario,))
         registros_asist = cursor.fetchall()
         asistencias_si = sum(1 for r in registros_asist if r['asistio'] == 'SI')
         porcentaje_asist = (asistencias_si / len(registros_asist) * 100) if len(registros_asist) > 0 else 0
 
-        # 6. Notas para el promedio
+        # 6. Notas
         cursor.execute("SELECT nota FROM Notas WHERE id_usuario = %s", (id_usuario,))
         notas = cursor.fetchall()
-
-        # PRINT DE DEPURACIÓN EN CONSOLA
-        print(f"\n--- ESTADÍSTICAS MÓDULOS (ID: {id_usuario}) ---")
-        print(f" > Módulos del curso: {total_modulos}")
-        print(f" > Módulos con nota: {modulos_hechos}")
-        print(f" > Avance: {porcentaje_modulos:.1f}%")
-        print("------------------------------------------\n")
 
         cursor.close()
         conn.close()
@@ -998,11 +988,13 @@ def get_student_stats(id_usuario):
             "success": True,
             "notas": notas,
             "asistencia_porcentaje": f"{round(porcentaje_asist, 1)}%",
-            "modulos_completados": f"{round(porcentaje_modulos, 1)}%" # Se envía como porcentaje
+            "modulos_completados": f"{round(porcentaje_modulos, 1)}%",
+            "total_modulos": total_modulos,
+            "modulos_hechos": modulos_hechos
         })
 
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(f"Error en get_student_stats: {str(e)}")
         return jsonify({"success": False, "message": str(e)}), 500
     
 
@@ -1084,6 +1076,41 @@ def eliminar_usuario(id_usuario):
     finally:
         if cursor: cursor.close()
         if db: db.close()
+
+@app.route('/actualizar_perfil/<int:id_usuario>', methods=['PUT'])
+def actualizar_perfil(id_usuario):
+    try:
+        data = request.json
+        nombres = data.get('nombres')
+        apellidos = data.get('apellidos')
+        correo = data.get('correo')
+        fecha_nacimiento = data.get('fecha_nacimiento')
+
+        if not all([nombres, apellidos, correo, fecha_nacimiento]):
+            return jsonify({"success": False, "error": "Todos los campos son requeridos"}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        query = """
+            UPDATE usuarios 
+            SET nombres = %s, apellidos = %s, correo = %s, fecha_nacimiento = %s
+            WHERE id_usuario = %s
+        """
+        cursor.execute(query, (nombres, apellidos, correo, fecha_nacimiento, id_usuario))
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            "success": True, 
+            "message": "Perfil actualizado correctamente"
+        }), 200
+
+    except Exception as e:
+        print(f"Error actualizando perfil: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

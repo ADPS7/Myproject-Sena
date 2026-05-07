@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../widget/login_widget.dart';
+import 'AjustesScreen.dart';
 import 'asiststudent.dart';
 import 'NotasEstudiantes.dart';
 import 'cursosStudente.dart';
@@ -216,6 +217,14 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           unselectedItemColor: Colors.grey[400],
           currentIndex: 0,
           type: BottomNavigationBarType.fixed,
+          onTap: (index) {
+            if (index == 2) { // Ajustes
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AjustesScreen(user: widget.user)),
+              );
+            }
+          },
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Inicio"),
             BottomNavigationBarItem(icon: Icon(Icons.notifications_none_rounded), label: "Avisos"),
