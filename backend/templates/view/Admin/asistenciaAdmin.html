@@ -1,28 +1,27 @@
-<!-- Enlace a los estilos CSS personalizados -->
+<!-- Estilos del panel -->
 <link rel="stylesheet" href="{{url_for('static', filename='frontend/style/asistenciaAdmin.css')}}">
-
-<div class="container-fluid py-4" id="main-container">
-    <!-- Encabezado y Buscador -->
-    <div id="header-section" class="row align-items-center mb-5 g-3">
-        <div class="col-12 col-md-6">
-            <h2 class="fw-bold h3 mb-1 text-dark" id="view-title">Asistencias</h2>
-            <p class="text-muted mb-0" id="view-subtitle">Panel de visualización de cursos activos.</p>
+<!-- Contenedor Principal -->
+<div class="container-fluid py-4">
+    <!-- Encabezado Dinámico -->
+    <div class="row align-items-center mb-4">
+        <div class="col-12 col-md-7">
+            <h2 class="fw-bold text-dark mb-1" id="view-title">Control de Asistencias</h2>
+            <p class="text-muted mb-0" id="view-subtitle">Cargando información del servidor...</p>
         </div>
-        <div class="col-12 col-md-6" id="search-wrapper">
-            <div class="input-group search-container">
-                <span class="input-group-text bg-white border-0 ps-3">
-                    <i class="bi bi-search text-muted"></i>
-                </span>
-                <input type="text" id="inputBusqueda" oninput="filtrarCursos()" placeholder="Buscar curso por nombre..." class="form-control border-0 shadow-none">
-            </div>
+        <div class="col-12 col-md-5 text-md-end mt-3 mt-md-0" id="back-button-container">
+            <!-- Botón de navegación dinámico -->
         </div>
     </div>
 
-    <!-- Contenedor Dinámico de Tarjetas -->
-    <div class="row g-4" id="contenedor-asistencias-cursos">
-        <!-- Aquí se inyectan primero los Cursos y luego los Módulos -->
+    <!-- Área de Contenido Variable -->
+    <div class="row g-4" id="contenedor-principal">
+        <div class="col-12 text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2 text-muted">Sincronizando base de datos...</p>
+        </div>
     </div>
 </div>
 
-<!-- Enlace al Script Externo -->
 <script src="{{url_for('static', filename='backend/javascripts/asistenciaAdmin.js')}}"></script>

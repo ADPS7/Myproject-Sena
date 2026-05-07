@@ -1,126 +1,154 @@
-// Variable global para el buscador de cursos
-let listaCursos = []; 
+// Variable global para almacenar los datos una sola vez
+let datosAsistencia = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchAsistencias();
+});
 
 /**
- * CARGA INICIAL: Obtiene todos los cursos
+ * Obtiene los datos del endpoint /admin/asistencias
  */
-function cargarAsistenciasCursos() {
-    // Restaurar el encabezado original si venimos de la vista de módulos
-    document.getElementById('view-title').innerText = "Asistencias";
-    document.getElementById('view-subtitle').innerText = "Panel de visualización de cursos activos.";
-    document.getElementById('search-wrapper').style.display = "block";
-
-    fetch('/cursos')
-        .then(response => response.json())
-        .then(cursos => {
-            listaCursos = cursos; 
-            renderizarCursos(listaCursos);
-        })
-        .catch(error => console.error('Error al cargar cursos:', error));
+async function fetchAsistencias() {
+    try {
+        const response = await fetch('/admin/asistencias');
+        const res = await response.json();
+        
+        if (res.success) {
+            datosAsistencia = res.cursos;
+            renderizarCursos();
+        } else {
+            throw new Error(res.error || "Error desconocido");
+        }
+    } catch (error) {
+        console.error("Error al cargar datos:", error);
+        document.getElementById('contenedor-principal').innerHTML = `
+            <div class="col-12 alert alert-danger">
+                Error al conectar con la base de datos: ${error.message}
+            </div>`;
+    }
 }
 
 /**
- * RENDERIZA LAS CARDS DE CURSOS
+ * VISTA 1: Muestra los Cursos
  */
-function renderizarCursos(cursosAMostrar) {
-    const contenedor = document.getElementById('contenedor-asistencias-cursos');
-    if (!contenedor) return;
-    contenedor.innerHTML = ''; 
+function renderizarCursos() {
+    const contenedor = document.getElementById('contenedor-principal');
+    const navContainer = document.getElementById('back-button-container');
+    
+    document.getElementById('view-title').innerText = "Cursos Activos";
+    document.getElementById('view-subtitle').innerText = "Selecciona un curso para ver sus módulos.";
+    navContainer.innerHTML = ''; // Sin botón de volver en la raíz
 
-    if (cursosAMostrar.length === 0) {
-        contenedor.innerHTML = `<div class="col-12 text-center py-5 text-muted">No se encontraron resultados.</div>`;
-        return;
-    }
-
-    cursosAMostrar.forEach(curso => {
-        contenedor.innerHTML += `
-            <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-                <div class="card-curso-admin p-4 shadow-sm h-100 d-flex align-items-center" 
-                     onclick="verDetalleAsistenciaAdmin(${curso.id_curso}, '${curso.nombre}')">
-                    <div class="icon-shape me-3">
-                        <i class="bi bi-journal-text fs-4"></i>
+    contenedor.innerHTML = datosAsistencia.map(curso => `
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card card-asistencia shadow-sm p-4 h-100 cursor-pointer" onclick="renderizarModulos(${curso.id_curso})">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-circle me-3">
+                        <i class="bi bi-book-half fs-3"></i>
                     </div>
                     <div>
-                        <h6 class="fw-bold mb-0 text-dark text-capitalize">${curso.nombre.toLowerCase()}</h6>
-                        <small class="text-muted" style="font-size: 10px;">CONSULTAR MODULOS</small>
+                        <h5 class="fw-bold mb-0">${curso.nombre}</h5>
+                        <small class="text-muted">${curso.modulos.length} Módulos registrados</small>
                     </div>
                 </div>
-            </div>`;
-    });
+            </div>
+        </div>
+    `).join('');
 }
 
 /**
- * NAVEGACIÓN: Carga los módulos de un curso específico
+ * VISTA 2: Muestra los Módulos del curso
  */
-window.verDetalleAsistenciaAdmin = function(idCurso, nombreCurso) {
-    // 1. Cambiar la interfaz para el modo Módulos
-    document.getElementById('view-title').innerText = "Módulos de " + nombreCurso;
-    document.getElementById('view-subtitle').innerText = "Selecciona un módulo para gestionar asistencia.";
-    document.getElementById('search-wrapper').style.display = "none"; // Ocultamos buscador en módulos
+function renderizarModulos(idCurso) {
+    const curso = datosAsistencia.find(c => c.id_curso === idCurso);
+    const contenedor = document.getElementById('contenedor-principal');
+    const navContainer = document.getElementById('back-button-container');
 
-    // 2. Botón de retorno
-    const contenedor = document.getElementById('contenedor-asistencias-cursos');
-    contenedor.innerHTML = `
-        <div class="col-12 mb-2">
-            <button class="btn btn-light btn-sm rounded-pill shadow-sm border" onclick="cargarAsistenciasCursos()">
-                <i class="bi bi-arrow-left me-1"></i> Volver a Cursos
-            </button>
-        </div>`;
+    document.getElementById('view-title').innerText = curso.nombre;
+    document.getElementById('view-subtitle').innerText = "Módulos de este curso.";
+    
+    navContainer.innerHTML = `
+        <button class="btn btn-outline-secondary rounded-pill btn-sm" onclick="renderizarCursos()">
+            <i class="bi bi-arrow-left"></i> Volver a Cursos
+        </button>`;
 
-    // 3. Petición a tu nueva ruta de Flask
-    fetch(`/modulos/curso/${idCurso}`)
-        .then(response => response.json())
-        .then(modulos => {
-            if (modulos.length === 0) {
-                contenedor.innerHTML += `<div class="col-12 text-center py-5 text-muted">Este curso no tiene módulos registrados.</div>`;
-                return;
-            }
-
-            modulos.forEach(modulo => {
-                const fInicio = new Date(modulo.fecha_inicio).toLocaleDateString();
-                const fFin = new Date(modulo.fecha_fin).toLocaleDateString();
-
-                contenedor.innerHTML += `
-                    <div class="col-12 col-md-6 col-xl-4">
-                        <div class="card-stat bg-white p-4 rounded-4 border-0 shadow-sm border-hover h-100" 
-                             style="cursor: pointer;" onclick="verAsistenciaFinal(${modulo.id_modulo})">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="icon-shape bg-primary bg-opacity-10 text-primary p-2 rounded-3 me-3">
-                                    <i class="bi bi-layers-fill fs-4"></i>
-                                </div>
-                                <h6 class="fw-bold mb-0">${modulo.nombre}</h6>
-                            </div>
-                            <div class="row g-0 py-2 border-top border-bottom my-3">
-                                <div class="col-6 border-end text-center">
-                                    <small class="text-muted d-block small">Desde</small>
-                                    <span class="fw-bold" style="font-size: 0.85rem;">${fInicio}</span>
-                                </div>
-                                <div class="col-6 text-center">
-                                    <small class="text-muted d-block small">Hasta</small>
-                                    <span class="fw-bold" style="font-size: 0.85rem;">${fFin}</span>
-                                </div>
-                            </div>
-                            <div class="text-center">
-                                <span class="text-primary small fw-bold">Revisar Asistencia <i class="bi bi-arrow-right"></i></span>
-                            </div>
-                        </div>
-                    </div>`;
-            });
-        });
-};
+    contenedor.innerHTML = curso.modulos.map(mod => `
+        <div class="col-12 col-md-6">
+            <div class="card card-asistencia shadow-sm p-3 border-start border-primary border-4" 
+                 onclick="renderizarReporteFinal(${idCurso}, ${mod.id_modulo})" style="cursor:pointer">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0">${mod.nombre}</h6>
+                    <span class="badge bg-light text-dark border">${mod.estudiantes.length} Alumnos</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
 
 /**
- * BUSCADOR DE CURSOS
+ * VISTA 3: Reporte de Asistencia (Tabla)
  */
-window.filtrarCursos = function() {
-    const termino = document.getElementById('inputBusqueda').value.toLowerCase().trim();
-    const filtrados = listaCursos.filter(c => c.nombre.toLowerCase().includes(termino));
-    renderizarCursos(filtrados);
-};
+function renderizarReporteFinal(idCurso, idModulo) {
+    const curso = datosAsistencia.find(c => c.id_curso === idCurso);
+    const modulo = curso.modulos.find(m => m.id_modulo === idModulo);
+    const contenedor = document.getElementById('contenedor-principal');
+    const navContainer = document.getElementById('back-button-container');
 
-// Iniciar al cargar el DOM
-document.addEventListener('DOMContentLoaded', cargarAsistenciasCursos);
+    document.getElementById('view-title').innerText = "Reporte: " + modulo.nombre;
+    document.getElementById('view-subtitle').innerText = "Seguimiento detallado de inasistencias.";
 
-function verAsistenciaFinal(idModulo) {
-    console.log("Accediendo al módulo ID:", idModulo);
+    navContainer.innerHTML = `
+        <button class="btn btn-outline-secondary rounded-pill btn-sm" onclick="renderizarModulos(${idCurso})">
+            <i class="bi bi-arrow-left"></i> Volver a Módulos
+        </button>`;
+
+    contenedor.innerHTML = `
+        <div class="col-12">
+            <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 15px;">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Estudiante</th>
+                                <th class="text-center">Total Faltas</th>
+                                <th class="text-center">Estado</th>
+                                <th class="ps-4">Últimos Registros</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${modulo.estudiantes.map(est => `
+                                <tr class="${est.alerta ? 'table-danger' : ''}">
+                                    <td class="ps-4">
+                                        <div class="fw-bold">${est.nombre}</div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="fw-bold ${est.inasistencias > 0 ? 'text-danger' : 'text-muted'}">
+                                            ${est.inasistencias}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        ${est.alerta ? 
+                                            '<span class="badge bg-danger">Alerta de Deserción</span>' : 
+                                            '<span class="badge bg-success">Al día</span>'}
+                                    </td>
+                                    <td class="ps-4">
+                                        <div class="d-flex gap-1">
+                                            ${est.asistencias.length > 0 ? 
+                                                est.asistencias.slice(-5).map(a => `
+                                                    <span class="badge-date ${a.asistio === 'SI' ? 'bg-success text-white' : 'bg-danger text-white'}" 
+                                                          title="${a.fecha}">
+                                                        ${a.fecha.split('-')[2]}/${a.fecha.split('-')[1]}
+                                                    </span>
+                                                `).join('') : 
+                                                '<small class="text-muted">Sin registros</small>'
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>`;
 }
