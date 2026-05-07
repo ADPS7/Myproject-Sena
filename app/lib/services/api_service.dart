@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'aut_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.127.238:5000 ';
+  static const String baseUrl = 'http://10.2.139.161:5000 ';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,  
@@ -472,69 +472,65 @@ Future<Map<String, dynamic>> getMyModules() async {
  
  // primer metodo
 
-Future<Map<String, dynamic>> obtenerUsuarios() async {
-  try {
-    final response = await http.get(
-      Uri.parse('$baseUrl/usuarios'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    );
+  Future<Map<String, dynamic>> obtenerUsuarios() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/usuarios'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
 
-    if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
 
-      return {
-        'success': true,
-        'usuarios': data,
-      };
-    } else {
-      return {
-        'success': false,
-        'message': 'Error al obtener usuarios',
-      };
-    }
-  } catch (e) {
-    return {
-      'success': false,
-      'message': e.toString(),
-    };
-  }
-}
-
-// segundo metodo
-
-Future<Map<String, dynamic>> actualizarRol(
-  int userId,
-  String rol,
-) async {
-  try {
-    final response = await http.put(
-      Uri.parse('$baseUrl/usuarios/$userId/rol'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'rol': rol,
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      return {
-        'success': true,
-      };
-    } else {
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {
+          'success': true,
+          'usuarios': data['usuarios'], // ✅ FIX IMPORTANTE
+        };
+      } else {
+        return {
+          'success': false,
+          'message': data['error'] ?? 'Error al obtener usuarios',
+        };
+      }
+    } catch (e) {
       return {
         'success': false,
-        'message': 'No se pudo actualizar el rol',
+        'message': e.toString(),
       };
     }
-  } catch (e) {
-    return {
-      'success': false,
-      'message': e.toString(),
-    };
   }
-}
-  
+
+  Future<Map<String, dynamic>> actualizarRol(int userId, String nuevoRol) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/usuarios/$userId/rol'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'rol': nuevoRol,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {
+          'success': true,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': data['error'] ?? 'Error al actualizar rol',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': e.toString(),
+      };
+    }
+  }
 }
