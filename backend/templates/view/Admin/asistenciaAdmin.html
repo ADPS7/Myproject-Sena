@@ -1,15 +1,26 @@
+<link rel="stylesheet" href="{{url_for('static', filename='frontend/style/asistenciaAdmin.css')}}">
+
 <div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold h4 mb-0">Gestión de Cursos</h2>
-        <button class="btn btn-primary rounded-pill px-4" onclick="abrirModalCrearCurso()">
-            <i class="bi bi-plus-lg me-2"></i>Nuevo Curso
-        </button>
+    <!-- Encabezado y Buscador -->
+    <div class="row align-items-center mb-5 g-3">
+        <div class="col-12 col-md-6">
+            <h2 class="fw-bold h3 mb-1 text-dark">Asistencias</h2>
+            <p class="text-muted mb-0">Panel de visualización de cursos activos.</p>
+        </div>
+        <div class="col-12 col-md-6">
+            <div class="input-group search-container">
+                <span class="input-group-text bg-white border-0 ps-3">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+                <input type="text" id="inputBusqueda" oninput="filtrarCursos()" placeholder="Buscar curso por nombre..." class="form-control border-0 shadow-none">
+            </div>
+        </div>
     </div>
 
-    <!-- Contenedor donde se cargarán los cursos dinámicamente -->
-    <div class="row g-3" id="contenedor-cursos">
-        <!-- Los cursos se inyectarán aquí desde el JavaScript -->
+    <!-- Contenedor de Cursos -->
+    <div class="row g-4" id="contenedor-asistencias-cursos">
+        <!-- Se carga dinámicamente -->
     </div>
 </div>
 
-<script src="{{url_for('static', filename='backend/javascripts/asistenciasAdmin.js')}}"></script>
+<script src="{{url_for('static', filename='backend/javascripts/asistenciaAdmin.js')}}"></script>

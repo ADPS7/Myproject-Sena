@@ -1,44 +1,75 @@
-function cargarCursos() {
-    fetch('/cursos')
-        .then(response => response.json())
-        .then(cursos => {
-            const contenedor = document.getElementById('contenedor-cursos');
-            contenedor.innerHTML = ''; // Limpiar contenedor
+// 1. Declarar la variable fuera para que sea accesible por todas las funciones
+let listaCursos = []; 
 
-            cursos.forEach(curso => {
-                contenedor.innerHTML += `
-                    <div class="col-12 col-md-6 col-xl-4">
-                        <div class="card-stat bg-white p-4 rounded-4 border-0 shadow-sm border-hover h-100">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <i class="bi bi-journal-bookmark-fill text-primary fs-3"></i>
-                                    <div class="mt-3">
-                                        <h5 class="fw-bold mb-1">${curso.nombre}</h5>
-                                        <small class="text-muted">ID: #${curso.id_curso}</small>
-                                    </div>
-                                </div>
-                                <div class="dropdown">
-                                    <button class="btn btn-light btn-sm rounded-circle" data-bs-toggle="dropdown">
-                                        <i class="bi bi-three-dots-vertical"></i>
-                                    </button>
-                                    <ul class="dropdown-menu border-0 shadow-sm">
-                                        <li><a class="dropdown-item" href="#" onclick="editarCurso(${curso.id_curso})">Editar</a></li>
-                                        <li><a class="dropdown-item text-danger" href="#" onclick="confirmarBorrarCurso(${curso.id_curso})">Eliminar</a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                            <div class="mt-4 pt-3 border-top">
-                                <button class="btn btn-outline-primary btn-sm w-100 rounded-pill" onclick="verModulos(${curso.id_curso})">
-                                    Gestionar Módulos
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
+function cargarAsistenciasCursos() {
+    fetch('/cursos')
+        .then(response => {
+            if (!response.ok) throw new Error("Error en la red");
+            return response.json();
         })
-        .catch(error => console.error('Error al cargar cursos:', error));
+        .then(cursos => {
+            // 2. Guardar los datos originales aquí
+            listaCursos = cursos; 
+            renderizarCursos(listaCursos);
+        })
+        .catch(error => {
+            console.error('Error al obtener cursos:', error);
+            document.getElementById('contenedor-asistencias-cursos').innerHTML = 
+                '<p class="text-center text-danger">Error al conectar con el servidor</p>';
+        });
 }
 
-// Llamar a la función al cargar la vista
-document.addEventListener('DOMContentLoaded', cargarCursos);
+function renderizarCursos(cursosAMostrar) {
+    const contenedor = document.getElementById('contenedor-asistencias-cursos');
+    if (!contenedor) return;
+    
+    contenedor.innerHTML = ''; 
+
+    if (cursosAMostrar.length === 0) {
+        contenedor.innerHTML = `
+            <div class="col-12 text-center py-5">
+                <i class="bi bi-search text-muted fs-1"></i>
+                <p class="text-muted mt-2">No se encontraron cursos con ese nombre</p>
+            </div>`;
+        return;
+    }
+
+    cursosAMostrar.forEach(curso => {
+        // Aseguramos que nombre no sea null
+        const nombreCurso = curso.nombre ? curso.nombre : "Sin nombre";
+        
+        contenedor.innerHTML += `
+            <div class="col-12 col-md-6 col-lg-4 col-xl-3 curso-item">
+                <div class="card-curso-admin p-4 shadow-sm h-100 d-flex align-items-center" 
+                     onclick="verDetalleAsistenciaAdmin(${curso.id_curso})">
+                    <div class="icon-shape me-3">
+                        <i class="bi bi-journal-text fs-4"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0 text-dark text-capitalize">${nombreCurso.toLowerCase()}</h6>
+                        <small class="text-muted" style="font-size: 10px;">CONSULTAR ASISTENCIA</small>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+}
+
+// 3. La función de filtrado mejorada
+function filtrarCursos() {
+    const input = document.getElementById('inputBusqueda');
+    if (!input) return;
+
+    const termino = input.value.toLowerCase().trim();
+    
+    // Filtramos sobre la variable global 'listaCursos'
+    const filtrados = listaCursos.filter(curso => {
+        const nombre = curso.nombre ? curso.nombre.toLowerCase() : "";
+        return nombre.includes(termino);
+    });
+
+    renderizarCursos(filtrados);
+}
+
+// Iniciar carga
+document.addEventListener('DOMContentLoaded', cargarAsistenciasCursos);
