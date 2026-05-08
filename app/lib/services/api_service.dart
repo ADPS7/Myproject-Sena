@@ -174,6 +174,51 @@ class ApiService {
   return jsonDecode(response.body);
 }
 
+  Future<List<dynamic>> getNotasPorModulo(int idModulo) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/notas/modulo/$idModulo'),
+      );
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      return [];
+    } catch (e) {
+      print('Error en getNotasPorModulo: $e');
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> guardarNota({
+    required int idUsuario,
+    required int idModulo,
+    required double nota,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/notas'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'id_usuario': idUsuario,
+          'id_modulo': idModulo,
+          'nota': nota,
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {'success': true};
+      }
+
+      final errorBody = json.decode(response.body);
+      return {
+        'success': false,
+        'error': errorBody['error'] ?? 'Error al guardar la nota',
+      };
+    } catch (e) {
+      return {'success': false, 'error': 'Error de conexión: $e'};
+    }
+  }
+
 Future<String> getStudentCourse() async {
   final userId = await AuthService.getUserId(); 
   if (userId == null) return "Usuario no encontrado";

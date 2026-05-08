@@ -3,6 +3,7 @@ import '../../services/api_service.dart';
 
 class NotasProfesorView extends StatefulWidget {
   final int idUsuario; // ID del profesor
+  
 
   const NotasProfesorView({super.key, required this.idUsuario});
 
@@ -12,6 +13,11 @@ class NotasProfesorView extends StatefulWidget {
 
 class _NotasProfesorViewState extends State<NotasProfesorView> {
   final ApiService _api = ApiService();
+
+  final Color primaryPurple = const Color(0xFF7C4DFF);
+  final Color darkBlue = const Color(0xFF1A202C);
+  final Color bgGrey = const Color(0xFFF8FAFC);
+  final Color borderGrey = const Color(0xFFE2E8F0);
 
   Future<List<dynamic>>? _futureCursos;
 
@@ -32,22 +38,246 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
   }
 
   Future<List<dynamic>> _getEstudiantes(int idModulo) async {
-    return await _api.getEstudiantesPorModulo(idModulo);
+    final notas = await _api.getNotasPorModulo(idModulo);
+    final estudiantes = await _api.getEstudiantesPorModulo(idModulo);
+
+    int? toInt(dynamic value) {
+      if (value is int) return value;
+      return int.tryParse(value?.toString() ?? '');
+    }
+
+    String nombreCompleto(Map estudiante) {
+      final nombres = estudiante['nombres']?.toString() ?? '';
+      final apellidos = estudiante['apellidos']?.toString() ?? '';
+      return '$nombres $apellidos'.trim();
+    }
+
+    final correosPorUsuario = <int, String>{};
+    final nombresPorUsuario = <int, String>{};
+
+    for (final estudiante in estudiantes) {
+      final idUsuario = toInt(estudiante['id_usuario']);
+      if (idUsuario == null) continue;
+
+      final nombre = nombreCompleto(estudiante);
+
+      correosPorUsuario[idUsuario] = estudiante['correo']?.toString() ?? '';
+      if (nombre.isNotEmpty) {
+        nombresPorUsuario[idUsuario] = nombre;
+      }
+    }
+
+    if (notas.isEmpty) {
+      return estudiantes.map((estudiante) {
+        return {
+          'id_usuario': estudiante['id_usuario'],
+          'nombre': nombreCompleto(estudiante),
+          'correo': estudiante['correo'],
+          'id_nota': null,
+          'nota': null,
+        };
+      }).toList();
+    }
+
+    for (final nota in notas) {
+      final idUsuario = toInt(nota['id_usuario']);
+      if (idUsuario == null) continue;
+
+      nota['correo'] ??= correosPorUsuario[idUsuario];
+      nota['nombre'] ??= nombresPorUsuario[idUsuario];
+    }
+
+    return notas;
   }
 
   void _mostrarDialogoNota(Map estudiante, int idModulo) {
-    final TextEditingController controller = TextEditingController(
-      text: estudiante['nota']?.toString() ?? '',
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text("Notas - ${estudiante['nombre']}"),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: FutureBuilder<Map<String, dynamic>>(
+            future: _api.getNotasEstudiante(estudiante['id_usuario']),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final data = snapshot.data!;
+              final allModulos = data['modulos'] as List<dynamic>? ?? [];
+              final modulos = allModulos.where((m) => m['id_modulo'] == idModulo).toList();
+
+              if (modulos.isEmpty) {
+                return const Text("No hay notas registradas para este estudiante en este módulo.");
+              }
+
+              return ListView.builder(
+                shrinkWrap: true,
+                itemCount: modulos.length,
+                itemBuilder: (context, index) {
+                  final modulo = modulos[index];
+                  final notas = modulo['notas'] as List<dynamic>? ?? [];
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: bgGrey,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: borderGrey, width: 0.5),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              modulo['nombre'] ?? 'Módulo',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            if (notas.isNotEmpty)
+                              IconButton(
+                                icon: const Icon(Icons.add_circle, size: 22, color: Colors.green),
+                                tooltip: 'Agregar nueva nota',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  _mostrarDialogoEditarNota(
+                                    estudiante,
+                                    modulo['nombre'] ?? 'Módulo',
+                                    null,
+                                    modulo['id_modulo'],
+                                  );
+                                },
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        if (notas.isEmpty)
+                        Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                "sin notas registradas",
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              )),
+                            IconButton(
+                              icon: const Icon(Icons.add, size: 18, color: Colors.blue,),
+                              tooltip: 'Agregar nota',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _mostrarDialogoEditarNota(
+                                  estudiante,
+                                  modulo['nombre'] ?? 'Módulo',
+                                  null,
+                                  modulo['id_modulo'],
+                                );
+                              },
+                            ),
+                          ],
+                        )
+                        else
+                          ...notas.map((nota) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: (nota != null && nota is num && nota < 3)
+                                      ? Colors.red.withOpacity(0.3)
+                                      : Colors.grey.withOpacity(0.2),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      "Nota: ${nota?.toString() ?? 'N/A'}",
+                                      style: TextStyle(
+                                        color: (nota != null && nota is num && nota < 3)
+                                            ? Colors.red
+                                            : Colors.black,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                                    tooltip: 'Editar nota',
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      _mostrarDialogoEditarNota(
+                                        estudiante,
+                                        modulo['nombre'] ?? 'Módulo',
+                                        nota,
+                                        modulo['id_modulo'],
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cerrar"),
+          ),
+        ],
+      ),
     );
+  }
+
+  void _mostrarDialogoEditarNota(Map estudiante, String moduloNombre, dynamic notaActual, int idModulo) {
+    final TextEditingController controller = TextEditingController(
+      text: notaActual?.toString() ?? '',
+    );
+    
+    final bool esNueveNota = notaActual == null;
+    final String tituloDialogo = esNueveNota 
+        ? "Agregar Nota - $moduloNombre" 
+        : "Editar Nota - $moduloNombre";
+    final String labelBoton = esNueveNota ? "Agregar" : "Actualizar";
 
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text("Nota - ${estudiante['nombres']} ${estudiante['apellidos']}"),
+        title: Text(tituloDialogo),
         content: TextField(
           controller: controller,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(hintText: "Ej: 4.5"),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            hintText: "Ej: 4.5",
+            labelText: "Nota",
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
         ),
         actions: [
           TextButton(
@@ -56,130 +286,337 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
           ),
           ElevatedButton(
             onPressed: () async {
-              
+              final value = controller.text.trim().replaceAll(',', '.');
+              final nota = double.tryParse(value);
+
+              if (nota == null || value.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Ingrese una nota válida.')),
+                );
+                return;
+              }
+
+              final result = await _api.guardarNota(
+                idUsuario: estudiante['id_usuario'],
+                idModulo: idModulo,
+                nota: nota,
+              );
+
               Navigator.pop(context);
-              setState(() {}); // recarga la vista para mostrar la nota actualizada
+
+              if (!mounted) return;
+
+              if (result['success'] == true) {
+                setState(() {});
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      esNueveNota 
+                          ? 'Nota agregada correctamente.' 
+                          : 'Nota actualizada correctamente.'
+                    ),
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(result['error'] ?? 'No se pudo guardar la nota.')),
+                );
+              }
             },
-            child: const Text("Guardar"),
+            child: Text(labelBoton),
           ),
         ],
       ),
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Cursos & Notas"),
-        backgroundColor: const Color(0xff0D1A63),
-      ),
-      body: FutureBuilder<List<dynamic>>(
-        future: _futureCursos,
-        builder: (context, snapshotCursos) {
-          if (!snapshotCursos.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final cursos = snapshotCursos.data!;
-          if (cursos.isEmpty) {
-            return const Center(child: Text("No tienes cursos asignados."));
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(12),
-            itemCount: cursos.length,
-            itemBuilder: (context, indexCurso) {
-              final curso = cursos[indexCurso];
-
-              return Card(
-                child: ExpansionTile(
-                  leading: const Icon(Icons.school, color: Color(0xffFFC107)),
-                  title: Text(
-                    curso['nombre'],
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 160,
+            pinned: true,
+            backgroundColor: Colors.transparent,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
+              onPressed: () => Navigator.pop(context),
+            ),
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: BoxDecoration(
+                  color: darkBlue,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(40),
+                    bottomRight: Radius.circular(40),
                   ),
-                  children: [
-                    FutureBuilder<List<dynamic>>(
-                      future: _getModulos(curso['id_curso']),
-                      builder: (context, snapshotModulos) {
-                        if (!snapshotModulos.hasData) {
-                          return const Center(child: CircularProgressIndicator());
-                        }
-
-                        final modulos = snapshotModulos.data!;
-                        if (modulos.isEmpty) {
-                          return const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text("No hay módulos en este curso."),
-                          );
-                        }
-
-                        return ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: modulos.length,
-                          itemBuilder: (context, indexModulo) {
-                            final modulo = modulos[indexModulo];
-
-                            return Card(
-                              color: Colors.grey[50],
-                              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              child: ExpansionTile(
-                                leading: const Icon(Icons.book, color: Color(0xff0D1A63)),
-                                title: Text(
-                                  modulo['nombre'],
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                children: [
-                                  FutureBuilder<List<dynamic>>(
-                                    future: _getEstudiantes(modulo['id_modulo']),
-                                    builder: (context, snapshotEstudiantes) {
-                                      if (!snapshotEstudiantes.hasData) {
-                                        return const Center(child: CircularProgressIndicator());
-                                      }
-
-                                      final estudiantes = snapshotEstudiantes.data!;
-                                      if (estudiantes.isEmpty) {
-                                        return const Padding(
-                                          padding: EdgeInsets.all(8.0),
-                                          child: Text("No hay estudiantes en este módulo."),
-                                        );
-                                      }
-
-                                      return ListView.builder(
-                                        shrinkWrap: true,
-                                        physics: const NeverScrollableScrollPhysics(),
-                                        itemCount: estudiantes.length,
-                                        itemBuilder: (context, indexEstudiante) {
-                                          final est = estudiantes[indexEstudiante];
-
-                                          return ListTile(
-                                            leading: const Icon(Icons.person),
-                                            title: Text("${est['nombres']} ${est['apellidos']}"),
-                                            subtitle: Text(est['correo']),
-                                            trailing: IconButton(
-                                              icon: const Icon(Icons.edit, color: Colors.blue),
-                                              onPressed: () => _mostrarDialogoNota(est, modulo['id_modulo']),
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ],
                 ),
-              );
-            },
-          );
-        },
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          "Cursos",
+                          style: TextStyle(
+                            color: primaryPurple,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                        const Text(
+                          "Cursos y Notas",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.all(20),
+            sliver: FutureBuilder<List<dynamic>>(
+              future: _futureCursos,
+              builder: (context, snapshotCursos) {
+                if (!snapshotCursos.hasData) {
+                  return const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                final cursos = snapshotCursos.data!;
+                if (cursos.isEmpty) {
+                  return const SliverFillRemaining(
+                    child: Center(child: Text("No tienes cursos asignados.")),
+                  );
+                }
+
+                return SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, indexCurso) {
+                      final curso = cursos[indexCurso];
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: borderGrey, width: 1.5),
+                        ),
+                        child: ExpansionTile(
+                          leading: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: primaryPurple.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Icon(
+                              Icons.school_rounded,
+                              color: primaryPurple,
+                              size: 32,
+                            ),
+                          ),
+                          title: Text(
+                            curso['nombre'],
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: darkBlue,
+                            ),
+                          ),
+                          subtitle: const Text(
+                            "Gestionar notas",
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 13,
+                            ),
+                          ),
+                          children: [
+                            FutureBuilder<List<dynamic>>(
+                              future: _getModulos(curso['id_curso']),
+                              builder: (context, snapshotModulos) {
+                                if (!snapshotModulos.hasData) {
+                                  return const Center(child: CircularProgressIndicator());
+                                }
+
+                                final modulos = snapshotModulos.data!;
+                                if (modulos.isEmpty) {
+                                  return const Padding(
+                                    padding: EdgeInsets.all(16.0),
+                                    child: Text("No hay módulos en este curso."),
+                                  );
+                                }
+
+                                return ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: modulos.length,
+                                  itemBuilder: (context, indexModulo) {
+                                    final modulo = modulos[indexModulo];
+
+                                    return Container(
+                                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: bgGrey,
+                                        borderRadius: BorderRadius.circular(15),
+                                        border: Border.all(color: borderGrey, width: 1),
+                                      ),
+                                      child: ExpansionTile(
+                                        leading: Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: Colors.blue.withOpacity(0.08),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: const Icon(
+                                            Icons.book_rounded,
+                                            color: Colors.blue,
+                                            size: 24,
+                                          ),
+                                        ),
+                                        title: Text(
+                                          modulo['nombre'],
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        children: [
+                                          FutureBuilder<List<dynamic>>(
+                                            future: _getEstudiantes(modulo['id_modulo']),
+                                            builder: (context, snapshotEstudiantes) {
+                                              if (!snapshotEstudiantes.hasData) {
+                                                return const Center(child: CircularProgressIndicator());
+                                              }
+
+                                              final data = snapshotEstudiantes.data!;
+                                              Map<int, Map<String, dynamic>> estudiantesAgrupados = {};
+                                              for (var item in data) {
+                                                final idUsuario = item['id_usuario'] is int
+                                                    ? item['id_usuario'] as int
+                                                    : int.tryParse(item['id_usuario']?.toString() ?? '');
+
+                                                if (idUsuario == null) continue;
+
+                                                if (!estudiantesAgrupados.containsKey(idUsuario)) {
+                                                  estudiantesAgrupados[idUsuario] = {
+                                                    "id_usuario": idUsuario,
+                                                    "nombre": item['nombre'] ?? 'Estudiante',
+                                                    "correo": item['correo'] ?? '',
+                                                    "notas": []
+                                                  };
+                                                }
+
+                                                if (item['nota'] != null) {
+                                                  estudiantesAgrupados[idUsuario]!['notas'].add({
+                                                    "id_nota": item['id_nota'],
+                                                    "nota": item['nota']
+                                                  });
+                                                }
+                                              }
+                                              final estudiantes = estudiantesAgrupados.values.toList();
+                                              
+                                              if (estudiantes.isEmpty) {
+                                                return const Padding(
+                                                  padding: EdgeInsets.all(16.0),
+                                                  child: Text("No hay estudiantes en este módulo."),
+                                                );
+                                              }
+
+                                              return ListView.builder(
+                                                shrinkWrap: true,
+                                                physics: const NeverScrollableScrollPhysics(),
+                                                itemCount: estudiantes.length,
+                                                itemBuilder: (context, indexEstudiante) {
+                                                  final est = estudiantes[indexEstudiante];
+                                                  final correo = est['correo']?.toString().trim() ?? '';
+
+                                                  return Container(
+                                                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                                    padding: const EdgeInsets.all(12),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.white,
+                                                      borderRadius: BorderRadius.circular(12),
+                                                      border: Border.all(color: borderGrey, width: 0.5),
+                                                    ),
+                                                    child: Row(
+                                                      children: [
+                                                        Container(
+                                                          padding: const EdgeInsets.all(8),
+                                                          decoration: BoxDecoration(
+                                                            color: Colors.green.withOpacity(0.08),
+                                                            borderRadius: BorderRadius.circular(8),
+                                                          ),
+                                                          child: const Icon(
+                                                            Icons.person,
+                                                            color: Colors.green,
+                                                            size: 20,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 12),
+                                                        Expanded(
+                                                          child: Column(
+                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                            children: [
+                                                              Text(
+                                                                est['nombre'] ?? 'Estudiante',
+                                                                style: const TextStyle(
+                                                                  fontSize: 14,
+                                                                  fontWeight: FontWeight.w600,
+                                                                ),
+                                                              ),
+                                                              const SizedBox(height: 4),
+                                                              Text(
+                                                                est['correo'] ?? 'correo no disponible',
+                                                                style: TextStyle(
+                                                                  color: Colors.grey[500],
+                                                                  fontSize: 12,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        IconButton(
+                                                          icon: const Icon(Icons.edit, color: Colors.blue),
+                                                          tooltip: 'Ver y editar notas',
+                                                          onPressed: () => _mostrarDialogoNota(est, modulo['id_modulo']),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                },
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    childCount: cursos.length,
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
