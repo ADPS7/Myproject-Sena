@@ -1,3 +1,4 @@
+
 :root {
     --primary: #2563eb;
     --primary-soft: #eff6ff;
@@ -126,4 +127,21 @@ body {
 /* Opcional pero recomendado */
 .main-content > div {
     width: 100%;
+}
+
+/* Ajuste para móvil: evita que el contenido quede bajo la navbar fija */
+@media (max-width: 767.98px) {
+    body { padding-top: 70px; }
+}
+.nav-link-item { cursor: pointer; display: block; padding: 0.5rem 1rem; text-decoration: none; color: inherit; }
+.avatar { 
+    width: 35px;
+    height: 35px;
+    background-color: #0d6efd;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
 }
