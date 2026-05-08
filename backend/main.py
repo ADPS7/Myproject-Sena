@@ -1214,21 +1214,30 @@ def actualizar_perfil(id_usuario):
         apellidos = data.get('apellidos')
         correo = data.get('correo')
         fecha_nacimiento = data.get('fecha_nacimiento')
-
-        if not all([nombres, apellidos, correo, fecha_nacimiento]):
-            return jsonify({"success": False, "error": "Todos los campos son requeridos"}), 400
+        nueva_clave = data.get('nueva_clave')
 
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        query = """
-            UPDATE usuarios 
-            SET nombres = %s, apellidos = %s, correo = %s, fecha_nacimiento = %s
-            WHERE id_usuario = %s
-        """
-        cursor.execute(query, (nombres, apellidos, correo, fecha_nacimiento, id_usuario))
-        conn.commit()
+        if nueva_clave:  # Solo actualizar contraseña si se envió
+            hashed_password = hashlib.sha256(nueva_clave.encode('utf-8')).hexdigest()
+            query = """
+                UPDATE usuarios 
+                SET nombres = %s, apellidos = %s, correo = %s, 
+                    fecha_nacimiento = %s, clave = %s
+                WHERE id_usuario = %s
+            """
+            cursor.execute(query, (nombres, apellidos, correo, fecha_nacimiento, hashed_password, id_usuario))
+        else:
+            query = """
+                UPDATE usuarios 
+                SET nombres = %s, apellidos = %s, correo = %s, 
+                    fecha_nacimiento = %s
+                WHERE id_usuario = %s
+            """
+            cursor.execute(query, (nombres, apellidos, correo, fecha_nacimiento, id_usuario))
 
+        conn.commit()
         cursor.close()
         conn.close()
 
