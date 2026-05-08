@@ -527,6 +527,7 @@ def get_notas_modulo(id_modulo):
             SELECT 
                 u.id_usuario,
                 CONCAT(u.nombres, ' ', u.apellidos) AS nombre,
+                u.correo,
                 n.id_nota,
                 n.nota
             FROM Usuarios u
@@ -603,6 +604,7 @@ def obtener_notas_estudiante(id_usuario):
         query = """
             SELECT 
                 c.nombre AS curso_nombre,
+                m.id_modulo,
                 m.nombre AS modulo_nombre,
                 n.nota
             FROM alumnos a
@@ -628,24 +630,26 @@ def obtener_notas_estudiante(id_usuario):
         modulos_dict = {}
 
         for row in resultados:
-            modulo = row['modulo_nombre']
+            modulo_id = row['id_modulo']
+            modulo_nombre = row['modulo_nombre']
             nota = row['nota']
 
-            if modulo is None:
+            if modulo_id is None:
                 continue
 
-            if modulo not in modulos_dict:
-                modulos_dict[modulo] = []
+            if modulo_id not in modulos_dict:
+                modulos_dict[modulo_id] = {'nombre': modulo_nombre, 'notas': []}
 
             if nota is not None:
-                modulos_dict[modulo].append(nota)
+                modulos_dict[modulo_id]['notas'].append(nota)
 
         resultado_modulos = [
             {
-                "nombre": modulo,
-                "notas": notas
+                "id_modulo": id_mod,
+                "nombre": data['nombre'],
+                "notas": data['notas']
             }
-            for modulo, notas in modulos_dict.items()
+            for id_mod, data in modulos_dict.items()
         ]
 
         cursor.close()
