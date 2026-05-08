@@ -3,6 +3,8 @@ from flask_cors import CORS
 import mysql.connector
 from mysql.connector import Error
 import hashlib
+from collections import defaultdict
+
 
 app = Flask(__name__)
 CORS(app)
@@ -352,8 +354,6 @@ def get_detalle_asistencias(id_usuario):
         }), 200
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
-    
-from collections import defaultdict
 
 @app.route('/admin/asistencias', methods=['GET'])
 def get_admin_asistencias():
