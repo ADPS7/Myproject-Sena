@@ -368,12 +368,17 @@ Future<Map<String, dynamic>> getMyModules() async {
     }
   }
   Future<Map<String, dynamic>> editarModulo(int id, String nombre, String inicio, String fin, int idCurso) async {
-    final response = await http.put(
+    final res = await http.put(
       Uri.parse('$baseUrl/modulos/editar/$id'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'nombre': nombre, 'fecha_inicio': inicio, 'fecha_fin': fin, 'id_curso': idCurso}),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        'nombre': nombre,
+        'fecha_inicio': inicio,
+        'fecha_fin': fin,
+        'id_curso': idCurso
+      }),
     );
-    return json.decode(response.body);
+    return jsonDecode(res.body);
   }
   Future<Map<String, dynamic>> eliminarModulo(int id) async {
     final response = await http.delete(Uri.parse('$baseUrl/modulos/eliminar/$id'));

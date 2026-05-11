@@ -1212,6 +1212,8 @@ def eliminar_usuario(id_usuario):
 
 @app.route('/actualizar_perfil/<int:id_usuario>', methods=['PUT'])
 def actualizar_perfil(id_usuario):
+    print("2")
+
     try:
         data = request.json
         nombres = data.get('nombres')
