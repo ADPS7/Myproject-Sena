@@ -1212,8 +1212,6 @@ def eliminar_usuario(id_usuario):
 
 @app.route('/actualizar_perfil/<int:id_usuario>', methods=['PUT'])
 def actualizar_perfil(id_usuario):
-    print("2")
-
     try:
         data = request.json
         nombres = data.get('nombres')
@@ -1258,6 +1256,7 @@ def actualizar_perfil(id_usuario):
 
 @app.route('/usuarios', methods=['GET'])
 def obtener_todos_usuarios():
+
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)

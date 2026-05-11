@@ -223,8 +223,7 @@ class _HomeadminState extends State<Homeadmin> {
         ),
       ),
       
-      // MENÚ DE ABAJO REINCORPORADO
-        bottomNavigationBar: Container(
+      bottomNavigationBar: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -238,7 +237,8 @@ class _HomeadminState extends State<Homeadmin> {
           currentIndex: 0,
           type: BottomNavigationBarType.fixed,
           onTap: (index) {
-            if (index == 2) { // Ajustes
+            // Solo manejo de Configuración (índice 1)
+            if (index == 1) { 
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -249,7 +249,6 @@ class _HomeadminState extends State<Homeadmin> {
           },
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Inicio"),
-            BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined), label: "Reportes"),
             BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: "Configuración"),
           ],
         ),

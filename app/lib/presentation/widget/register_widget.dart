@@ -10,7 +10,6 @@ class RegisterView extends StatefulWidget {
 }
 
 class _RegisterViewState extends State<RegisterView> {
-  // ... (Tus controladores y lógica de _selectDate y _registerUser se mantienen igual)
   final TextEditingController nombresController = TextEditingController();
   final TextEditingController apellidosController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
@@ -24,12 +23,9 @@ class _RegisterViewState extends State<RegisterView> {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFE2E8F0), // Fondo Gris Sólido
+      backgroundColor: const Color(0xFFE2E8F0), 
       body: Stack(
         children: [
-          // --- ELEMENTOS GEOMÉTRICOS (En lugar de burbujas) ---
-          
-          // Rectángulo decorativo superior
           Positioned(
             top: -size.height * 0.1,
             left: -size.width * 0.2,
@@ -45,8 +41,6 @@ class _RegisterViewState extends State<RegisterView> {
               ),
             ),
           ),
-
-          // Línea decorativa lateral
           Positioned(
             right: 20,
             top: size.height * 0.2,
@@ -59,21 +53,17 @@ class _RegisterViewState extends State<RegisterView> {
               ),
             ),
           ),
-
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
               child: Column(
                 children: [
                   const SizedBox(height: 20),
-                  // Logo
                   Image.network(
                     "https://image2url.com/r2/default/images/1770490852326-698c5fd0-f5e1-48cc-8548-30eb28e1596b.png",
                     height: 90,
                   ),
                   const SizedBox(height: 30),
-
-                  // Contenedor Principal (Card)
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
@@ -105,7 +95,6 @@ class _RegisterViewState extends State<RegisterView> {
                           style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
                         ),
                         const SizedBox(height: 30),
-
                         _customInput(hint: "Nombres", controller: nombresController, icon: Icons.person_outline),
                         const SizedBox(height: 15),
                         _customInput(hint: "Apellidos", controller: apellidosController, icon: Icons.badge_outlined),
@@ -126,10 +115,7 @@ class _RegisterViewState extends State<RegisterView> {
                           icon: Icons.lock_outline,
                           isPassword: true,
                         ),
-
                         const SizedBox(height: 35),
-
-                        // Botón de Registro
                         _buildRegisterButton(),
                       ],
                     ),
@@ -142,8 +128,6 @@ class _RegisterViewState extends State<RegisterView> {
       ),
     );
   }
-
-  // --- MISMOS HELPERS QUE ANTES (Pero ajustados al nuevo estilo) ---
 
   Widget _customInput({required String hint, required TextEditingController controller, required IconData icon, bool isPassword = false, bool readOnly = false, VoidCallback? onTap}) {
     return TextField(
@@ -171,123 +155,120 @@ class _RegisterViewState extends State<RegisterView> {
   }
 
   Widget _buildRegisterButton() {
-  return SizedBox(
-    width: double.infinity,
-    height: 56,
-    child: ElevatedButton(
-      onPressed: isLoading ? null : _registerUser,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF7C4DFF),
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 0,
-      ),
-      child: isLoading 
-          ? const CircularProgressIndicator(color: Colors.white)
-          : const Text("Registrarse", 
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-    ),
-  );
-}
-// Agrega esto dentro de la clase _RegisterViewState
-
-Future<void> _selectDate(BuildContext context) async {
-  final DateTime? picked = await showDatePicker(
-    context: context,
-    initialDate: DateTime(2005, 1, 1),
-    firstDate: DateTime(1950),
-    lastDate: DateTime.now(),
-  );
-
-  if (picked != null) {
-    setState(() {
-      fechaController.text = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
-    });
-  }
-}
-
-// ==================== LÓGICA DE REGISTRO ====================
-Future<void> _registerUser() async {
-  // Validaciones básicas
-  if (nombresController.text.trim().isEmpty ||
-      apellidosController.text.trim().isEmpty ||
-      emailController.text.trim().isEmpty ||
-      fechaController.text.isEmpty ||
-      passwordController.text.trim().isEmpty) {
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Por favor completa todos los campos"),
-        backgroundColor: Colors.red,
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton(
+        onPressed: isLoading ? null : _registerUser,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF7C4DFF),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 0,
+        ),
+        child: isLoading 
+            ? const CircularProgressIndicator(color: Colors.white)
+            : const Text("Registrarse", 
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
       ),
     );
-    return;
   }
 
-  // Validación simple de email
-  if (!emailController.text.contains('@')) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Ingresa un correo válido"),
-        backgroundColor: Colors.red,
-      ),
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime(2005, 1, 1),
+      firstDate: DateTime(1950),
+      lastDate: DateTime.now(),
     );
-    return;
+
+    if (picked != null) {
+      setState(() {
+        fechaController.text = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+      });
+    }
   }
 
-  if (passwordController.text.length < 5) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("La contraseña debe tener al menos 6 caracteres"),
-        backgroundColor: Colors.red,
-      ),
-    );
-    return;
-  }
-
-  setState(() => isLoading = true);
-
-  try {
-    final result = await ApiService().createUser(
-      nombres: nombresController.text.trim(),
-      apellidos: apellidosController.text.trim(),
-      correo: emailController.text.trim(),
-      fechaNacimiento: fechaController.text,
-      clave: passwordController.text,
-    );
-
-    if (result['message'] != null && result['message'].toString().contains("exitosamente")) {
+  Future<void> _registerUser() async {
+    if (nombresController.text.trim().isEmpty ||
+        apellidosController.text.trim().isEmpty ||
+        emailController.text.trim().isEmpty ||
+        fechaController.text.isEmpty ||
+        passwordController.text.trim().isEmpty) {
+      
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("¡Registro exitoso! Ahora puedes iniciar sesión"),
-          backgroundColor: Colors.green,
-        ),
-      );
-
-      if (mounted) {
-  Navigator.pushAndRemoveUntil(
-    context,
-    MaterialPageRoute(builder: (context) => const LoginView()),
-    (route) => false,   // Elimina todas las pantallas anteriores
-  );
-}
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['error']?.toString() ?? "Error al registrar usuario"),
+          content: Text("Por favor completa todos los campos"),
           backgroundColor: Colors.red,
         ),
       );
+      return;
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Error de conexión: $e"),
-        backgroundColor: Colors.red,
-      ),
-    );
-  } finally {
-    setState(() => isLoading = false);
+
+    if (!emailController.text.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Ingresa un correo válido"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // ACTUALIZACIÓN: Ahora valida que la contraseña sea mayor a 6 caracteres
+    if (passwordController.text.length <= 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("La contraseña debe tener más de 6 caracteres"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      final result = await ApiService().createUser(
+        nombres: nombresController.text.trim(),
+        apellidos: apellidosController.text.trim(),
+        correo: emailController.text.trim(),
+        fechaNacimiento: fechaController.text,
+        clave: passwordController.text,
+      );
+
+      if (result['message'] != null && result['message'].toString().contains("exitosamente")) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("¡Registro exitoso! Ahora puedes iniciar sesión"),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginView()),
+            (route) => false,
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['error']?.toString() ?? "Error al registrar usuario"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error de conexión: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => isLoading = false);
+    }
   }
-}
 }
