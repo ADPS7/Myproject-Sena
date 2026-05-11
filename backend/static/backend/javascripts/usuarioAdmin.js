@@ -1,8 +1,9 @@
 let cacheAdmins = [], cacheProfesores = [], cacheEstudiantes = [];
+let idUsuarioAEliminar = null;
 
-// --- 1. FUNCIÓN PARA PINTAR LAS FILAS (REUTILIZABLE) ---
+// --- 1. FUNCIÓN PARA PINTAR LAS FILAS ---
 function pintarFilas(tbody, lista) {
-    tbody.innerHTML = lista.length === 0 ? '<tr><td colspan="4" class="text-center py-3">Sin resultados</td></tr>' : '';
+    tbody.innerHTML = lista.length === 0 ? '<tr><td colspan="4" class="text-center py-3 text-muted">Sin resultados</td></tr>' : '';
     lista.forEach(u => {
         tbody.innerHTML += `
             <tr>
@@ -13,7 +14,7 @@ function pintarFilas(tbody, lista) {
                             class="btn btn-sm btn-light text-primary border shadow-sm" title="Editar">
                         <i class="bi bi-pencil"></i>
                     </button>
-                    <button onclick="eliminarUsuario('${u.id_usuario}', '${u.nombre_completo}')" 
+                    <button onclick="eliminarUsuario('${u.id_usuario}', '${u.nombre_completo}', '${u.id_rol}')" 
                             class="btn btn-sm btn-light text-danger border shadow-sm" title="Eliminar">
                         <i class="bi bi-trash"></i>
                     </button>
@@ -22,75 +23,67 @@ function pintarFilas(tbody, lista) {
     });
 }
 
-// --- 2. FUNCIONES INDEPENDIENTES POR ROL ---
+// --- 2. FUNCIÓN DE REFRESCO DINÁMICO ---
+function refrescarTablaPorRol(idRol) {
+    let endpoint = '';
+    let tablaId = '';
+    let cacheName = '';
 
-function gestionarAdmins() {
-    const modal = document.getElementById('modalAdmins');
-    const tabla = document.getElementById('tabla-admins-body');
-    const buscador = document.getElementById('buscarAdminModal');
+    if (idRol == "1") { endpoint = 'admin'; tablaId = 'tabla-admins-body'; cacheName = 'cacheAdmins'; }
+    else if (idRol == "2") { endpoint = 'estudiante'; tablaId = 'tabla-estudiantes-body'; cacheName = 'cacheEstudiantes'; }
+    else if (idRol == "3") { endpoint = 'profesor'; tablaId = 'tabla-profesores-body'; cacheName = 'cacheProfesores'; }
 
-    modal.addEventListener('show.bs.modal', () => {
-        fetch('/get_usuarios/admin').then(res => res.json()).then(data => {
-            cacheAdmins = data;
-            pintarFilas(tabla, data);
+    if (endpoint) {
+        fetch(`/get_usuarios/${endpoint}`).then(res => res.json()).then(data => {
+            window[cacheName] = data;
+            pintarFilas(document.getElementById(tablaId), data);
         });
-    });
+    }
+}
 
-    buscador.addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        const filtrados = cacheAdmins.filter(u => u.nombre_completo.toLowerCase().includes(term) || u.correo.toLowerCase().includes(term));
-        pintarFilas(tabla, filtrados);
+// --- 3. GESTIÓN DE CARGA INICIAL Y BUSCADORES ---
+function gestionarRoles() {
+    const configuraciones = [
+        { modal: 'modalAdmins', tabla: 'tabla-admins-body', buscador: 'buscarAdminModal', endpoint: 'admin', cache: 'cacheAdmins' },
+        { modal: 'modalProfesores', tabla: 'tabla-profesores-body', buscador: 'buscarProfesorModal', endpoint: 'profesor', cache: 'cacheProfesores' },
+        { modal: 'modalEstudiantes', tabla: 'tabla-estudiantes-body', buscador: 'buscarEstudianteModal', endpoint: 'estudiante', cache: 'cacheEstudiantes' }
+    ];
+
+    configuraciones.forEach(conf => {
+        const modalEl = document.getElementById(conf.modal);
+        modalEl.addEventListener('show.bs.modal', () => {
+            fetch(`/get_usuarios/${conf.endpoint}`).then(res => res.json()).then(data => {
+                window[conf.cache] = data;
+                pintarFilas(document.getElementById(conf.tabla), data);
+            });
+        });
+
+        document.getElementById(conf.buscador).addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtrados = window[conf.cache].filter(u => 
+                u.nombre_completo.toLowerCase().includes(term) || u.correo.toLowerCase().includes(term)
+            );
+            pintarFilas(document.getElementById(conf.tabla), filtrados);
+        });
     });
 }
 
-function gestionarProfesores() {
-    const modal = document.getElementById('modalProfesores');
-    const tabla = document.getElementById('tabla-profesores-body');
-    const buscador = document.getElementById('buscarProfesorModal');
-
-    modal.addEventListener('show.bs.modal', () => {
-        fetch('/get_usuarios/profesor').then(res => res.json()).then(data => {
-            cacheProfesores = data;
-            pintarFilas(tabla, data);
-        });
-    });
-
-    buscador.addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        const filtrados = cacheProfesores.filter(u => u.nombre_completo.toLowerCase().includes(term) || u.correo.toLowerCase().includes(term));
-        pintarFilas(tabla, filtrados);
-    });
-}
-
-function gestionarEstudiantes() {
-    const modal = document.getElementById('modalEstudiantes');
-    const tabla = document.getElementById('tabla-estudiantes-body');
-    const buscador = document.getElementById('buscarEstudianteModal');
-
-    modal.addEventListener('show.bs.modal', () => {
-        fetch('/get_usuarios/estudiante').then(res => res.json()).then(data => {
-            cacheEstudiantes = data;
-            pintarFilas(tabla, data);
-        });
-    });
-
-    buscador.addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        const filtrados = cacheEstudiantes.filter(u => u.nombre_completo.toLowerCase().includes(term) || u.correo.toLowerCase().includes(term));
-        pintarFilas(tabla, filtrados);
-    });
-}
-
-// --- 3. GESTIÓN DE EDICIÓN ---
-
+// --- 4. GESTIÓN DE EDICIÓN (CON RESTRICCIÓN DE ADMIN) ---
 window.abrirModalEdicion = (id, nom, ape, mail, fecha, rol) => {
+    // BLOQUEO: Si el usuario es administrador (rol 1), no permitimos editar
+    if (rol == "1") {
+        showToast("No tienes permisos para editar a otro Administrador", "error");
+        return;
+    }
+
     document.getElementById('edit_user_id').value = id;
     document.getElementById('edit_nombres').value = nom;
     document.getElementById('edit_apellidos').value = ape;
     document.getElementById('edit_correo').value = mail;
     document.getElementById('edit_fecha_nacimiento').value = fecha;
     document.getElementById('edit_rol').value = rol;
-    
+    document.getElementById('edit_user_id').dataset.oldRol = rol;
+
     const myModal = new bootstrap.Modal(document.getElementById('modalEditarUsuario'));
     myModal.show();
 };
@@ -98,12 +91,21 @@ window.abrirModalEdicion = (id, nom, ape, mail, fecha, rol) => {
 document.getElementById('formEditarUsuario').addEventListener('submit', function(e) {
     e.preventDefault();
     const id = document.getElementById('edit_user_id').value;
+    const oldRol = document.getElementById('edit_user_id').dataset.oldRol;
+    const newRol = document.getElementById('edit_rol').value;
+
+    // VALIDACIÓN EXTRA: Evitar que intenten cambiar el rol a Admin desde el formulario
+    if (newRol == "1") {
+        showToast("No puedes asignar el rol de Administrador", "error");
+        return;
+    }
+
     const datos = {
         nombres: document.getElementById('edit_nombres').value,
         apellidos: document.getElementById('edit_apellidos').value,
         correo: document.getElementById('edit_correo').value,
         fecha_nacimiento: document.getElementById('edit_fecha_nacimiento').value,
-        id_rol: document.getElementById('edit_rol').value
+        id_rol: newRol
     };
 
     fetch(`/actualizar_usuario/${id}`, {
@@ -112,83 +114,79 @@ document.getElementById('formEditarUsuario').addEventListener('submit', function
         body: JSON.stringify(datos)
     }).then(res => res.json()).then(r => {
         if(r.status === 'success') {
-            Swal.fire({
-                icon: 'success',
-                title: '¡Buen trabajo!',
-                text: 'El usuario ha sido actualizado con éxito.',
-                timer: 2000,
-                showConfirmButton: false,
-                background: '#fff',
-                color: '#212529'
-            }).then(() => location.reload());
+            bootstrap.Modal.getInstance(document.getElementById('modalEditarUsuario')).hide();
+            limpiarBackdrops();
+            showToast("Datos actualizados correctamente", "success");
+            refrescarTablaPorRol(oldRol);
+            if (oldRol !== newRol) refrescarTablaPorRol(newRol);
         } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: 'Hubo un error: ' + r.message
-            });
+            showToast("Error: " + r.message, "error");
         }
     });
 });
 
-// --- 4. GESTIÓN DE ELIMINACIÓN ---
+// --- 5. GESTIÓN DE ELIMINACIÓN (CON RESTRICCIÓN) ---
+window.eliminarUsuario = (id, nombre, rol) => {
+    if (rol == "1") {
+        showToast("No se puede eliminar a un Administrador", "error");
+        return;
+    }
 
-window.eliminarUsuario = (id, nombre) => {
-    Swal.fire({
-        title: '¿Estás completamente seguro?',
-        text: `Estás a punto de eliminar a "${nombre}". Esta acción es irreversible.`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#191b1d', // Color oscuro para combinar con tu estilo
-        cancelButtonColor: '#dc3545',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'No, cancelar',
-        reverseButtons: true
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`/eliminar_usuario/${id}`, {
-                method: 'DELETE',
-            })
-            .then(res => res.json())
-            .then(r => {
-                if (r.status === 'success') {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Eliminado',
-                        text: 'El usuario ha sido borrado del sistema.',
-                        timer: 1500,
-                        showConfirmButton: false
-                    }).then(() => {
-                        // Si el ID borrado es el mismo que el de la sesión activa
-                        if (typeof idUsuarioLogueado !== 'undefined' && id == idUsuarioLogueado) {
-                            window.location.href = "/logout"; 
-                        } else {
-                            location.reload();
-                        }
-                    });
-                } else {
-                    Swal.fire('Error', 'No se pudo eliminar: ' + r.message, 'error');
-                }
-            })
-            .catch(err => {
-                Swal.fire('Error de conexión', 'No se pudo contactar con el servidor', 'error');
-            });
-        }
-    });
+    idUsuarioAEliminar = id;
+    document.getElementById('nombreUsuarioEliminar').innerText = nombre;
+    const modalConfirm = new bootstrap.Modal(document.getElementById('modalConfirmarEliminar'));
+    modalConfirm.show();
 };
 
-// --- 5. CONFIGURACIÓN FINAL ---
+document.getElementById('btnConfirmarEliminar').addEventListener('click', function() {
+    if (!idUsuarioAEliminar) return;
 
-// Solución para que el teclado funcione en el modal de edición sobre otro modal
+    fetch(`/eliminar_usuario/${idUsuarioAEliminar}`, { method: 'DELETE' })
+    .then(res => res.json()).then(r => {
+        bootstrap.Modal.getInstance(document.getElementById('modalConfirmarEliminar')).hide();
+        if (r.status === 'success') {
+            limpiarBackdrops();
+            showToast("Usuario eliminado correctamente", "success");
+            refrescarTablaPorRol("2"); refrescarTablaPorRol("3");
+        }
+    });
+});
+
+// --- 6. UTILS (TOASTS, BACKDROP Y FOCO) ---
+function showToast(message, type = "success") {
+    const container = document.getElementById('toastContainer');
+    const id = Date.now();
+    const bgColor = type === "success" ? "#191b1d" : "#dc3545";
+    const toastHTML = `
+        <div id="toast-${id}" class="toast align-items-center text-white border-0 mb-2 shadow-lg" role="alert" style="background-color: ${bgColor}; border-radius: 12px;">
+            <div class="d-flex p-3">
+                <div class="toast-body d-flex align-items-center gap-2">
+                    <i class="bi ${type === 'success' ? 'bi-check-circle-fill text-success' : 'bi-exclamation-triangle-fill text-warning'}"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+            <div style="height: 4px; background: rgba(255,255,255,0.1); width: 100%; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; overflow: hidden;">
+                <div id="progress-${id}" style="height: 100%; background: ${type === 'success' ? '#198754' : '#fff'}; width: 100%;"></div>
+            </div>
+        </div>`;
+    container.insertAdjacentHTML('beforeend', toastHTML);
+    const toastEl = document.getElementById(`toast-${id}`);
+    new bootstrap.Toast(toastEl, { delay: 3000 }).show();
+    const pBar = document.getElementById(`progress-${id}`);
+    pBar.style.transition = "width 3s linear";
+    setTimeout(() => pBar.style.width = "0%", 10);
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
+
+function limpiarBackdrops() {
+    document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+}
+
 document.addEventListener('focusin', (e) => {
-    if (e.target.closest('#modalEditarUsuario')) {
-        e.stopImmediatePropagation();
-    }
+    if (e.target.closest('.modal')) e.stopImmediatePropagation();
 }, true);
 
-// Inicializar todas las gestiones al cargar la página
-document.addEventListener('DOMContentLoaded', () => {
-    gestionarAdmins();
-    gestionarProfesores();
-    gestionarEstudiantes();
-});
+document.addEventListener('DOMContentLoaded', () => gestionarRoles());
