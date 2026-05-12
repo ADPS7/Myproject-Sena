@@ -134,7 +134,7 @@ def dashboard():
         return render_template('view/Admin/menuAdmin.html', user=user)
     
     elif rol == 'profesor' or user.get('id_rol') == 3:
-        return render_template('view/profesor/inicioProfesor.html', user=user)
+        return render_template('view/profesor/menuProfesor.html', user=user)
     
     else:
         return render_template('view/estudiante/inicioEstudiante.html', user=user)
