@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'aut_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.125.19:5000';
+  static const String baseUrl = 'http://10.2.137.182:5000';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,  
@@ -575,18 +575,24 @@ Future<Map<String, dynamic>> getMyModules() async {
     required String nombres,
     required String apellidos,
     required String correo,
-    required String fechaNacimiento,
+    required String fechaNacimiento, String? password,
   }) async {
     try {
+      final Map<String, dynamic> body = {
+        'nombres': nombres,
+        'apellidos': apellidos,
+        'correo': correo,
+        'fecha_nacimiento': fechaNacimiento,
+      };
+
+      if (password != null && password.isNotEmpty) {
+        body['nueva_clave'] = password;
+      }
+
       final response = await http.put(
         Uri.parse('$baseUrl/actualizar_perfil/$idUsuario'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'nombres': nombres,
-          'apellidos': apellidos,
-          'correo': correo,
-          'fecha_nacimiento': fechaNacimiento,
-        }),
+        body: json.encode(body),
       );
 
       return json.decode(response.body);
