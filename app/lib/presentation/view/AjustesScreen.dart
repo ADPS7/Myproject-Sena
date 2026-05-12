@@ -1,5 +1,6 @@
+import 'dart:ui';
+
 import 'package:app/services/api_service.dart';
-import 'package:app/services/aut_service.dart';
 import 'package:flutter/material.dart';
 
 class AjustesScreen extends StatefulWidget {
@@ -17,9 +18,13 @@ class _AjustesScreenState extends State<AjustesScreen> {
   late TextEditingController apellidosController;
   late TextEditingController emailController;
   late TextEditingController fechaController;
+  late TextEditingController passwordController;
+  late TextEditingController confirmPasswordController;
 
   bool isLoading = false;
   bool isEditing = false;
+  bool _showPassword = false;
+  bool _showConfirmPassword = false;
 
 @override
 void initState() {
@@ -29,6 +34,8 @@ void initState() {
   nombresController = TextEditingController(text: widget.user['nombres'] ?? '');
   apellidosController = TextEditingController(text: widget.user['apellidos'] ?? '');
   emailController = TextEditingController(text: widget.user['correo'] ?? '');
+  passwordController = TextEditingController();
+  confirmPasswordController = TextEditingController();
 
   // === PARSEO FUERTE DE FECHA ===
   String fechaRaw = widget.user['fecha_nacimiento']?.toString() ?? '';
@@ -83,6 +90,25 @@ Future<void> _saveChanges() async {
     return;
   }
 
+  if(passwordController.text.isNotEmpty){
+    if(passwordController.text.length < 5 ){
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("La contraseña debe tener minimo 6 caracteres"),
+        backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    if(passwordController.text != confirmPasswordController.text){
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Las contraseñas no coinciden"),
+        backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+  }
+
   setState(() => isLoading = true);
 
   try {
@@ -92,6 +118,7 @@ Future<void> _saveChanges() async {
       apellidos: apellidosController.text.trim(),
       correo: emailController.text.trim(),
       fechaNacimiento: fechaController.text,
+      password: passwordController.text.isNotEmpty ? passwordController.text : null
     );
 
     if (result['success'] == true) {
@@ -101,6 +128,8 @@ Future<void> _saveChanges() async {
           backgroundColor: Colors.green,
         ),
       );
+      passwordController.clear();
+      confirmPasswordController.clear();
       setState(() => isEditing = false);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -163,6 +192,21 @@ Future<void> _saveChanges() async {
                   _buildTextField("Correo Electrónico", emailController, isEditing),
                   const SizedBox(height: 16),
                   _buildTextField("Fecha de Nacimiento", fechaController, isEditing),
+                  
+                  const SizedBox(height: 30),
+
+                  const Text("Actualizar Contraseña", style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),),
+
+                  const SizedBox(height: 12),
+
+                  _buildPasswordField("Nueva Contraseña", passwordController, isEditing, _showPassword, () => setState(() => _showPassword = !_showPassword)),
+
+                  const SizedBox(height: 16,),
+
+                  _buildPasswordField("Confirmar Contraseña", confirmPasswordController, isEditing, _showConfirmPassword, () => setState(() => _showConfirmPassword = !_showConfirmPassword)),
                 ],
               ),
             ),
@@ -216,6 +260,26 @@ Future<void> _saveChanges() async {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
         filled: true,
         fillColor: enabled ? Colors.white : const Color(0xFFF8FAFC),
+      ),
+    );
+  }
+
+  Widget _buildPasswordField( String label, TextEditingController controller, bool enabled, bool showPassword, VoidCallback onToggle) {
+    return TextField(
+      controller: controller,
+      enabled: enabled,
+      obscureText: !showPassword,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        filled: true,
+        fillColor: enabled ? Colors.white :  const Color(0xFFF8FAFC),
+        suffixIcon: enabled ? IconButton(
+          icon: Icon(showPassword ? Icons.visibility_off : Icons.visibility),
+          onPressed: onToggle,
+        ) : null,
       ),
     );
   }

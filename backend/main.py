@@ -1218,7 +1218,7 @@ def actualizar_perfil(id_usuario):
         apellidos = data.get('apellidos')
         correo = data.get('correo')
         fecha_nacimiento = data.get('fecha_nacimiento')
-        nueva_clave = data.get('nueva_clave')
+        nueva_clave = data.get('nueva_clave') or data.get('clave')
 
         conn = get_db_connection()
         cursor = conn.cursor()
