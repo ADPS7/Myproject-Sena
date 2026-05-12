@@ -2,9 +2,8 @@
 
 let cursosData = [];
 
-function inicializarCursosAdmin() {
-    cargarCursos();
-}
+cargarCursos();
+
 
 function cargarCursos() {
     fetch('/cursos')
@@ -96,16 +95,43 @@ function guardarCurso() {
     .catch(() => alert("Error de conexión"));
 }
 
+// Variable global temporal para guardar qué curso queremos borrar
+let cursoAEliminar = null;
+
 function eliminarCurso(id, nombre) {
-    if (confirm(`¿Eliminar el curso "${nombre}"?`)) {
-        fetch(`/cursos/eliminar/${id}`, { method: 'DELETE' })
+    // 1. Guardamos los datos en la variable temporal
+    cursoAEliminar = { id, nombre };
+
+    // 2. Mostramos el modal de Bootstrap
+    const modalConfirm = new bootstrap.Modal(document.getElementById('modalConfirmarEliminar'));
+    modalConfirm.show();
+}
+
+// 3. Escuchamos el clic del botón "Eliminar" dentro del modal
+document.getElementById('btnConfirmarEliminarDoc').addEventListener('click', () => {
+    if (!cursoAEliminar) return;
+
+    const { id, nombre } = cursoAEliminar;
+
+    fetch(`/cursos/eliminar/${id}`, { method: 'DELETE' })
         .then(res => res.json())
         .then(data => {
-            if (data.success) cargarCursos();
-            else alert(data.error || "No se pudo eliminar");
+            // Cerramos el modal
+            const modalEl = document.getElementById('modalConfirmarEliminar');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            modalInstance.hide();
+
+            if (data.success) {
+                cargarCursos();
+                mostrarToast(`El curso "${nombre}" ha sido eliminado`, "danger");
+            } else {
+                mostrarToast(data.error || "No se pudo eliminar", "danger");
+            }
+        })
+        .catch(() => {
+            mostrarToast("Error de conexión", "danger");
         });
-    }
-}
+});
 
 function filtrarCursos() {
     const texto = document.getElementById('buscarCurso').value.toLowerCase();

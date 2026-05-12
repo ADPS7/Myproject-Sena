@@ -1,3 +1,37 @@
+// ==========================================
+// 1. VARIABLES GLOBALES
+// ==========================================
+let todosLosModulos = [];
+let moduloIdParaEliminar = null; // Para gestionar el modal de borrado
+
+// ==========================================
+// 2. UTILIDADES (Notificaciones Toast)
+// ==========================================
+function mostrarToast(mensaje, tipo = "primary") {
+    let toastContainer = document.getElementById("toastContainer");
+    if (!toastContainer) {
+        toastContainer = document.createElement("div");
+        toastContainer.id = "toastContainer";
+        toastContainer.className = "toast-container position-fixed bottom-0 end-0 p-3";
+        document.body.appendChild(toastContainer);
+    }
+    const toastEl = document.createElement("div");
+    toastEl.className = `toast align-items-center text-bg-${tipo} border-0`;
+    toastEl.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${mensaje}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    toastContainer.appendChild(toastEl);
+    const toast = new bootstrap.Toast(toastEl);
+    toast.show();
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
+
+// ==========================================
+// 3. CARGA DE DATOS Y RENDERIZADO
+// ==========================================
 function llenarSelectCursos() {
     const selectAgregar = document.getElementById('id_curso_modulo');
     const selectEditar = document.getElementById('edit_id_curso_modulo');
@@ -7,7 +41,6 @@ function llenarSelectCursos() {
         .then(cursos => {
             let opciones = '<option value="" selected disabled>Seleccione un curso...</option>';
             cursos.forEach(curso => {
-                // Importante: Usar el ID como value
                 opciones += `<option value="${curso.id_curso}">${curso.nombre}</option>`;
             });
 
@@ -16,66 +49,6 @@ function llenarSelectCursos() {
         });
 }
 
-// Ejecutar la función al cargar el documento
-document.addEventListener('DOMContentLoaded', llenarSelectCursos);
-
-document.getElementById('formAgregarModulo').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const datosModulo = {
-        nombre: document.getElementById('nombre_modulo').value,
-        fecha_inicio: document.getElementById('fecha_inicio').value,
-        fecha_fin: document.getElementById('fecha_fin').value,
-        id_curso: document.getElementById('id_curso_modulo').value
-    };
-
-    fetch('/modulos/crear', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(datosModulo)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Alerta de Éxito
-            Swal.fire({
-                title: '¡Correcto!',
-                text: 'El módulo ha sido creado exitosamente',
-                icon: 'success',
-                confirmButtonColor: '#0d6efd' // Color azul de Bootstrap
-            });
-            
-            // Cerrar modal y limpiar
-            const modal = bootstrap.Modal.getInstance(document.getElementById('modalAgregarModulo'));
-            modal.hide();
-            document.getElementById('formAgregarModulo').reset();
-            
-        } else {
-            // Alerta de Error del servidor
-            Swal.fire({
-                title: 'Error',
-                text: 'No se pudo registrar el módulo',
-                icon: 'error',
-                confirmButtonColor: '#dc3545'
-            });
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        // Alerta de Error de conexión
-        Swal.fire({
-            title: 'Error de Red',
-            text: 'Hubo un problema al conectar con el servidor',
-            icon: 'warning',
-            confirmButtonColor: '#ffc107'
-        });
-    });
-});
-// Variable global para guardar los datos y no tener que llamar a la DB cada vez que escribes
-let todosLosModulos = [];
-
 function cargarModulos() {
     const tablaBody = document.getElementById('tabla-modulos-body');
     if(!tablaBody) return;
@@ -83,12 +56,11 @@ function cargarModulos() {
     fetch('/modulos')
         .then(response => response.json())
         .then(modulos => {
-            todosLosModulos = modulos; // Guardamos la copia original
-            renderizarTabla(modulos);  // Llamamos a una función que dibuja la tabla
+            todosLosModulos = modulos; 
+            renderizarTabla(modulos);  
         });
 }
 
-// Función que dibuja las filas (la separamos para poder reutilizarla al filtrar)
 function renderizarTabla(lista) {
     const tablaBody = document.getElementById('tabla-modulos-body');
     tablaBody.innerHTML = '';
@@ -99,7 +71,6 @@ function renderizarTabla(lista) {
     }
 
     lista.forEach(modulo => {
-        // Tu lógica de formateo de fecha que ya definimos
         const formatear = (f) => {
             try {
                 let d = new Date(f);
@@ -122,122 +93,194 @@ function renderizarTabla(lista) {
     });
 }
 
-// LÓGICA DEL BUSCADOR
-document.getElementById('inputBusqueda').addEventListener('input', function(e) {
-    const termino = e.target.value.toLowerCase(); // Lo que el usuario escribe en minúsculas
+// ==========================================
+// 4. LÓGICA DE AGREGAR MÓDULO
+// ==========================================
+document.getElementById('formAgregarModulo').addEventListener('submit', function(e) {
+    e.preventDefault();
 
-    const filtrados = todosLosModulos.filter(modulo => {
-        const nombreM = modulo.nombre.toLowerCase();
-        const nombreC = modulo.nombre_curso.toLowerCase();
-        
-        // Retorna verdadero si el término está en el nombre del módulo O en el del curso
-        return nombreM.includes(termino) || nombreC.includes(termino);
-    });
+    const datosModulo = {
+        nombre: document.getElementById('nombre_modulo').value,
+        fecha_inicio: document.getElementById('fecha_inicio').value,
+        fecha_fin: document.getElementById('fecha_fin').value,
+        id_curso: document.getElementById('id_curso_modulo').value
+    };
 
-    renderizarTabla(filtrados); // Redibujamos la tabla con los resultados filtrados
+    if (new Date(datosModulo.fecha_inicio) > new Date(datosModulo.fecha_fin)) {
+        mostrarToast("La fecha de inicio no puede ser mayor a la de fin", "warning");
+        return;
+    }
+
+    fetch('/modulos/crear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datosModulo)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            // 1. Obtener la instancia del modal y ocultarla
+            const modalEl = document.getElementById('modalAgregarModulo');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            
+            if (modalInstance) {
+                modalInstance.hide();
+            }
+
+            // 2. LIMPIEZA MANUAL DEL BACKDROP (Esto quita la pantalla opaca)
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+
+            // 3. Limpiar formulario y notificar
+            document.getElementById('formAgregarModulo').reset();
+            mostrarToast("¡Módulo creado!", "success");
+            cargarModulos();
+        } else {
+            mostrarToast(data.error || "Error al crear", "danger");
+        }
+    })
+    .catch(() => mostrarToast("Error de conexión", "danger"));
 });
 
-// Inicializar
-document.addEventListener('DOMContentLoaded', cargarModulos);
-
-//editar
-// 1. CARGAR DATOS EN EL MODAL
+// ==========================================
+// 5. LÓGICA DE EDITAR MÓDULO
+// ==========================================
 function prepararEdicion(id) {
-    // Buscamos el módulo en nuestra lista global
     const modulo = todosLosModulos.find(m => m.id_modulo === id);
 
     if (modulo) {
         document.getElementById('edit_id_modulo').value = modulo.id_modulo;
         document.getElementById('edit_nombre_modulo').value = modulo.nombre;
         
-        // Convertir fechas al formato YYYY-MM-DD que aceptan los inputs
         const fInicio = new Date(modulo.fecha_inicio).toISOString().split('T')[0];
         const fFin = new Date(modulo.fecha_fin).toISOString().split('T')[0];
         
         document.getElementById('edit_fecha_inicio').value = fInicio;
         document.getElementById('edit_fecha_fin').value = fFin;
         
-        // ASIGNAR EL CURSO ACTUAL
-        // Asegúrate de que 'id_curso' sea el nombre que viene en tu JSON de Python
         const selectCurso = document.getElementById('edit_id_curso_modulo');
         selectCurso.value = modulo.id_curso; 
 
-        // Mostrar modal
         const modalEdit = new bootstrap.Modal(document.getElementById('modalEditarModulo'));
         modalEdit.show();
     }
 }
-
-// 2. ENVIAR DATOS A PYTHON (Ajustado a tu ruta actual)
 document.getElementById('formEditarModulo').addEventListener('submit', function(e) {
     e.preventDefault();
 
     const id = document.getElementById('edit_id_modulo').value;
     const datos = {
-        id_modulo: id, // Lo incluimos por si tu Python lo requiere en el body
         nombre: document.getElementById('edit_nombre_modulo').value,
         fecha_inicio: document.getElementById('edit_fecha_inicio').value,
         fecha_fin: document.getElementById('edit_fecha_fin').value,
         id_curso: document.getElementById('edit_id_curso_modulo').value
     };
 
-    fetch(`/modulos/editar/${id}`, { // Asegúrate que esta sea tu ruta de Python
-        method: 'PUT', // O POST, según como lo tengas en Python
+    // Validación de fechas
+    if (new Date(datos.fecha_inicio) > new Date(datos.fecha_fin)) {
+        mostrarToast("La fecha de inicio no puede ser mayor a la de fin", "warning");
+        return;
+    }
+
+    fetch(`/modulos/editar/${id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datos)
     })
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            Swal.fire({
-                title: '¡Actualizado!',
-                text: 'El módulo se ha modificado con éxito.',
-                icon: 'success',
-                confirmButtonColor: '#ffc107'
-            });
-            bootstrap.Modal.getInstance(document.getElementById('modalEditarModulo')).hide();
-            cargarModulos(); // Refrescamos la tabla
-        }
+            if (data.success) {
+                // 1. Cerrar modal
+                const modalEditEl = document.getElementById('modalEditarModulo');
+                const modalInstance = bootstrap.Modal.getInstance(modalEditEl);
+                if (modalInstance) modalInstance.hide();
+
+                // 2. Limpieza extrema del backdrop y clases de Bootstrap
+                setTimeout(() => {
+                    const backdrop = document.querySelector('.modal-backdrop');
+                    if (backdrop) backdrop.remove();
+                    document.body.classList.remove('modal-open');
+                    document.body.style.overflow = '';
+                    document.body.style.paddingRight = '';
+                }, 100); // Un pequeño retraso para que la animación de Bootstrap termine
+
+                // 3. Notificación azul
+                mostrarToast("¡Módulo actualizado correctamente!", "primary");
+                
+                cargarModulos(); 
+            }
+        } 
     })
-    .catch(err => Swal.fire('Error', 'No se pudo actualizar', 'error'));
+    .catch(() => mostrarToast("Error de conexión con el servidor", "danger"));
+});
+// ==========================================
+// 6. LÓGICA DE ELIMINAR MÓDULO
+// ==========================================
+
+// ==========================================
+// 6. LÓGICA DE ELIMINAR MÓDULO
+// ==========================================
+function confirmarEliminacion(id) {
+    moduloIdParaEliminar = id;
+    const modalConfirm = new bootstrap.Modal(document.getElementById('modalConfirmarEliminar'));
+    modalConfirm.show();
+}
+
+document.getElementById('btnConfirmarEliminarModulo')?.addEventListener('click', function() {
+    if (!moduloIdParaEliminar) return;
+
+    fetch(`/modulos/eliminar/${moduloIdParaEliminar}`, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(data => {
+            // 1. Cerrar modal
+            const modalEl = document.getElementById('modalConfirmarEliminar');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            if(modalInstance) modalInstance.hide();
+
+            // 2. LIMPIEZA MANUAL DE PANTALLA OPACA
+            setTimeout(() => {
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) backdrop.remove();
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+            }, 100);
+
+            // 3. Resultados
+            if (data.success) {
+                mostrarToast("Módulo eliminado correctamente", "danger");
+                cargarModulos();
+            } else {
+                // Aquí te dirá por qué no deja eliminar (tu petición original)
+                mostrarToast(data.error || "No se pudo eliminar", "warning");
+            }
+        })
+        .catch(() => mostrarToast("Error de red", "danger"))
+        .finally(() => {
+            moduloIdParaEliminar = null;
+        });
 });
 
-//eliminar modulo
-function confirmarEliminacion(id) {
-    Swal.fire({
-        title: '¿Estás seguro?',
-        text: "El módulo se eliminará permanentemente. Esta acción no se puede deshacer.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33', // Rojo
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar',
-        reverseButtons: true // Pone el botón de cancelar a la izquierda
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Llamada a la ruta que me pasaste
-            fetch(`/modulos/eliminar/${id}`, {
-                method: 'DELETE'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire(
-                        '¡Eliminado!',
-                        'El módulo ha sido borrado.',
-                        'success'
-                    );
-                    // Actualizamos la tabla para que el módulo desaparezca visualmente
-                    cargarModulos(); 
-                } else {
-                    Swal.fire('Error', 'No se pudo eliminar: ' + data.error, 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                Swal.fire('Error de red', 'No se pudo contactar con el servidor.', 'error');
-            });
-        }
+// ==========================================
+// 7. BUSCADOR E INICIALIZACIÓN
+// ==========================================
+document.getElementById('inputBusqueda').addEventListener('input', function(e) {
+    const termino = e.target.value.toLowerCase();
+    const filtrados = todosLosModulos.filter(modulo => {
+        return modulo.nombre.toLowerCase().includes(termino) || 
+               modulo.nombre_curso.toLowerCase().includes(termino);
     });
-}
+    renderizarTabla(filtrados);
+});
+
+// EVENTO ÚNICO DE CARGA
+document.addEventListener('DOMContentLoaded', () => {
+    llenarSelectCursos();
+    cargarModulos();
+});

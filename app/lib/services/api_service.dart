@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'aut_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.1.5:5000';
+  static const String baseUrl = 'http://10.2.125.19:5000';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,  
@@ -368,12 +368,17 @@ Future<Map<String, dynamic>> getMyModules() async {
     }
   }
   Future<Map<String, dynamic>> editarModulo(int id, String nombre, String inicio, String fin, int idCurso) async {
-    final response = await http.put(
+    final res = await http.put(
       Uri.parse('$baseUrl/modulos/editar/$id'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'nombre': nombre, 'fecha_inicio': inicio, 'fecha_fin': fin, 'id_curso': idCurso}),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        'nombre': nombre,
+        'fecha_inicio': inicio,
+        'fecha_fin': fin,
+        'id_curso': idCurso
+      }),
     );
-    return json.decode(response.body);
+    return jsonDecode(res.body);
   }
   Future<Map<String, dynamic>> eliminarModulo(int id) async {
     final response = await http.delete(Uri.parse('$baseUrl/modulos/eliminar/$id'));
@@ -565,33 +570,31 @@ Future<Map<String, dynamic>> getMyModules() async {
       return {'success': false, 'message': 'Error de conexión: $e'};
     }
   }
-
   Future<Map<String, dynamic>> actualizarPerfil({
-  required int idUsuario,
-  required String nombres,
-  required String apellidos,
-  required String correo,
-  required String fechaNacimiento,
-}) async {
-  try {
-    final response = await http.put(
-      Uri.parse('$baseUrl/actualizar_perfil/$idUsuario'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'nombres': nombres,
-        'apellidos': apellidos,
-        'correo': correo,
-        'fecha_nacimiento': fechaNacimiento,
-      }),
-    );
+    required int idUsuario,
+    required String nombres,
+    required String apellidos,
+    required String correo,
+    required String fechaNacimiento,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/actualizar_perfil/$idUsuario'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'nombres': nombres,
+          'apellidos': apellidos,
+          'correo': correo,
+          'fecha_nacimiento': fechaNacimiento,
+        }),
+      );
 
-    return json.decode(response.body);
-  } catch (e) {
-    print("Error en actualizarPerfil: $e");
-    return {"success": false, "error": "Error de conexión"};
+      return json.decode(response.body);
+    } catch (e) {
+      print("Error en actualizarPerfil: $e");
+      return {"success": false, "error": "Error de conexión"};
+    }
   }
-}
-
 // Estos son los metodos del archibo usuarioAdmin.dart que hacen uso de los servicios del ApiService, por eso se encuentran aqui para no perder el contexto de su uso
  
  // primer metodo
