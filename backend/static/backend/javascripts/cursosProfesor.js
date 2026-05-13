@@ -12,7 +12,8 @@ async function cargarCursosProfesor() {
     try {
 
         // ID DEL PROFESOR
-        const idProfesor = 13;
+        const idProfesor = window.USER_ID;
+
 
         const response = await fetch(`/cursos/profesor/${idProfesor}`);
         datosCursos = await response.json();

@@ -137,7 +137,7 @@ def dashboard():
         return render_template('view/profesor/menuProfesor.html', user=user)
     
     else:
-        return render_template('view/estudiante/inicioEstudiante.html', user=user)
+        return render_template('view/estudiante/menuEstudiante.html', user=user)
 
 @app.route('/asistencias/<int:id_usuario>', methods=['GET'])
 def get_asistencias(id_usuario):
