@@ -283,10 +283,11 @@ def registrar_asistencia():
     try:
         data = request.json
         id_modulo = data.get('id_modulo')
-        ids_estudiantes_presentes = data.get('estudiantes') # Es la lista [1, 2, 3...]
+        ids_estudiantes_presentes = data.get('estudiantes')
+        asistencias = data.get('asistencias')
         fecha = data.get('fecha')
 
-        if not id_modulo or ids_estudiantes_presentes is None:
+        if not id_modulo or (ids_estudiantes_presentes is None and asistencias is None):
             return jsonify({"error": "Faltan datos requeridos"}), 400
 
         conn = get_db_connection()
@@ -311,10 +312,19 @@ def registrar_asistencia():
             ON DUPLICATE KEY UPDATE asistio = VALUES(asistio)
         """
 
-        # Busca esta parte en tu ruta /asistencia/registrar
+        estado_por_estudiante = {}
+        if asistencias is not None:
+            for item in asistencias:
+                try:
+                    estado_por_estudiante[int(item.get('id_usuario'))] = 'SI' if str(item.get('asistio')).upper() == 'SI' else 'NO'
+                except (ValueError, TypeError):
+                    continue
+
         for id_estudiante in todos_los_estudiantes:
-            # CAMBIO AQUÍ: Guardamos "SI" o "NO" como texto
-            asistio_texto = "SI" if id_estudiante in ids_estudiantes_presentes else "NO"
+            if id_estudiante in estado_por_estudiante:
+                asistio_texto = estado_por_estudiante[id_estudiante]
+            else:
+                asistio_texto = 'SI' if ids_estudiantes_presentes and id_estudiante in ids_estudiantes_presentes else 'NO'
             cursor.execute(insert_query, (id_estudiante, id_modulo, fecha, asistio_texto))
 
         conn.commit()
