@@ -135,7 +135,15 @@ async function verModulos(idCurso, nombreCurso) {
     } catch (error) {
 
         console.error(error);
-
+        const contenedor = document.getElementById('contenedor-principal');
+        if (contenedor) {
+            contenedor.innerHTML = `
+                <div class="col-12">
+                    <div class="alert alert-danger shadow-sm">
+                        No se pudieron cargar los módulos. Revisa la consola del navegador.
+                    </div>
+                </div>`;
+        }
     }
 }
 
@@ -168,87 +176,57 @@ function renderizarModulos(idCurso, nombreCurso, modulos) {
 
         </div>
 
-        ${modulos.map(modulo => {
+        ${modulos.length ? modulos.map(modulo => {
 
-            const fechaInicio = modulo.fecha_inicio.split('T')[0];
-            const fechaFin = modulo.fecha_fin.split('T')[0];
+            const fechaInicio = modulo.fecha_inicio ? String(modulo.fecha_inicio).split('T')[0] : 'Sin fecha';
+            const fechaFin = modulo.fecha_fin ? String(modulo.fecha_fin).split('T')[0] : 'Sin fecha';
 
             return `
 
                 <div class="col-md-6 mb-4">
 
-                    <div class="card border-0 shadow modulo-card h-100"
-                         onclick="verEstudiantes(${idCurso}, ${modulo.id_modulo}, '${modulo.nombre}')">
-
+                    <div class="card border-0 shadow modulo-card h-100" onclick='verEstudiantes(${idCurso}, ${modulo.id_modulo}, ${JSON.stringify(modulo.nombre)})'>
                         <div class="card-body p-4">
-
                             <div class="d-flex justify-content-between align-items-start mb-4">
-
                                 <div>
-
                                     <small class="text-primary fw-semibold">
                                         MÓDULO
                                     </small>
-
                                     <h4 class="fw-bold mt-2">
                                         ${modulo.nombre}
                                     </h4>
-
                                 </div>
-
                                 <div class="bg-light rounded-circle p-3">
-
                                     <i class="bi bi-journal-bookmark-fill text-primary fs-4"></i>
-
                                 </div>
-
                             </div>
-
                             <div class="bg-light rounded-4 p-3">
-
                                 <div class="d-flex justify-content-between mb-2">
-
-                                    <small class="text-muted">
-                                        Inicio
-                                    </small>
-
-                                    <span class="fw-semibold">
-                                        ${fechaInicio}
-                                    </span>
-
+                                    <small class="text-muted">Inicio</small>
+                                    <span class="fw-semibold">${fechaInicio}</span>
                                 </div>
-
                                 <div class="d-flex justify-content-between">
-
-                                    <small class="text-muted">
-                                        Finaliza
-                                    </small>
-
-                                    <span class="fw-semibold">
-                                        ${fechaFin}
-                                    </span>
-
+                                    <small class="text-muted">Finaliza</small>
+                                    <span class="fw-semibold">${fechaFin}</span>
                                 </div>
-
                             </div>
-
                             <div class="mt-4 d-flex justify-content-end">
-
-                                <span class="text-primary fw-semibold">
-                                    Ver estudiantes →
-                                </span>
-
+                                <span class="text-primary fw-semibold">Ver estudiantes →</span>
                             </div>
-
                         </div>
-
                     </div>
 
                 </div>
 
             `;
 
-        }).join('')}
+        }).join('') : `
+            <div class="col-12">
+                <div class="alert alert-warning shadow-sm">
+                    No hay módulos registrados para este curso.
+                </div>
+            </div>
+        `}
     `;
 }
 
@@ -267,7 +245,15 @@ async function verEstudiantes(idCurso, idModulo, nombreModulo) {
     } catch (error) {
 
         console.error(error);
-
+        const contenedor = document.getElementById('contenedor-principal');
+        if (contenedor) {
+            contenedor.innerHTML = `
+                <div class="col-12">
+                    <div class="alert alert-danger shadow-sm">
+                        No se pudieron cargar los estudiantes. Revisa la consola del navegador.
+                    </div>
+                </div>`;
+        }
     }
 }
 
