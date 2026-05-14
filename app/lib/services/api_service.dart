@@ -4,23 +4,20 @@ import 'package:http/http.dart' as http;
 import 'aut_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.137.182:5000';
+  static const String baseUrl = 'http://10.2.133.30:5000';
   Future<Map<String, dynamic>> login({
     required String correo,
-    required String clave,  
+    required String clave,
   }) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/login'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'correo': correo,
-          'clave': clave,
-        }),
+        body: json.encode({'correo': correo, 'clave': clave}),
       );
 
       final decodedData = json.decode(response.body);
-      
+
       if (response.statusCode == 200) {
         return {"success": true, "user": decodedData['user']};
       } else {
@@ -70,10 +67,13 @@ class ApiService {
       return [];
     }
   }
+
   // Obtener módulos de un curso específico
   Future<List<dynamic>> getModulosPorCurso(int idCurso) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/modulos/curso/$idCurso'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/modulos/curso/$idCurso'),
+      );
       if (response.statusCode == 200) {
         return json.decode(response.body);
       }
@@ -83,7 +83,7 @@ class ApiService {
       return [];
     }
   }
-  
+
   Future<List<dynamic>> getEstudiantesPorModulo(int idModulo) async {
     try {
       final response = await http.get(
@@ -97,6 +97,7 @@ class ApiService {
       return [];
     }
   }
+
   Future<Map<String, dynamic>> guardarAsistencia({
     required int idModulo,
     required List<int> idsEstudiantes,
@@ -116,12 +117,16 @@ class ApiService {
         return {'success': true};
       } else {
         final errorBody = json.decode(response.body);
-        return {'success': false, 'error': errorBody['detail'] ?? 'Error al guardar'};
+        return {
+          'success': false,
+          'error': errorBody['detail'] ?? 'Error al guardar',
+        };
       }
     } catch (e) {
       return {'success': false, 'error': 'Error de conexión: $e'};
     }
   }
+
   Future<Map<String, dynamic>> getHistorialAsistencia(dynamic idUsuario) async {
     try {
       final String idStr = idUsuario.toString();
@@ -131,7 +136,7 @@ class ApiService {
 
       if (response.statusCode == 200) {
         return json.decode(response.body);
-      } 
+      }
       return {"success": false, "asistencias": []};
     } catch (e) {
       return {"success": false, "asistencias": []};
@@ -161,18 +166,16 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getAdminNotas() async {
-  final response = await http.get(Uri.parse('$baseUrl/admin/notas'));
+    final response = await http.get(Uri.parse('$baseUrl/admin/notas'));
 
-  return json.decode(response.body);
+    return json.decode(response.body);
   }
 
   Future<Map<String, dynamic>> getNotasEstudiante(int id) async {
-  final response = await http.get(
-    Uri.parse('$baseUrl/notas-alumno/$id'),
-  );
+    final response = await http.get(Uri.parse('$baseUrl/notas-alumno/$id'));
 
-  return jsonDecode(response.body);
-}
+    return jsonDecode(response.body);
+  }
 
   Future<List<dynamic>> getNotasPorModulo(int idModulo) async {
     try {
@@ -219,36 +222,36 @@ class ApiService {
     }
   }
 
-Future<String> getStudentCourse() async {
-  final userId = await AuthService.getUserId(); 
-  if (userId == null) return "Usuario no encontrado";
+  Future<String> getStudentCourse() async {
+    final userId = await AuthService.getUserId();
+    if (userId == null) return "Usuario no encontrado";
 
-  try {
-    final response = await http.get(
-      Uri.parse('$baseUrl/asistencias/$userId'),
-      headers: {'Content-Type': 'application/json'},
-    );
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/asistencias/$userId'),
+        headers: {'Content-Type': 'application/json'},
+      );
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      
-      if (data['curso_nombre'] != null) {
-        return data['curso_nombre'];
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        if (data['curso_nombre'] != null) {
+          return data['curso_nombre'];
+        }
+        if (data['asistencias'] != null && data['asistencias'].isNotEmpty) {
+          return data['asistencias'][0]['curso_nombre'] ?? 'Sin curso asignado';
+        }
+        return 'Sin curso asignado';
+      } else {
+        return "Error del servidor";
       }
-      if (data['asistencias'] != null && data['asistencias'].isNotEmpty) {
-        return data['asistencias'][0]['curso_nombre'] ?? 'Sin curso asignado';
-      }
-      return 'Sin curso asignado';
-    } else {
-      return "Error del servidor";
+    } catch (e) {
+      print("Error getStudentCourse: $e");
+      return "Sin conexión con el servidor";
     }
-  } catch (e) {
-    print("Error getStudentCourse: $e");
-    return "Sin conexión con el servidor";
   }
-}
-  
-Future<Map<String, dynamic>> getMyModules() async {
+
+  Future<Map<String, dynamic>> getMyModules() async {
     final userId = await AuthService.getUserId();
     if (userId == null) {
       return {'curso': 'Usuario no encontrado', 'modulos': []};
@@ -265,21 +268,21 @@ Future<Map<String, dynamic>> getMyModules() async {
         final data = json.decode(response.body);
 
         final List<dynamic> asistencias = data['asistencias'] ?? [];
-        
-        String cursoNombre = data['curso_nombre'] ?? 
-            (asistencias.isNotEmpty ? asistencias.first['curso_nombre'] ?? 'Sin curso asignado' : 'Sin curso asignado');
 
-        final int idCurso = asistencias.isNotEmpty 
-            ? (asistencias.first['id_curso'] ?? 1) 
+        String cursoNombre =
+            data['curso_nombre'] ??
+            (asistencias.isNotEmpty
+                ? asistencias.first['curso_nombre'] ?? 'Sin curso asignado'
+                : 'Sin curso asignado');
+
+        final int idCurso = asistencias.isNotEmpty
+            ? (asistencias.first['id_curso'] ?? 1)
             : 1;
 
         // Obtenemos los módulos
         final List<dynamic> modulos = await getModulosPorCurso(idCurso);
 
-        return {
-          'curso': cursoNombre,
-          'modulos': modulos,
-        };
+        return {'curso': cursoNombre, 'modulos': modulos};
       } else {
         return {'curso': 'Error al cargar', 'modulos': []};
       }
@@ -288,6 +291,7 @@ Future<Map<String, dynamic>> getMyModules() async {
       return {'curso': 'Sin curso asignado', 'modulos': []};
     }
   }
+
   Future<Map<String, dynamic>> crearCurso(String nombreCurso) async {
     try {
       final response = await http.post(
@@ -302,6 +306,7 @@ Future<Map<String, dynamic>> getMyModules() async {
       return {"success": false, "error": "Error de conexión: $e"};
     }
   }
+
   Future<List<dynamic>> getCursos() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/cursos'));
@@ -313,7 +318,11 @@ Future<Map<String, dynamic>> getMyModules() async {
       return [];
     }
   }
-  Future<Map<String, dynamic>> editarCurso(int idCurso, String nuevoNombre) async {
+
+  Future<Map<String, dynamic>> editarCurso(
+    int idCurso,
+    String nuevoNombre,
+  ) async {
     try {
       final response = await http.put(
         Uri.parse('$baseUrl/cursos/editar/$idCurso'),
@@ -325,6 +334,7 @@ Future<Map<String, dynamic>> getMyModules() async {
       return {"success": false, "error": "Error de conexión"};
     }
   }
+
   Future<Map<String, dynamic>> eliminarCurso(int idCurso) async {
     try {
       final response = await http.delete(
@@ -335,7 +345,13 @@ Future<Map<String, dynamic>> getMyModules() async {
       return {"success": false, "error": "Error de conexión"};
     }
   }
-  Future<Map<String, dynamic>> crearModulo(String nombre, String inicio, String fin, int idCurso) async {
+
+  Future<Map<String, dynamic>> crearModulo(
+    String nombre,
+    String inicio,
+    String fin,
+    int idCurso,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/modulos/crear'),
@@ -344,7 +360,7 @@ Future<Map<String, dynamic>> getMyModules() async {
           'nombre': nombre,
           'fecha_inicio': inicio,
           'fecha_fin': fin,
-          'id_curso': idCurso
+          'id_curso': idCurso,
         }),
       );
       return json.decode(response.body);
@@ -352,10 +368,11 @@ Future<Map<String, dynamic>> getMyModules() async {
       return {"success": false, "error": e.toString()};
     }
   }
+
   Future<List<dynamic>> getModulos() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/modulos'));
-      
+
       if (response.statusCode == 200) {
         // Decodificamos el JSON y devolvemos la lista
         return json.decode(response.body);
@@ -367,7 +384,14 @@ Future<Map<String, dynamic>> getMyModules() async {
       return [];
     }
   }
-  Future<Map<String, dynamic>> editarModulo(int id, String nombre, String inicio, String fin, int idCurso) async {
+
+  Future<Map<String, dynamic>> editarModulo(
+    int id,
+    String nombre,
+    String inicio,
+    String fin,
+    int idCurso,
+  ) async {
     final res = await http.put(
       Uri.parse('$baseUrl/modulos/editar/$id'),
       headers: {"Content-Type": "application/json"},
@@ -375,13 +399,16 @@ Future<Map<String, dynamic>> getMyModules() async {
         'nombre': nombre,
         'fecha_inicio': inicio,
         'fecha_fin': fin,
-        'id_curso': idCurso
+        'id_curso': idCurso,
       }),
     );
     return jsonDecode(res.body);
   }
+
   Future<Map<String, dynamic>> eliminarModulo(int id) async {
-    final response = await http.delete(Uri.parse('$baseUrl/modulos/eliminar/$id'));
+    final response = await http.delete(
+      Uri.parse('$baseUrl/modulos/eliminar/$id'),
+    );
     return json.decode(response.body);
   }
 
@@ -399,7 +426,9 @@ Future<Map<String, dynamic>> getMyModules() async {
 
   Future<List<dynamic>> getEstudiantesSinCurso() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/estudiantes-sin-curso'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/estudiantes-sin-curso'),
+      );
       if (response.statusCode == 200) {
         return json.decode(response.body);
       }
@@ -423,7 +452,9 @@ Future<Map<String, dynamic>> getMyModules() async {
 
   Future<List<dynamic>> getEstudiantesPorCurso(int idCurso) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/cursos/$idCurso/estudiantes'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/cursos/$idCurso/estudiantes'),
+      );
       if (response.statusCode == 200) {
         return json.decode(response.body);
       }
@@ -435,7 +466,9 @@ Future<Map<String, dynamic>> getMyModules() async {
 
   Future<List<dynamic>> getProfesoresSinCurso() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/profesores-sin-curso'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/profesores-sin-curso'),
+      );
       if (response.statusCode == 200) {
         return json.decode(response.body);
       }
@@ -447,7 +480,9 @@ Future<Map<String, dynamic>> getMyModules() async {
 
   Future<List<dynamic>> getProfesoresPorCurso(int idCurso) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/cursos/$idCurso/profesores'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/cursos/$idCurso/profesores'),
+      );
       if (response.statusCode == 200) {
         return json.decode(response.body);
       }
@@ -459,7 +494,9 @@ Future<Map<String, dynamic>> getMyModules() async {
 
   Future<List<dynamic>> getProfesoresDisponiblesPorCurso(int idCurso) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/profesores-disponibles/$idCurso'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/profesores-disponibles/$idCurso'),
+      );
       if (response.statusCode == 200) {
         return json.decode(response.body);
       }
@@ -469,7 +506,10 @@ Future<Map<String, dynamic>> getMyModules() async {
     }
   }
 
-  Future<Map<String, dynamic>> desasignarProfesor(int idUsuario, int? idCurso) async {
+  Future<Map<String, dynamic>> desasignarProfesor(
+    int idUsuario,
+    int? idCurso,
+  ) async {
     try {
       final body = {'id_usuario': idUsuario};
       if (idCurso != null) {
@@ -487,7 +527,10 @@ Future<Map<String, dynamic>> getMyModules() async {
     }
   }
 
-  Future<Map<String, dynamic>> asignarProfesor(int idUsuario, int idCurso) async {
+  Future<Map<String, dynamic>> asignarProfesor(
+    int idUsuario,
+    int idCurso,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/asignar-profesor'),
@@ -543,15 +586,12 @@ Future<Map<String, dynamic>> getMyModules() async {
       } else {
         return {
           "success": false,
-          "error": "Error al obtener datos del servidor"
+          "error": "Error al obtener datos del servidor",
         };
       }
     } catch (e) {
       print("Error en getAdminStats: $e");
-      return {
-        "success": false,
-        "error": "Error de conexión"
-      };
+      return {"success": false, "error": "Error de conexión"};
     }
   }
 
@@ -570,12 +610,14 @@ Future<Map<String, dynamic>> getMyModules() async {
       return {'success': false, 'message': 'Error de conexión: $e'};
     }
   }
+
   Future<Map<String, dynamic>> actualizarPerfil({
     required int idUsuario,
     required String nombres,
     required String apellidos,
     required String correo,
-    required String fechaNacimiento, String? password,
+    required String fechaNacimiento,
+    String? password,
   }) async {
     try {
       final Map<String, dynamic> body = {
@@ -601,17 +643,15 @@ Future<Map<String, dynamic>> getMyModules() async {
       return {"success": false, "error": "Error de conexión"};
     }
   }
-// Estos son los metodos del archibo usuarioAdmin.dart que hacen uso de los servicios del ApiService, por eso se encuentran aqui para no perder el contexto de su uso
- 
- // primer metodo
+  // Estos son los metodos del archibo usuarioAdmin.dart que hacen uso de los servicios del ApiService, por eso se encuentran aqui para no perder el contexto de su uso
+
+  // primer metodo
 
   Future<Map<String, dynamic>> obtenerUsuarios() async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/usuarios'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
       );
 
       final data = jsonDecode(response.body);
@@ -628,31 +668,25 @@ Future<Map<String, dynamic>> getMyModules() async {
         };
       }
     } catch (e) {
-      return {
-        'success': false,
-        'message': e.toString(),
-      };
+      return {'success': false, 'message': e.toString()};
     }
   }
 
-  Future<Map<String, dynamic>> actualizarRol(int userId, String nuevoRol) async {
+  Future<Map<String, dynamic>> actualizarRol(
+    int userId,
+    String nuevoRol,
+  ) async {
     try {
       final response = await http.put(
         Uri.parse('$baseUrl/usuarios/$userId/rol'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'rol': nuevoRol,
-        }),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'rol': nuevoRol}),
       );
 
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data['success'] == true) {
-        return {
-          'success': true,
-        };
+        return {'success': true};
       } else {
         return {
           'success': false,
@@ -660,10 +694,7 @@ Future<Map<String, dynamic>> getMyModules() async {
         };
       }
     } catch (e) {
-      return {
-        'success': false,
-        'message': e.toString(),
-      };
+      return {'success': false, 'message': e.toString()};
     }
   }
 }
