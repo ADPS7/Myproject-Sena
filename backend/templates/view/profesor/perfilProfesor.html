@@ -1,0 +1,87 @@
+<!-- view/Profesor/perfilProfesor.html -->
+<div
+    <div class="container-fluid p-4">
+        <div class="card border-0 shadow-sm rounded-4">
+            <!-- Encabezado de la Sección -->
+            <div class="card-header bg-success text-white py-3 rounded-top-4">
+                <h5 class="card-title mb-0 fw-bold">
+                    <i class="bi bi-person-workspace me-2"></i> Mi Perfil Docente
+                </h5>
+            </div>
+            
+            <div class="card-body p-4">
+                <div class="row">
+                    <!-- Columna Izquierda: Foto/Avatar -->
+                    <div class="col-lg-3 text-center border-end">
+                        <div class="avatar mx-auto mb-3" style="width: 100px; height: 100px; font-size: 2.5rem; background-color: #198754; color: white; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                            {{ user.nombres[0] }}
+                        </div>
+                        <h5 class="fw-bold mb-0" id="nombreCompletoProfesorVista"></h5>
+                        <p class="text-muted" id="rolProfesorVista"></p>
+                    </div>
+
+                    <!-- Columna Derecha: Formulario -->
+                    <div class="col-lg-9">
+                        <form id="formPerfilProfesor">
+                            <input type="hidden" id="id_usuario_prof" value="{{ user.id_usuario }}" readonly>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium text-secondary">Nombres</label>
+                                    <input type="text" class="form-control rounded-3" id="nombres_prof" value="{{ user.nombres }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium text-secondary">Apellidos</label>
+                                    <input type="text" class="form-control rounded-3" value="{{ user.apellidos }}" id="apellidos_prof" required>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label fw-medium text-secondary">Correo</label>
+                                    <input type="email" class="form-control rounded-3" value="{{ user.correo }}" id="correo_prof" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium text-secondary">Fecha de Nacimiento</label>
+                                    <input type="date" class="form-control rounded-3" value="{{ user.fecha_nacimiento }}" id="fecha_nacimiento_prof" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium text-secondary">Cargo / Rol</label>
+                                    <input type="text" class="form-control rounded-3 bg-light" id="rol_prof" value="{{ user.rol }}" readonly>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium text-secondary">Actualizar Contraseña</label>
+                                    <input type="password" class="form-control rounded-3" id="nueva_clave_prof" 
+                                           placeholder="Dejar en blanco para mantener la actual">
+                                </div>
+                                <div class="col-md-6 d-flex align-items-end">
+                                    <button type="button" class="btn btn-success rounded-3 px-5 w-100 py-2 fw-bold" onclick="guardarPerfilProfesor()">
+                                        <i class="bi bi-save me-2"></i> Guardar Cambios
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contenedor para las notificaciones (Toasts) -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
+  <div id="toastNotificacion" class="toast align-items-center text-white bg-success border-0 rounded-3 shadow" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body">
+        <strong id="toastTitulo" class="d-block"></strong>
+        <span id="toastMensaje"></span>
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{{ url_for('static', filename='backend/javascripts/perfilProfesor.js') }}?v=4"></script>

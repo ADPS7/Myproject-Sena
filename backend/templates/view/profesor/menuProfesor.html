@@ -67,7 +67,7 @@
                     <a href="#" class="nav-link-item"><i class="bi bi-clipboard-check"></i> Notas</a>
                 </div>
 
-                <div class="sidebar-footer mt-auto pt-3">
+                <div class="sidebar-footer mt-auto pt-3" onclick="mostrarvistaPerfilProfesor()">
                     <div class="user-pill mb-3">
                         <div class="avatar">{{ user.nombres[0] }}</div>
                         <div class="overflow-hidden">
@@ -89,6 +89,9 @@
                 </div>
                 <div id="mostrarAsistenciaProfesor" style="display:none;">
                     {% include "view/profesor/asistenciaProfesor.html" %}
+                </div>
+                <div id="mostrarPerfilProfesor" style="display:none;">
+                    {% include "view/profesor/perfilProfesor.html" %}
                 </div>
             </main>
         </div>
