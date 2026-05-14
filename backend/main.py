@@ -202,7 +202,7 @@ def get_asistencias(id_usuario):
             cursor.close()
         if 'conn' in locals():
             conn.close()
-    
+
 @app.route('/cursos/profesor/<int:id_usuario>', methods=['GET'])
 def get_cursos_profesor(id_usuario):
     try:

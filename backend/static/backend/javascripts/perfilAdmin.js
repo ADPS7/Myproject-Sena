@@ -1,6 +1,5 @@
 // perfilAdmin.js - Versión Completa (Toast + Menú Móvil)
 
-console.log("✅ perfilAdmin.js cargado correctamente");
 
 // ==================== TOAST DINÁMICO ====================
 function crearToastSiNoExiste() {
