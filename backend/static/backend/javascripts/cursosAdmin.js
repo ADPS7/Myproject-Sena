@@ -1,6 +1,9 @@
 // backend/javascripts/cursosAdmin.js
 
 let cursosData = [];
+let cursoSeleccionado = null;
+let estudiantesDisponiblesCache = [];
+let profesoresDisponiblesCache = [];
 
 cargarCursos();
 
@@ -15,7 +18,7 @@ function cargarCursos() {
         .catch(err => {
             console.error(err);
             document.getElementById('tbodyCursos').innerHTML = `
-                <tr><td colspan="5" class="text-center py-4 text-danger">
+                <tr><td colspan="3" class="text-center py-4 text-danger">
                     Error al cargar los cursos
                 </td></tr>`;
         });
@@ -26,7 +29,7 @@ function renderizarTablaCursos(cursos) {
     tbody.innerHTML = '';
 
     if (cursos.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4">No hay cursos registrados aún.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4">No hay cursos registrados aún.</td></tr>`;
         return;
     }
 
@@ -35,8 +38,9 @@ function renderizarTablaCursos(cursos) {
         fila.innerHTML = `
             <td class="ps-4 fw-medium">${curso.id_curso}</td>
             <td>${curso.nombre}</td>
-            <td class="text-end pe-4">
-                <button class="btn btn-sm btn-light text-primary me-1" onclick="editarCurso(${curso.id_curso}, '${curso.nombre.replace(/'/g, "\\'")}')">
+            <td class="text-end pe-4">                <button class="btn btn-sm btn-light text-info me-1" onclick="abrirModalDetalleCurso(${curso.id_curso}, '${curso.nombre.replace(/'/g, "\\'")}')" title="Ver y gestionar usuarios">
+                    <i class="bi bi-people-fill"></i>
+                </button>                <button class="btn btn-sm btn-light text-primary me-1" onclick="editarCurso(${curso.id_curso}, '${curso.nombre.replace(/'/g, "\\'")}')">
                     <i class="bi bi-pencil"></i>
                 </button>
                 <button class="btn btn-sm btn-light text-danger" onclick="eliminarCurso(${curso.id_curso}, '${curso.nombre.replace(/'/g, "\\'")}')">
@@ -47,6 +51,256 @@ function renderizarTablaCursos(cursos) {
         tbody.appendChild(fila);
     });
 }
+
+function abrirModalDetalleCurso(id, nombre) {
+    cursoSeleccionado = { id, nombre };
+    document.getElementById('modalDetalleCursoTitle').textContent = `Curso #${id}`;
+    document.getElementById('modalDetalleCursoSubtitle').textContent = nombre;
+    cargarEstudiantesCurso();
+    cargarProfesoresCurso();
+    new bootstrap.Modal(document.getElementById('modalDetalleCurso')).show();
+}
+
+function cargarEstudiantesCurso() {
+    if (!cursoSeleccionado) return;
+    fetch(`/cursos/${cursoSeleccionado.id}/estudiantes`)
+        .then(res => res.json())
+        .then(data => renderizarEstudiantesCurso(data))
+        .catch(err => {
+            console.error(err);
+            document.getElementById('tablaEstudiantesCurso').innerHTML = '<tr><td colspan="3" class="text-center py-3 text-danger">Error al cargar estudiantes</td></tr>';
+        });
+}
+
+function cargarProfesoresCurso() {
+    if (!cursoSeleccionado) return;
+    fetch(`/cursos/${cursoSeleccionado.id}/profesores`)
+        .then(res => res.json())
+        .then(data => renderizarProfesoresCurso(data))
+        .catch(err => {
+            console.error(err);
+            document.getElementById('tablaProfesoresCurso').innerHTML = '<tr><td colspan="3" class="text-center py-3 text-danger">Error al cargar profesores</td></tr>';
+        });
+}
+
+function renderizarEstudiantesCurso(estudiantes) {
+    const tbody = document.getElementById('tablaEstudiantesCurso');
+    if (!Array.isArray(estudiantes) || estudiantes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center py-3 text-muted">No hay estudiantes asignados</td></tr>';
+        return;
+    }
+    tbody.innerHTML = '';
+    estudiantes.forEach(u => {
+        tbody.innerHTML += `
+            <tr>
+                <td class="ps-4 fw-medium">${u.nombres} ${u.apellidos}</td>
+                <td class="text-secondary small">${u.correo}</td>
+                <td class="text-end pe-4">
+                    <button class="btn btn-sm btn-light text-danger" onclick="desasignarEstudiante(${u.id_usuario})">
+                        <i class="bi bi-person-dash"></i> Desasignar
+                    </button>
+                </td>
+            </tr>`;
+    });
+}
+
+function renderizarProfesoresCurso(profesores) {
+    const tbody = document.getElementById('tablaProfesoresCurso');
+    if (!Array.isArray(profesores) || profesores.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center py-3 text-muted">No hay profesores asignados</td></tr>';
+        return;
+    }
+    tbody.innerHTML = '';
+    profesores.forEach(u => {
+        tbody.innerHTML += `
+            <tr>
+                <td class="ps-4 fw-medium">${u.nombres} ${u.apellidos}</td>
+                <td class="text-secondary small">${u.correo}</td>
+                <td class="text-end pe-4">
+                    <button class="btn btn-sm btn-light text-danger" onclick="desasignarProfesor(${u.id_usuario})">
+                        <i class="bi bi-person-dash"></i> Desasignar
+                    </button>
+                </td>
+            </tr>`;
+    });
+}
+
+function abrirModalAsignarEstudiante() {
+    if (!cursoSeleccionado) return;
+    fetch('/estudiantes-sin-curso')
+        .then(res => res.json())
+        .then(data => {
+            estudiantesDisponiblesCache = data;
+            renderizarEstudiantesDisponibles(data);
+            new bootstrap.Modal(document.getElementById('modalAsignarEstudiante')).show();
+        })
+        .catch(err => {
+            console.error(err);
+            mostrarToast('Error al cargar estudiantes disponibles', 'danger');
+        });
+}
+
+function abrirModalAsignarProfesor() {
+    if (!cursoSeleccionado) return;
+    fetch(`/profesores-disponibles/${cursoSeleccionado.id}`)
+        .then(res => res.json())
+        .then(data => {
+            profesoresDisponiblesCache = data;
+            renderizarProfesoresDisponibles(data);
+            new bootstrap.Modal(document.getElementById('modalAsignarProfesor')).show();
+        })
+        .catch(err => {
+            console.error(err);
+            mostrarToast('Error al cargar profesores disponibles', 'danger');
+        });
+}
+
+function renderizarEstudiantesDisponibles(estudiantes) {
+    const tbody = document.getElementById('tablaEstudiantesDisponibles');
+    if (!Array.isArray(estudiantes) || estudiantes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center py-3 text-muted">No hay estudiantes disponibles</td></tr>';
+        return;
+    }
+    tbody.innerHTML = '';
+    estudiantes.forEach(u => {
+        tbody.innerHTML += `
+            <tr>
+                <td class="ps-4 fw-medium">${u.nombres} ${u.apellidos}</td>
+                <td class="text-secondary small">${u.correo}</td>
+                <td class="text-end pe-4">
+                    <button class="btn btn-sm btn-light text-success" onclick="asignarEstudiante(${u.id_usuario})">
+                        <i class="bi bi-person-plus"></i> Asignar
+                    </button>
+                </td>
+            </tr>`;
+    });
+}
+
+function renderizarProfesoresDisponibles(profesores) {
+    const tbody = document.getElementById('tablaProfesoresDisponibles');
+    if (!Array.isArray(profesores) || profesores.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center py-3 text-muted">No hay profesores disponibles</td></tr>';
+        return;
+    }
+    tbody.innerHTML = '';
+    profesores.forEach(u => {
+        tbody.innerHTML += `
+            <tr>
+                <td class="ps-4 fw-medium">${u.nombres} ${u.apellidos}</td>
+                <td class="text-secondary small">${u.correo}</td>
+                <td class="text-end pe-4">
+                    <button class="btn btn-sm btn-light text-success" onclick="asignarProfesor(${u.id_usuario})">
+                        <i class="bi bi-person-plus"></i> Asignar
+                    </button>
+                </td>
+            </tr>`;
+    });
+}
+
+function asignarEstudiante(idUsuario) {
+    if (!cursoSeleccionado) return;
+    fetch('/asignar-alumno', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_usuario: idUsuario, id_curso: cursoSeleccionado.id })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('modalAsignarEstudiante')).hide();
+            mostrarToast(data.message, 'success');
+            cargarEstudiantesCurso();
+        } else {
+            mostrarToast(data.error || 'No se pudo asignar al estudiante', 'danger');
+        }
+    })
+    .catch(() => mostrarToast('Error de conexión', 'danger'));
+}
+
+function asignarProfesor(idUsuario) {
+    if (!cursoSeleccionado) return;
+    fetch('/asignar-profesor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_usuario: idUsuario, id_curso: cursoSeleccionado.id })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('modalAsignarProfesor')).hide();
+            mostrarToast(data.message, 'success');
+            cargarProfesoresCurso();
+        } else {
+            mostrarToast(data.error || 'No se pudo asignar al profesor', 'danger');
+        }
+    })
+    .catch(() => mostrarToast('Error de conexión', 'danger'));
+}
+
+function desasignarEstudiante(idUsuario) {
+    fetch('/desasignar-alumno', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_usuario: idUsuario })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            mostrarToast(data.message, 'success');
+            cargarEstudiantesCurso();
+        } else {
+            mostrarToast(data.error || 'No se pudo desasignar al estudiante', 'danger');
+        }
+    })
+    .catch(() => mostrarToast('Error de conexión', 'danger'));
+}
+
+function desasignarProfesor(idUsuario) {
+    if (!cursoSeleccionado) return;
+    fetch('/desasignar-profesor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_usuario: idUsuario, id_curso: cursoSeleccionado.id })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            mostrarToast(data.message, 'success');
+            cargarProfesoresCurso();
+        } else {
+            mostrarToast(data.error || 'No se pudo desasignar al profesor', 'danger');
+        }
+    })
+    .catch(() => mostrarToast('Error de conexión', 'danger'));
+}
+
+function filtrarEstudiantesDisponibles() {
+    const termino = document.getElementById('buscarEstudianteDisponible').value.toLowerCase();
+    const filtrados = estudiantesDisponiblesCache.filter(u =>
+        `${u.nombres} ${u.apellidos}`.toLowerCase().includes(termino) || u.correo.toLowerCase().includes(termino)
+    );
+    renderizarEstudiantesDisponibles(filtrados);
+}
+
+function filtrarProfesoresDisponibles() {
+    const termino = document.getElementById('buscarProfesorDisponible').value.toLowerCase();
+    const filtrados = profesoresDisponiblesCache.filter(u =>
+        `${u.nombres} ${u.apellidos}`.toLowerCase().includes(termino) || u.correo.toLowerCase().includes(termino)
+    );
+    renderizarProfesoresDisponibles(filtrados);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const buscadorEstudiantes = document.getElementById('buscarEstudianteDisponible');
+    if (buscadorEstudiantes) {
+        buscadorEstudiantes.addEventListener('input', filtrarEstudiantesDisponibles);
+    }
+
+    const buscadorProfesores = document.getElementById('buscarProfesorDisponible');
+    if (buscadorProfesores) {
+        buscadorProfesores.addEventListener('input', filtrarProfesoresDisponibles);
+    }
+});
 
 function abrirModalNuevoCurso() {
     document.getElementById('modalTitle').textContent = 'Nuevo Curso';
