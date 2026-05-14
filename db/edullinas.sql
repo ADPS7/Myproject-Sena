@@ -46,6 +46,7 @@ CREATE TABLE Asistencia (
     asistio ENUM('SI','NO') NOT NULL,
     id_usuario INT NOT NULL,
     id_modulo INT NOT NULL,
+    UNIQUE KEY unique_asistencia_por_dia (id_usuario, id_modulo, fecha),
     FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario),
     FOREIGN KEY (id_modulo) REFERENCES Modulos(id_modulo)
 );

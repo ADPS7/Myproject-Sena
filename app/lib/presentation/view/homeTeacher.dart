@@ -2,7 +2,7 @@ import 'package:app/presentation/view/notaPro.dart';
 import 'package:flutter/material.dart';
 import '../widget/login_widget.dart';
 import 'AjustesScreen.dart';
-import 'asistenciateaacher.dart';
+import 'asistsTeacher.dart';
 import 'cursosteacher.dart';
 
 class HomeTeacher extends StatelessWidget {
