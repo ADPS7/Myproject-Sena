@@ -17,11 +17,8 @@ class StudentHomeScreen extends StatefulWidget {
 
 class _StudentHomeScreenState extends State<StudentHomeScreen> {
   final ApiService _apiService = ApiService();
-  
-  // Usamos un Future que puede ser nulo inicialmente para evitar errores de inicialización
   Future<Map<String, dynamic>>? _studentStatsFuture;
 
-  // Colores del tema
   final Color primaryPurple = const Color(0xFF7C4DFF);
   final Color darkBlue = const Color(0xFF1A202C);
   final Color bgGrey = const Color(0xFFF8FAFC);
@@ -30,8 +27,21 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Inicializamos la petición al servidor usando el id del usuario logueado
-    _studentStatsFuture = _apiService.getStudentStats(widget.user['id_usuario']);
+    _cargarDatos(); // Encapsulamos la carga en una función
+  }
+
+  // Función para cargar o refrescar los datos
+  Future<void> _cargarDatos() async {
+    setState(() {
+      _studentStatsFuture = Future.wait([
+        _apiService.getStudentStats(widget.user['id_usuario']),
+        _apiService.getHistorialAsistencia(widget.user['id_usuario']),
+      ]).then((responses) {
+        Map<String, dynamic> combined = Map<String, dynamic>.from(responses[0]);
+        combined['lista_asistencia'] = responses[1]['asistencias'] ?? [];
+        return combined;
+      });
+    });
   }
 
   void _cerrarSesion(BuildContext context) {
@@ -100,107 +110,112 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bgGrey,
-      body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // Header
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("PANEL ESTUDIANTE", 
-                          style: TextStyle(color: primaryPurple, fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 1.2)),
-                        Text(widget.user['nombres']?.split(' ')[0] ?? 'Hola', 
-                          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -1)),
-                      ],
-                    ),
-                    GestureDetector(
-                      onTap: () => _mostrarPerfil(context),
-                      child: CircleAvatar(
-                        radius: 25,
-                        backgroundColor: primaryPurple,
-                        child: const Icon(Icons.person_rounded, color: Colors.white),
+      // Envolvemos todo en RefreshIndicator
+      body: RefreshIndicator(
+        color: primaryPurple,
+        onRefresh: _cargarDatos, // Al deslizar, se llama a esta función
+        child: SafeArea(
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            slivers: [
+              // Header
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("PANEL ESTUDIANTE", 
+                            style: TextStyle(color: primaryPurple, fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 1.2)),
+                          Text(widget.user['nombres']?.split(' ')[0] ?? 'Hola', 
+                            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -1)),
+                        ],
                       ),
-                    )
-                  ],
+                      GestureDetector(
+                        onTap: () => _mostrarPerfil(context),
+                        child: CircleAvatar(
+                          radius: 25,
+                          backgroundColor: primaryPurple,
+                          child: const Icon(Icons.person_rounded, color: Colors.white),
+                        ),
+                      )
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // Tarjetas de Resumen con Lógica de Cálculo de Promedio
-            SliverToBoxAdapter(
-              child: Container(
-                height: 120,
-                margin: const EdgeInsets.symmetric(vertical: 24),
-                child: FutureBuilder<Map<String, dynamic>>(
-                  future: _studentStatsFuture,
-                  builder: (context, snapshot) {
-                    String promedio = "0.0";
-                    String asistenciaPerc = "--%";
-                    String modulosRealizados = "0";
-                    bool loading = snapshot.connectionState == ConnectionState.waiting;
+              // Tarjetas de Resumen
+              SliverToBoxAdapter(
+                child: Container(
+                  height: 120,
+                  margin: const EdgeInsets.symmetric(vertical: 24),
+                  child: FutureBuilder<Map<String, dynamic>>(
+                    future: _studentStatsFuture,
+                    builder: (context, snapshot) {
+                      String promedio = "0.0";
+                      String inasistencias = "0";
+                      String modulosRealizados = "0";
+                      bool loading = snapshot.connectionState == ConnectionState.waiting;
 
-                    if (snapshot.hasData && snapshot.data!['success'] == true) {
-                      var data = snapshot.data!;
-                      
-                      // 1. Cálculo de Promedio de Notas (según tabla Notas, columna nota)
-                      List notas = data['notas'] ?? [];
-                      if (notas.isNotEmpty) {
-                        double suma = 0;
-                        for (var item in notas) {
-                          // Usamos 'nota' para coincidir con tu esquema SQL
-                          suma += double.tryParse(item['nota'].toString()) ?? 0.0;
+                      if (snapshot.hasData && snapshot.data!['success'] == true) {
+                        var data = snapshot.data!;
+                        
+                        List notas = data['notas'] ?? [];
+                        if (notas.isNotEmpty) {
+                          double suma = 0;
+                          for (var item in notas) {
+                            suma += double.tryParse(item['nota'].toString()) ?? 0.0;
+                          }
+                          promedio = (suma / notas.length).toStringAsFixed(1);
                         }
-                        promedio = (suma / notas.length).toStringAsFixed(1);
+
+                        List listaAsistencias = data['lista_asistencia'] ?? [];
+                        int contadorFaltas = listaAsistencias.where((a) => a['asistio'] == 'NO').length;
+                        inasistencias = contadorFaltas.toString();
+
+                        modulosRealizados = data['modulos_completados']?.toString() ?? "0";
                       }
 
-                      // 2. Otros datos (asumiendo que los envías desde Python)
-                      asistenciaPerc = data['asistencia_porcentaje']?.toString() ?? "--%";
-                      modulosRealizados = data['modulos_completados']?.toString() ?? "0";
-                    }
-
-                    return ListView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      children: [
-                        _buildStatCard("Promedio", promedio, Icons.auto_graph_rounded, loading),
-                        const SizedBox(width: 16),
-                        _buildStatCard("Asistencias", asistenciaPerc, Icons.calendar_today_rounded, loading),
-                        const SizedBox(width: 16),
-                        _buildStatCard("Módulos", modulosRealizados, Icons.view_module_rounded, loading),
-                      ],
-                    );
-                  },
+                      return ListView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        children: [
+                          _buildStatCard("Promedio", promedio, Icons.auto_graph_rounded, loading),
+                          const SizedBox(width: 16),
+                          _buildStatCard("Inasistencias", inasistencias, Icons.person_off_rounded, loading),
+                          const SizedBox(width: 16),
+                          _buildStatCard("Módulos", modulosRealizados, Icons.view_module_rounded, loading),
+                        ],
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
 
-            // Menú de Acciones
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  const Text("ACADEMIA", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8), letterSpacing: 1.5)),
-                  const SizedBox(height: 16),
-                  _buildDashboardItem(Icons.grade_outlined, "Mis Notas", "Calificaciones y retroalimentación", 
-                    () => Navigator.push(context, MaterialPageRoute(builder: (context) => NotasEstudiantesScreen(idAlumno: widget.user['id_usuario'])))),
-                  _buildDashboardItem(Icons.how_to_reg_outlined, "Mi Asistencia", "Registro de faltas e ingresos", 
-                    () => Navigator.push(context, MaterialPageRoute(builder: (context) => AttendanceScreen()))),
-                  _buildDashboardItem(Icons.library_books_outlined, "Mis Cursos", "Programas en los que estás inscrito", 
-                    () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MyCourseScreen()))),
-                  _buildDashboardItem(Icons.view_module_outlined, "Módulos", "Contenido de estudio disponible", 
-                    () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MyModulesScreen()))),
-                  const SizedBox(height: 40),
-                ]),
+              // Menú de Acciones
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    const Text("ACADEMIA", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8), letterSpacing: 1.5)),
+                    const SizedBox(height: 16),
+                    _buildDashboardItem(Icons.grade_outlined, "Mis Notas", "Calificaciones y retroalimentación", 
+                      () => Navigator.push(context, MaterialPageRoute(builder: (context) => NotasEstudiantesScreen(idAlumno: widget.user['id_usuario'])))),
+                    _buildDashboardItem(Icons.how_to_reg_outlined, "Mi Asistencia", "Registro de faltas e ingresos", 
+                      () => Navigator.push(context, MaterialPageRoute(builder: (context) => AttendanceScreen()))),
+                    _buildDashboardItem(Icons.library_books_outlined, "Mis Cursos", "Programas en los que estás inscrito", 
+                      () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MyCourseScreen()))),
+                    _buildDashboardItem(Icons.view_module_outlined, "Módulos", "Contenido de estudio disponible", 
+                      () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MyModulesScreen()))),
+                    const SizedBox(height: 40),
+                  ]),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       
@@ -218,7 +233,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           currentIndex: 0,
           type: BottomNavigationBarType.fixed,
           onTap: (index) {
-            if (index == 2) { // Ajustes
+            if (index == 1) { 
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => AjustesScreen(user: widget.user)),
@@ -227,7 +242,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           },
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Inicio"),
-            BottomNavigationBarItem(icon: Icon(Icons.notifications_none_rounded), label: "Avisos"),
             BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: "Ajustes"),
           ],
         ),

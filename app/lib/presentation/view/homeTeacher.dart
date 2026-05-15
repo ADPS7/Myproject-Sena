@@ -1,19 +1,40 @@
 import 'package:app/presentation/view/notaPro.dart';
 import 'package:flutter/material.dart';
+import '../../services/api_service.dart';
 import '../widget/login_widget.dart';
 import 'AjustesScreen.dart';
 import 'asistsTeacher.dart';
 import 'cursosteacher.dart';
 
-class HomeTeacher extends StatelessWidget {
+class HomeTeacher extends StatefulWidget {
   final Map<String, dynamic> user;
   const HomeTeacher({super.key, required this.user});
 
-  // Paleta de colores
+  @override
+  State<HomeTeacher> createState() => _HomeTeacherState();
+}
+
+class _HomeTeacherState extends State<HomeTeacher> {
+  // Paleta de colores original
   final Color primaryPurple = const Color(0xFF7C4DFF);
   final Color darkBlue = const Color(0xFF1A202C);
   final Color bgGrey = const Color(0xFFF8FAFC);
   final Color borderGrey = const Color(0xFFE2E8F0);
+
+  final ApiService _apiService = ApiService();
+  late Future<List<dynamic>> _cursosFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarCursos();
+  }
+
+  void _cargarCursos() {
+    setState(() {
+      _cursosFuture = _apiService.getCursosPorProfesor(widget.user['id_usuario']);
+    });
+  }
 
   void _cerrarSesion(BuildContext context) {
     Navigator.pushAndRemoveUntil(
@@ -57,7 +78,7 @@ class HomeTeacher extends StatelessWidget {
               ),
               const SizedBox(height: 15),
               Text(
-                "${user['nombres'] ?? ''} ${user['apellidos'] ?? ''}",
+                "${widget.user['nombres'] ?? ''} ${widget.user['apellidos'] ?? ''}",
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
@@ -66,7 +87,7 @@ class HomeTeacher extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                user['correo'] ?? "No email",
+                widget.user['correo'] ?? "No email",
                 style: TextStyle(color: Colors.grey[600]),
               ),
               const SizedBox(height: 30),
@@ -95,7 +116,7 @@ class HomeTeacher extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon) {
+  Widget _buildStatCard(String label, String value, IconData icon, {bool isLoading = false}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -108,10 +129,16 @@ class HomeTeacher extends StatelessWidget {
         children: [
           Icon(icon, color: primaryPurple, size: 20),
           const Spacer(),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-          ),
+          isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF7C4DFF)),
+                )
+              : Text(
+                  value,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                ),
           Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
         ],
       ),
@@ -180,155 +207,173 @@ class HomeTeacher extends StatelessWidget {
     return Scaffold(
       backgroundColor: bgGrey,
       body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // Header
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "PANEL INSTRUCTOR",
-                          style: TextStyle(
-                            color: primaryPurple,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 11,
-                            letterSpacing: 1.2,
+        child: RefreshIndicator(
+          onRefresh: () async => _cargarCursos(),
+          color: primaryPurple,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            slivers: [
+              // Header
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "PANEL INSTRUCTOR",
+                            style: TextStyle(
+                              color: primaryPurple,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          Text(
+                            widget.user['nombres']?.split(' ')[0] ?? 'Hola',
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -1,
+                            ),
+                          ),
+                        ],
+                      ),
+                      GestureDetector(
+                        onTap: () => _mostrarPerfil(context),
+                        child: CircleAvatar(
+                          radius: 25,
+                          backgroundColor: primaryPurple,
+                          child: const Icon(
+                            Icons.person_rounded,
+                            color: Colors.white,
                           ),
                         ),
-                        Text(
-                          user['nombres']?.split(' ')[0] ?? 'Hola',
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -1,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Tarjetas de Resumen
+              SliverToBoxAdapter(
+                child: Container(
+                  height: 120,
+                  margin: const EdgeInsets.symmetric(vertical: 24),
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    children: [
+                      // TARJETA DE FICHAS DINÁMICA
+                      FutureBuilder<List<dynamic>>(
+                        future: _cursosFuture,
+                        builder: (context, snapshot) {
+                          String total = "0";
+                          bool loading = snapshot.connectionState == ConnectionState.waiting;
+                          if (snapshot.hasData) {
+                            total = snapshot.data!.length.toString();
+                          }
+                          return SizedBox(
+                            width: 140,
+                            child: FutureBuilder<List<dynamic>>(
+                              future: _cursosFuture,
+                              builder: (context, snapshot) {
+                                String total = "0";
+                                bool loading = snapshot.connectionState == ConnectionState.waiting;
+                                
+                                if (snapshot.hasData) {
+                                  total = snapshot.data!.length.toString();
+                                }
+                                
+                                return _buildStatCard(
+                                  "Cursos",
+                                  total,
+                                  Icons.school_rounded, // <--- Este icono representa mejor "Cursos"
+                                  isLoading: loading,
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 16),
+                      SizedBox(
+                        width: 140,
+                        child: _buildStatCard(
+                          "Pendientes",
+                          "12",
+                          Icons.pending_actions_rounded,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Acciones principales
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    const Text(
+                      "GESTIÓN ACADÉMICA",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF94A3B8),
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDashboardItem(
+                      Icons.book_outlined,
+                      "Mis Cursos",
+                      "Gestiona tus fichas y grupos",
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MyCoursesTeacherScreen(user: widget.user),
+                        ),
+                      ),
+                    ),
+                    _buildDashboardItem(
+                      Icons.assignment_turned_in_outlined,
+                      "Calificar Notas",
+                      "Registro de evaluaciones",
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => NotasProfesorView(
+                            idUsuario: widget.user['id_usuario'] ?? 0,
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                    GestureDetector(
-                      onTap: () => _mostrarPerfil(context),
-                      child: CircleAvatar(
-                        radius: 25,
-                        backgroundColor: primaryPurple,
-                        child: const Icon(
-                          Icons.person_rounded,
-                          color: Colors.white,
+                    _buildDashboardItem(
+                      Icons.fact_check_outlined,
+                      "Control de Asistencia",
+                      "Reporte de faltas y retardos",
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AsistsTeacher(idUsuario: widget.user['id_usuario'] ?? 0),
                         ),
                       ),
                     ),
-                  ],
+                    const SizedBox(height: 40),
+                  ]),
                 ),
               ),
-            ),
-
-            // Tarjetas de Resumen
-            SliverToBoxAdapter(
-              child: Container(
-                height: 120,
-                margin: const EdgeInsets.symmetric(vertical: 24),
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  children: [
-                    SizedBox(
-                      width: 140,
-                      child: _buildStatCard(
-                        "Fichas",
-                        "4",
-                        Icons.groups_rounded,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    SizedBox(
-                      width: 140,
-                      child: _buildStatCard(
-                        "Pendientes",
-                        "12",
-                        Icons.pending_actions_rounded,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    SizedBox(
-                      width: 140,
-                      child: _buildStatCard(
-                        "Promedio Gral",
-                        "4.2",
-                        Icons.analytics_rounded,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Acciones principales
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  const Text(
-                    "GESTIÓN ACADÉMICA",
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF94A3B8),
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDashboardItem(
-                    Icons.book_outlined,
-                    "Mis Cursos",
-                    "Gestiona tus fichas y grupos",
-                    () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            MyCoursesTeacherScreen(user: user),
-                      ),
-                    ),
-                  ),
-                  _buildDashboardItem(
-                    Icons.assignment_turned_in_outlined,
-                    "Calificar Notas",
-                    "Registro de evaluaciones",
-                    () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => NotasProfesorView(
-                          idUsuario: user['id_usuario'] ?? 0,
-                        ),
-                      ),
-                    ),
-                  ),
-                  _buildDashboardItem(
-                    Icons.fact_check_outlined,
-                    "Control de Asistencia",
-                    "Reporte de faltas y retardos",
-                    () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            AsistsTeacher(idUsuario: user['id_usuario'] ?? 0),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                ]),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
 
-      // Bottom Navigation Bar - Versión limpia
+      // Bottom Navigation Bar
       bottomNavigationBar: BottomNavigationBar(
         elevation: 8,
         backgroundColor: Colors.white,
@@ -338,11 +383,10 @@ class HomeTeacher extends StatelessWidget {
         type: BottomNavigationBarType.fixed,
         onTap: (index) {
           if (index == 1) {
-            // Ajustes
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => AjustesScreen(user: user),
+                builder: (context) => AjustesScreen(user: widget.user),
               ),
             );
           }
