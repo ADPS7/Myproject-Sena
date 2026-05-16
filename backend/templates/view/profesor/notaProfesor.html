@@ -1,0 +1,36 @@
+<div class="container mt-4">
+    <h2 class="text-primary mb-4">Gestión de Notas</h2>
+
+    <!-- Selección de curso y módulo -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="cursoSelect" class="form-label fw-bold">Curso:</label>
+            <select id="cursoSelect" class="form-select">
+                <option value="">-- Selecciona un curso --</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label for="moduloSelect" class="form-label fw-bold">Módulo:</label>
+            <select id="moduloSelect" class="form-select">
+                <option value="">-- Selecciona un módulo --</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Tabla de estudiantes -->
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead class="table-primary">
+                <tr>
+                    <th>Estudiante</th>
+                    <th>Correo</th>
+                    <th>Nota</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="tablaEstudiantes">
+                <!-- Se llenará dinámicamente -->
+            </tbody>
+        </table>
+    </div>
+</div>

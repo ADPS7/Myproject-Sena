@@ -27,3 +27,13 @@ function mostrarvistaPerfilProfesor() {
     asistencia = document.getElementById("mostrarAsistenciaProfesor").style = "display: none;"
     perfil = document.getElementById("mostrarPerfilProfesor").style = "display: block;"
 }
+
+function mostrarvistaNotasProfesor() {
+    document.getElementById("mostrarInicioProfesor").style.display = "none";
+    document.getElementById("mostrarCursosProfesor").style.display = "none";
+    document.getElementById("mostrarAsistenciaProfesor").style.display = "none";
+    document.getElementById("mostrarPerfilProfesor").style.display = "none";
+    document.getElementById("mostrarNotasProfesor").style.display = "block";
+}
+
+
