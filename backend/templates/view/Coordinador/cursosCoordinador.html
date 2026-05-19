@@ -1,0 +1,223 @@
+<div class="p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold h4 mb-0">Gestión de Cursos</h2>
+        <button class="btn btn-primary d-flex align-items-center gap-2" onclick="abrirModalNuevoCurso()">
+            <i class="bi bi-plus-circle"></i> 
+            Nuevo Curso
+        </button>
+    </div>
+
+    <!-- Buscador -->
+    <div class="mb-4">
+        <div class="input-group">
+            <input type="text" id="buscarCurso" class="form-control rounded-3" 
+                   placeholder="Buscar por nombre del curso..." onkeyup="filtrarCursos()">
+            <button class="btn btn-outline-secondary" onclick="filtrarCursos()">
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabla de Cursos -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="tablaCursos">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">ID</th>
+                        <th>Nombre del Curso</th>
+                        <th class="text-end pe-4">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyCursos">
+                    <!-- Llenado por JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="modalCurso" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold" id="modalTitle">Nuevo Curso</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="idCurso">
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Nombre del Curso</label>
+                    <input type="text" id="nombreCurso" class="form-control rounded-3" required>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary rounded-3" onclick="guardarCurso()">Guardar Curso</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de detalle de curso -->
+<div class="modal fade" id="modalDetalleCurso" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-0">
+                <div>
+                    <h5 class="modal-title fw-bold" id="modalDetalleCursoTitle">Curso</h5>
+                    <p class="text-muted mb-0" id="modalDetalleCursoSubtitle"></p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row gy-4">
+                    <div class="col-12 col-lg-6">
+                        <div class="card border-0 shadow-sm rounded-4 h-100">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Estudiantes asignados</h6>
+                                    <small class="text-muted">Lista de alumnos inscritos en el curso</small>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary" onclick="abrirModalAsignarEstudiante()">
+                                    <i class="bi bi-person-plus"></i> Asignar estudiante
+                                </button>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="bg-light small">
+                                            <tr>
+                                                <th class="ps-4">NOMBRE</th>
+                                                <th>CORREO</th>
+                                                <th class="text-end pe-4">ACCIONES</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tablaEstudiantesCurso"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-lg-6">
+                        <div class="card border-0 shadow-sm rounded-4 h-100">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Profesores asignados</h6>
+                                    <small class="text-muted">Profesores vinculados al curso</small>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary" onclick="abrirModalAsignarProfesor()">
+                                    <i class="bi bi-person-plus"></i> Asignar profesor
+                                </button>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="bg-light small">
+                                            <tr>
+                                                <th class="ps-4">NOMBRE</th>
+                                                <th>CORREO</th>
+                                                <th class="text-end pe-4">ACCIONES</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tablaProfesoresCurso"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal asignar estudiante -->
+<div class="modal fade" id="modalAsignarEstudiante" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Asignar estudiante</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" id="buscarEstudianteDisponible" class="form-control rounded-3" placeholder="Buscar estudiante disponible...">
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light small">
+                            <tr>
+                                <th class="ps-4">NOMBRE</th>
+                                <th>CORREO</th>
+                                <th class="text-end pe-4">ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaEstudiantesDisponibles"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal asignar profesor -->
+<div class="modal fade" id="modalAsignarProfesor" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Asignar profesor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" id="buscarProfesorDisponible" class="form-control rounded-3" placeholder="Buscar profesor disponible...">
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light small">
+                            <tr>
+                                <th class="ps-4">NOMBRE</th>
+                                <th>CORREO</th>
+                                <th class="text-end pe-4">ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaProfesoresDisponibles"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--modal eliminar-->
+<!-- Modal de Confirmación de Eliminación -->
+<div class="modal fade" id="modalConfirmarEliminar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3">
+                    <i class="bi bi-exclamation-circle text-danger display-4"></i>
+                </div>
+                <h5 class="fw-bold mb-2">¿Estás seguro?</h5>
+                <p class="text-muted mb-4">Esta acción no se puede deshacer. El curso se eliminará permanentemente.</p>
+                
+                <div class="d-flex gap-2 justify-content-center">
+                    <button type="button" class="btn btn-light rounded-3 px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="btnConfirmarEliminarDoc" class="btn btn-danger rounded-3 px-4">Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

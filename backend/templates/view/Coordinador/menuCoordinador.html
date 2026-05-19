@@ -67,11 +67,11 @@
                 <div class="nav flex-column flex-grow-1 px-2">
                     <small class="menu-label text-muted fw-bold">GESTIÓN</small>
                     <a onclick="mostrarvistaInicioCoordinador()" class="nav-link-item"><i class="bi bi-house"></i> Inicio</a>
-                    <a onclick="mostrarvistaCursosAdmin()" class="nav-link-item"><i class="bi bi-journal-bookmark"></i> Cursos</a>
-                    <a onclick="mostrarvistaModulosAdmin()" class="nav-link-item"><i class="bi bi-stack"></i> Módulos</a>
+                    <a onclick="mostrarvistaCursosCoordinador()" class="nav-link-item"><i class="bi bi-journal-bookmark"></i> Cursos</a>
+                    <a onclick="mostrarvistaModulosCoordinador()" class="nav-link-item"><i class="bi bi-stack"></i> Módulos</a>
                     
                     <small class="menu-label mt-3 text-muted fw-bold">CONTROL</small>
-                    <a onclick="mostrarvistaUsuarioAdmin()" class="nav-link-item"><i class="bi bi-people"></i> Usuarios</a>
+                    <a onclick="mostrarvistaUsuarioCoordinador()" class="nav-link-item"><i class="bi bi-people"></i> Usuarios</a>
                     <a onclick="mostrarvistaAsistenciaAdmin()" class="nav-link-item"><i class="bi bi-calendar-check"></i> Asistencia</a>
                 </div>
 
@@ -99,8 +99,8 @@
                 <div id="mostrarModulosCoordinador" style="display: none;">
                     {% include "view/Coordinador/modulosCoordinador.html" %}
                 </div>
-                <div id="mostrarCursosAdmin" style="display: none;">
-                    {% include "view/Admin/cursosAdmin.html" %}
+                <div id="mostrarCursosCoordinador" style="display: none;">
+                    {% include "view/Coordinador/cursosCoordinador.html" %}
                 </div>
                 {% include "view/Admin/perfilAdmin.html" %}
                 <div id="mostrarAsistenciaAdmin" style="display: none;">

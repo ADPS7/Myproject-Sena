@@ -1,5 +1,5 @@
 function mostrarvistaInicioCoordinador() {
-    //cursos = document.getElementById("mostrarCursosAdmin").style = "display: none;"    
+    cursos = document.getElementById("mostrarCursosCoordinador").style = "display: none;"    
     modulo = document.getElementById("mostrarModulosCoordinador").style = "display:none;"
     usuario = document.getElementById("mostrarUsuarioCoordinador").style = "display: none;"
     //asistencia = document.getElementById("mostrarAsistenciaAdmin").style = "display: none;"
@@ -8,28 +8,29 @@ function mostrarvistaInicioCoordinador() {
 
 
 
-function mostrarvistaUsuarioAdmin() {
-    //cursos = document.getElementById("mostrarCursosAdmin").style = "display: none;"    
+function mostrarvistaUsuarioCoordinador() {
+    cursos = document.getElementById("mostrarCursosCoordinador").style = "display: none;"    
     modulo = document.getElementById("mostrarModulosCoordinador").style = "display:none;"
     inicio = document.getElementById("mostrarInicioCoordinador").style = "display: none;"
     //asistencia = document.getElementById("mostrarAsistenciaAdmin").style = "display: none;"
     usuario = document.getElementById("mostrarUsuarioCoordinador").style = "display: block;"
 }
 
-function mostrarvistaModulosAdmin() {
-    //cursos = document.getElementById("mostrarCursosAdmin").style = "display: none;"
+function mostrarvistaModulosCoordinador() {
+    cursos = document.getElementById("mostrarCursosCoordinador").style = "display: none;"
     //asistencia = document.getElementById("mostrarAsistenciaAdmin").style = "display: none;"
     inicio = document.getElementById("mostrarInicioCoordinador").style = "display: none;"
     usuario = document.getElementById("mostrarUsuarioCoordinador").style = "display: none;"
     modulo = document.getElementById("mostrarModulosCoordinador").style = "display:block;"
 }
 
-function mostrarvistaCursosAdmin() {
-    //inicio = document.getElementById("mostrarInicioAdmin").style = "display: none;"
-    //usuario = document.getElementById("mostrarUsuarioAdmin").style = "display: none;"
-    //modulo = document.getElementById("mostrarModulosAdmin").style = "display:none;"
-    //asistencia = document.getElementById("mostrarAsistenciaAdmin").style = "display: none;"
-    //cursos = document.getElementById("mostrarCursosAdmin").style = "display: block;"
+function mostrarvistaCursosCoordinador() {
+    inicio = document.getElementById("mostrarInicioCoordinador").style = "display: none;"
+    cursos = document.getElementById("mostrarCursosCoordinador").style = "display: none;"
+    usuario = document.getElementById("mostrarUsuarioCoordinador").style = "display: none;"
+    modulo = document.getElementById("mostrarModulosCoordinador").style = "display:none;"
+    //asistencia = document.getElementById("mostrarAsistenciaCoordinador").style = "display: none;"
+    cursos = document.getElementById("mostrarCursosCoordinador").style = "display: block;"
 }
 function mostrarvistaAsistenciaAdmin() {
     //inicio = document.getElementById("mostrarInicioAdmin").style = "display: none;"
