@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, redirect
+from flask import Flask, request, jsonify, render_template, redirect, session, redirect, url_for
 from flask_cors import CORS
 import mysql.connector
 from mysql.connector import Error
@@ -57,7 +57,7 @@ def create_user():
         
         cursor.execute(
             "INSERT INTO usuarios (nombres, apellidos, correo, fecha_nacimiento, clave, id_rol) VALUES (%s, %s, %s, %s, %s, %s)",
-            (nombres, apellidos, correo, fecha_nacimiento, hashed_password, 2)
+            (nombres, apellidos, correo, fecha_nacimiento, hashed_password, 0)
         )
         conn.commit()
         cursor.close()
@@ -70,7 +70,6 @@ def create_user():
     except Error as e:
         return jsonify({"error": str(e)}), 400
 
-from flask import session, redirect, url_for
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -135,6 +134,9 @@ def dashboard():
     
     elif rol == 'profesor' or user.get('id_rol') == 3:
         return render_template('view/profesor/menuProfesor.html', user=user)
+    
+    elif rol == 'Coordinador' or user.get('id_rol') == 4:
+        return render_template('view/Coordinador/menuCoordinador.html', user=user)
     
     else:
         return render_template('view/estudiante/menuEstudiante.html', user=user)

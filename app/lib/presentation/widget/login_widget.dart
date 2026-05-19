@@ -2,6 +2,7 @@ import 'package:app/services/aut_service.dart';
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../view/homeAdmin.dart';
+import '../view/homeCoordinacion.dart';
 import '../view/homeTeacher.dart';
 import '../view/homestudent.dart';
 import 'register_widget.dart';
@@ -49,6 +50,8 @@ class _LoginViewState extends State<LoginView> {
         nextScreen = StudentHomeScreen(user: userData);
       } else if (rol == 'profesor') {
         nextScreen = HomeTeacher(user: userData);
+      } else if (rol == 'coordinacion') {
+        nextScreen = HomeCoordinacion(user: userData);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Error: Rol no reconocido')),

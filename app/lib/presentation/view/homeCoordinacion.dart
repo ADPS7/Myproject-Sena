@@ -8,19 +8,19 @@ import 'cursoAdmin.dart';
 import 'modulosAdmin.dart';
 import 'usuarioAdmin.dart';
 
-class Homeadmin extends StatefulWidget {
+class HomeCoordinacion extends StatefulWidget {
   final Map<String, dynamic> user;
 
-  const Homeadmin({
+  const HomeCoordinacion({
     super.key,
     required this.user,
   });
 
   @override
-  State<Homeadmin> createState() => _HomeadminState();
+  State<HomeCoordinacion> createState() => _HomeadminState();
 }
 
-class _HomeadminState extends State<Homeadmin> {
+class _HomeadminState extends State<HomeCoordinacion> {
   final ApiService _apiService = ApiService();
   late Future<Map<String, dynamic>> _statsFuture;
 
@@ -124,9 +124,9 @@ class _HomeadminState extends State<Homeadmin> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text("Panel Admin", style: TextStyle(color: Color(0xFF7C4DFF), fontWeight: FontWeight.bold, fontSize: 12)),
+                        const Text("Panel Coordinación", style: TextStyle(color: Color(0xFF7C4DFF), fontWeight: FontWeight.bold, fontSize: 12)),
                         Text(
-                          widget.user['nombres']?.split(' ')[0] ?? 'Admin', 
+                          widget.user['nombres']?.split(' ')[0] ?? 'Coordinador', 
                           style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
                         ),
                       ],
@@ -199,13 +199,6 @@ class _HomeadminState extends State<Homeadmin> {
                     () async {
                       await Navigator.push(context, MaterialPageRoute(builder: (context) => const AsignarEstudiantesScreen()));
                       _refreshData();
-                    }
-                  ),
-                  
-                  _buildDashboardItem(Icons.badge_outlined, "Control de Usuarios", "Roles y permisos", 
-                    () async {
-                      await Navigator.push(context, MaterialPageRoute(builder: (context) => const UsuariosScreen()));
-                      _refreshData(); 
                     }
                   ),
                   

@@ -1,0 +1,98 @@
+<!-- Contenedor de Bienvenida -->
+<div class="mb-5">
+    <div class="row align-items-center g-4">
+        <div class="col-12 col-md-7">
+            <h1 class="fw-bold h3 mb-2" style="color: #1e293b;">¡Panel de Coordinación! 📋</h1>
+            <p class="text-muted mb-0" style="font-size: 1rem;">
+                Supervisa el rendimiento de instructores y aprendices, gestiona la oferta de cursos y 
+                controla el cumplimiento de los módulos y asistencias de tu centro de formación.
+            </p>
+        </div>
+        
+        <div class="col-12 col-md-5 d-flex justify-content-md-end">
+            <div class="user-pill shadow-sm bg-white">
+                <!-- Cambiado el fondo a un azul de coordinación -->
+                <div class="avatar" style="background-color: #e0f2fe; color: #0369a1;">C</div>
+                <div>
+                    <div class="fw-bold" style="font-size: 0.85rem; line-height: 1;">Coordinador Académico</div>
+                    <small class="text-success" style="font-size: 0.75rem;">Sesión activa</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mb-4">
+    <h2 class="menu-label mb-3">Resumen de supervisión</h2>
+    <div class="row g-3">
+        
+        <!-- Instructores y Aprendices -->
+        <div class="col-6 col-xl-3">
+            <a onclick="mostrarvistaUsuarioCoordinador()" class="text-decoration-none text-dark">
+                <div class="card-stat bg-white p-4 rounded-4 border-0 shadow-sm">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="p-2 rounded-3 bg-primary-soft">
+                            <i class="bi bi-people text-primary fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-0">120</h5>
+                            <small class="text-muted">Usuarios a cargo</small>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Cursos / Fichas -->
+        <div class="col-6 col-xl-3">
+            <a class="text-decoration-none text-dark" onclick="mostrarvistaCursosCoordinador()">
+                <div class="card-stat bg-white p-4 rounded-4 border-0 shadow-sm">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="p-2 rounded-3" style="background-color: #f0fdf4;">
+                            <i class="bi bi-journal-text fs-4" style="color: #16a34a;"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-0">12</h5>
+                            <small class="text-muted">Cursos activos</small>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Módulos / Competencias -->
+        <div class="col-6 col-xl-3">
+            <a onclick="mostrarvistaModulosCoordinador()" class="text-decoration-none text-dark">
+                <div class="card-stat bg-white p-4 rounded-4 border-0 shadow-sm">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="p-2 rounded-3" style="background-color: #faf5ff;">
+                            <i class="bi bi-layers fs-4" style="color: #9333ea;"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-0">45</h5>
+                            <small class="text-muted">Módulos/Resultados</small>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Asistencia General -->
+        <div class="col-6 col-xl-3">
+            <a onclick="mostrarvistaAsistenciaCoordinador()" class="text-decoration-none text-dark">
+                <div class="card-stat bg-white p-4 rounded-4 border-0 shadow-sm">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="p-2 rounded-3" style="background-color: #fff7ed;">
+                            <i class="bi bi-calendar-check fs-4" style="color: #ea580c;"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-0">94%</h5>
+                            <small class="text-muted">Asistencia global</small>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+    </div>
+</div>

@@ -6,9 +6,20 @@ CREATE TABLE Roles (
     nombre VARCHAR(50) NOT NULL UNIQUE
 );
 
+CREATE TABLE Usuarios (
+    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+    nombres VARCHAR(100) NOT NULL,
+    apellidos VARCHAR(100) NOT NULL,
+    correo VARCHAR(50) NOT NULL UNIQUE,
+    fecha_nacimiento DATE NOT NULL,
+    clave VARCHAR(200) NOT NULL,
+    id_rol INT NOT NULL,
+    FOREIGN KEY (id_rol) REFERENCES Roles(id_rol)
+);
+
 CREATE TABLE DatosUsuarios (
-    estado ENUM('Activo', 'Inactivo', 'Pendiente') NOT NULL,
     id_datos_usuario INT AUTO_INCREMENT PRIMARY KEY,
+    estado ENUM('Activo', 'Inactivo', 'Pendiente') NOT NULL,
     direccion VARCHAR(200) NOT NULL,
     departamento VARCHAR(100) NOT NULL,
     municipio VARCHAR(100) NOT NULL,
@@ -21,17 +32,6 @@ CREATE TABLE DatosUsuarios (
     eps VARCHAR(100) NOT NULL,
     id_usuario INT NOT NULL,
     FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario)
-);
-
-CREATE TABLE Usuarios (
-    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
-    nombres VARCHAR(100) NOT NULL,
-    apellidos VARCHAR(100) NOT NULL,
-    correo VARCHAR(50) NOT NULL UNIQUE,
-    fecha_nacimiento DATE NOT NULL,
-    clave VARCHAR(200) NOT NULL,
-    id_rol INT NOT NULL,
-    FOREIGN KEY (id_rol) REFERENCES Roles(id_rol)
 );
 
 CREATE TABLE Cursos (
