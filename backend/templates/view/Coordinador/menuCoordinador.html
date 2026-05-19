@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Edullinas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='frontend/style/inicioAdmin.css') }}">
+    
+</head>
+<body>
+
+    <!-- NAVBAR PARA MÓVILES -->
+    <nav class="navbar navbar-dark bg-primary d-md-none fixed-top shadow-sm">
+        <div class="container-fluid">
+            <span class="navbar-brand fw-bold">Edullinas</span>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
+                <i class="bi bi-list fs-2"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MENÚ OFFCANVAS (Móvil) -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileMenu">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title">Menú Edullinas</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body d-flex flex-column">
+            <!-- Perfil en Móvil (Clickable) -->
+            <div class="d-flex align-items-center mb-4 p-2 border-bottom" 
+                 onclick="abrirPerfilAdminYcerrarMenu()" 
+                 style="cursor: pointer;">
+                <div class="avatar me-2">{{ user.nombres[0] }}</div>
+                <div>
+                    <p class="mb-0 fw-bold small">{{ user.nombres }}</p>
+                    <small class="text-muted">{{ user.rol }}</small>
+                </div>
+            </div>
+
+            <div class="nav flex-column flex-grow-1">
+                <small class="text-muted fw-bold mb-2">GESTIÓN</small>
+                <a onclick="mostrarvistaInicioCoordinador()" class="nav-link-item" data-bs-dismiss="offcanvas"><i class="bi bi-house"></i> Inicio</a>
+                <a onclick="mostrarvistaCursosCoordinador()" class="nav-link-item" data-bs-dismiss="offcanvas"><i class="bi bi-journal-bookmark"></i> Cursos</a>
+                <a onclick="mostrarvistaModulosCoordinador()" class="nav-link-item" data-bs-dismiss="offcanvas"><i class="bi bi-stack"></i> Módulos</a>
+
+                <small class="text-muted fw-bold mt-3 mb-2">CONTROL</small>
+                <a onclick="mostrarvistaUsuarioCoordinador()" class="nav-link-item" data-bs-dismiss="offcanvas"><i class="bi bi-people"></i> Usuarios</a>
+                <a href="#" class="nav-link-item"><i class="bi bi-calendar-check"></i> Asistencia</a>
+            </div>
+
+            <div class="mt-auto pt-3">
+                <a href="/logout" class="btn btn-danger w-100">Cerrar Sesión</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- SIDEBAR (Escritorio) -->
+            <nav class="col-md-3 col-lg-2 sidebar d-none d-md-flex flex-column p-3 bg-light vh-100 sticky-top">
+                <div class="sidebar-header text-center mb-4">
+                    <img src="{{ url_for('static', filename='frontend/images/instituto-removebg-preview.png') }}" class="img-fluid logo-img">
+                </div>
+                
+                <div class="nav flex-column flex-grow-1 px-2">
+                    <small class="menu-label text-muted fw-bold">GESTIÓN</small>
+                    <a onclick="mostrarvistaInicioCoordinador()" class="nav-link-item"><i class="bi bi-house"></i> Inicio</a>
+                    <a onclick="mostrarvistaCursosCoordinador()" class="nav-link-item"><i class="bi bi-journal-bookmark"></i> Cursos</a>
+                    <a onclick="mostrarvistaModulosCoordinador()" class="nav-link-item"><i class="bi bi-stack"></i> Módulos</a>
+                    
+                    <small class="menu-label mt-3 text-muted fw-bold">CONTROL</small>
+                    <a onclick="mostrarvistaUsuarioCoordinador()" class="nav-link-item"><i class="bi bi-people"></i> Usuarios</a>
+                    <a onclick="mostrarvistaAsistenciaCoordinador()" class="nav-link-item"><i class="bi bi-calendar-check"></i> Asistencia</a>
+                </div>
+
+                <!-- Perfil en Escritorio -->
+                <div class="sidebar-footer mt-auto pt-3 border-top">
+                    <div class="d-flex align-items-center mb-3 cursor-pointer" onclick="abrirPerfilCoordinador()" style="cursor: pointer;">
+                    <div class="avatar me-2">{{ user.nombres[0] }}</div>
+                    <div class="overflow-hidden">
+                    <p class="mb-0 fw-bold small text-truncate">{{ user.nombres }}</p>
+                    <span class="text-muted" style="font-size: 0.7rem;">{{ user.rol }}</span>
+                    </div>
+                    </div>
+                    <a href="/logout" class="btn btn-sm btn-outline-danger w-100">Cerrar Sesión</a>
+                </div>
+            </nav>
+
+            <!-- CONTENIDO PRINCIPAL -->
+            <main class="col-12 col-md-9 col-lg-10 p-4">
+                <div id="mostrarInicioCoordinador">
+                    {% include "view/Coordinador/inicioCoordinador.html" %}
+                </div>
+                <div id="mostrarUsuarioCoordinador" style="display: none;">
+                    {% include "view/Coordinador/usuariosCoordinador.html" %}
+                </div>
+                <div id="mostrarModulosCoordinador" style="display: none;">
+                    {% include "view/Coordinador/modulosCoordinador.html" %}
+                </div>
+                <div id="mostrarCursosCoordinador" style="display: none;">
+                    {% include "view/Coordinador/cursosCoordinador.html" %}
+                </div>
+                <div id="mostrarAsistenciaCoordinador" style="display: none;">
+                    {% include "view/Coordinador/asistenciaCoordinador.html" %}
+                </div>
+                <div id="mostrarPerfilCoordinador" style="display: block;">
+                    {% include "view/Coordinador/perfilCoordinador.html" %}
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+     <script>
+    window.usuarioAdmin = {
+        id_usuario: "{{ user.id_usuario }}",
+        nombres: "{{ user.nombres }}",
+        apellidos: "{{ user.apellidos }}",
+        correo: "{{ user.correo }}",
+        fecha_nacimiento: "{{ user.fecha_nacimiento }}",
+        rol: "{{ user.rol }}"
+    };
+</script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{url_for('static', filename='backend/javascripts/menuCoordinador.js')}}"></script>
+    <script src="{{url_for('static', filename='backend/javascripts/cursosAdmin.js')}}"></script>
+    <script src="{{ url_for('static', filename='backend/javascripts/perfilAdmin.js') }}"></script>
+</body>
+</html>

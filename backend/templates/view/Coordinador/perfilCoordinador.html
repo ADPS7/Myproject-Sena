@@ -1,0 +1,65 @@
+<!-- view/Admin/perfilAdmin.html -->
+<div class="modal fade" id="modalPerfilAdmin" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-primary text-white rounded-top-4">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-person-circle me-2"></i> Mi Perfil
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <div class="avatar mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                        {{ user.nombres[0] }}
+                    </div>
+                    <h5 class="fw-bold mb-0" id="nombreCompletoModal"></h5>
+                    <small class="text-muted" id="rolModal"></small>
+                </div>
+
+                <form id="formPerfil">
+                    <input type="hidden" id="id_usuario" value="{{ user.id_usuario }}" readonly>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Nombres</label>
+                            <input type="text" class="form-control rounded-3" id="nombres" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Apellidos</label>
+                            <input type="text" class="form-control rounded-3" id="apellidos" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-medium">Correo Electrónico</label>
+                            <input type="email" class="form-control rounded-3" id="correo" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Fecha de Nacimiento</label>
+                            <input type="date" class="form-control rounded-3" id="fecha_nacimiento" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Rol (No editable)</label>
+                            <input type="text" class="form-control rounded-3 bg-light" id="rol" readonly>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Nueva Contraseña (opcional)</label>
+                        <input type="password" class="form-control rounded-3" id="nueva_clave" 
+                               placeholder="Dejar en blanco si no desea cambiarla">
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary rounded-3 px-4" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary rounded-3 px-4" onclick="guardarPerfil()">
+                    <i class="bi bi-save"></i> Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+</div
