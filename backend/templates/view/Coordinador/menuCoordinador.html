@@ -41,12 +41,12 @@
 
             <div class="nav flex-column flex-grow-1">
                 <small class="text-muted fw-bold mb-2">GESTIÓN</small>
-                <a onclick="mostrarvistaInicioAdmin()" class="nav-link-item" data-bs-dismiss="offcanvas"><i class="bi bi-house"></i> Inicio</a>
-                <a onclick="mostrarvistaCursosAdmin()" class="nav-link-item" data-bs-dismiss="offcanvas"><i class="bi bi-journal-bookmark"></i> Cursos</a>
-                <a onclick="mostrarvistaModulosAdmin()" class="nav-link-item" data-bs-dismiss="offcanvas"><i class="bi bi-stack"></i> Módulos</a>
-                
+                <a onclick="mostrarvistaInicioCoordinador()" class="nav-link-item" data-bs-dismiss="offcanvas"><i class="bi bi-house"></i> Inicio</a>
+                <a onclick="mostrarvistaCursosCoordinador()" class="nav-link-item" data-bs-dismiss="offcanvas"><i class="bi bi-journal-bookmark"></i> Cursos</a>
+                <a onclick="mostrarvistaModulosCoordinador()" class="nav-link-item" data-bs-dismiss="offcanvas"><i class="bi bi-stack"></i> Módulos</a>
+
                 <small class="text-muted fw-bold mt-3 mb-2">CONTROL</small>
-                <a onclick="mostrarvistaUsuarioAdmin()" class="nav-link-item" data-bs-dismiss="offcanvas"><i class="bi bi-people"></i> Usuarios</a>
+                <a onclick="mostrarvistaUsuarioCoordinador()" class="nav-link-item" data-bs-dismiss="offcanvas"><i class="bi bi-people"></i> Usuarios</a>
                 <a href="#" class="nav-link-item"><i class="bi bi-calendar-check"></i> Asistencia</a>
             </div>
 
@@ -72,12 +72,12 @@
                     
                     <small class="menu-label mt-3 text-muted fw-bold">CONTROL</small>
                     <a onclick="mostrarvistaUsuarioCoordinador()" class="nav-link-item"><i class="bi bi-people"></i> Usuarios</a>
-                    <a onclick="mostrarvistaAsistenciaAdmin()" class="nav-link-item"><i class="bi bi-calendar-check"></i> Asistencia</a>
+                    <a onclick="mostrarvistaAsistenciaCoordinador()" class="nav-link-item"><i class="bi bi-calendar-check"></i> Asistencia</a>
                 </div>
 
                 <!-- Perfil en Escritorio -->
                 <div class="sidebar-footer mt-auto pt-3 border-top">
-                    <div class="d-flex align-items-center mb-3 cursor-pointer" onclick="abrirPerfilAdmin()" style="cursor: pointer;">
+                    <div class="d-flex align-items-center mb-3 cursor-pointer" onclick="abrirPerfilCoordinador()" style="cursor: pointer;">
                     <div class="avatar me-2">{{ user.nombres[0] }}</div>
                     <div class="overflow-hidden">
                     <p class="mb-0 fw-bold small text-truncate">{{ user.nombres }}</p>
@@ -102,9 +102,11 @@
                 <div id="mostrarCursosCoordinador" style="display: none;">
                     {% include "view/Coordinador/cursosCoordinador.html" %}
                 </div>
-                {% include "view/Admin/perfilAdmin.html" %}
-                <div id="mostrarAsistenciaAdmin" style="display: none;">
-                    {% include "view/Admin/asistenciaAdmin.html" %}
+                <div id="mostrarAsistenciaCoordinador" style="display: none;">
+                    {% include "view/Coordinador/asistenciaCoordinador.html" %}
+                </div>
+                <div id="mostrarPerfilCoordinador" style="display: block;">
+                    {% include "view/Coordinador/perfilCoordinador.html" %}
                 </div>
             </main>
         </div>
