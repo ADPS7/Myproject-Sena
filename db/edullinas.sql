@@ -6,6 +6,23 @@ CREATE TABLE Roles (
     nombre VARCHAR(50) NOT NULL UNIQUE
 );
 
+CREATE TABLE DatosUsuarios (
+    estado ENUM('Activo', 'Inactivo', 'Pendiente') NOT NULL,
+    id_datos_usuario INT AUTO_INCREMENT PRIMARY KEY,
+    direccion VARCHAR(200) NOT NULL,
+    departamento VARCHAR(100) NOT NULL,
+    municipio VARCHAR(100) NOT NULL,
+    telefono VARCHAR(20) NOT NULL,
+    telefono_emergencia VARCHAR(20) NOT NULL,
+    tipo_documento ENUM('DNI', 'Pasaporte', 'Cedula de Extranjería', 'Cedula', 'Tarjeta de Identidad') NOT NULL,
+    numero_documento VARCHAR(50) NOT NULL UNIQUE,
+    Estrato ENUM('1', '2', '3', '4', '5', '6') NOT NULL,
+    Sexo ENUM('M', 'F', 'O') NOT NULL,
+    eps VARCHAR(100) NOT NULL,
+    id_usuario INT NOT NULL,
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario)
+);
+
 CREATE TABLE Usuarios (
     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
     nombres VARCHAR(100) NOT NULL,
@@ -88,6 +105,8 @@ CREATE TABLE Profesor(
 INSERT INTO Roles (nombre) values ('admin');
 INSERT INTO Roles (nombre) values ('estudiante');
 INSERT INTO Roles (nombre) values ('profesor');
+INSERT INTO Roles (nombre) values ('coordinacion');
+
 
 INSERT INTO Usuarios (nombres, apellidos, correo, fecha_nacimiento, clave, id_rol) 
 VALUES ('Andrés', 'Admin', 'admin@edullinas.com', '1990-01-01', '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5', 1);
@@ -97,3 +116,6 @@ VALUES ('Laura', 'Estudiante', 'estudiante@edullinas.com', '2005-05-20', '599447
 
 INSERT INTO Usuarios (nombres, apellidos, correo, fecha_nacimiento, clave, id_rol) 
 VALUES ('Roberto', 'Profesor', 'profesor@edullinas.com', '1980-11-30', '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5', 3);
+
+INSERT INTO Usuarios (nombres, apellidos, correo, fecha_nacimiento, clave, id_rol) 
+VALUES ('Carlos', 'Coordinador', 'coordinador@edullinas.com', '1975-08-15', '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5', 4);
