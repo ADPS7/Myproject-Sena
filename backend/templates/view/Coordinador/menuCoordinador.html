@@ -66,7 +66,7 @@
                 
                 <div class="nav flex-column flex-grow-1 px-2">
                     <small class="menu-label text-muted fw-bold">GESTIÓN</small>
-                    <a onclick="mostrarvistaInicioAdmin()" class="nav-link-item"><i class="bi bi-house"></i> Inicio</a>
+                    <a onclick="mostrarvistaInicioCoordinador()" class="nav-link-item"><i class="bi bi-house"></i> Inicio</a>
                     <a onclick="mostrarvistaCursosAdmin()" class="nav-link-item"><i class="bi bi-journal-bookmark"></i> Cursos</a>
                     <a onclick="mostrarvistaModulosAdmin()" class="nav-link-item"><i class="bi bi-stack"></i> Módulos</a>
                     
@@ -90,11 +90,11 @@
 
             <!-- CONTENIDO PRINCIPAL -->
             <main class="col-12 col-md-9 col-lg-10 p-4">
-                <div id="mostrarInicioAdmin">
-                    {% include "view/Admin/inicioAdmin.html" %}
+                <div id="mostrarInicioCoordinador">
+                    {% include "view/Coordinador/inicioCoordinador.html" %}
                 </div>
-                <div id="mostrarUsuarioAdmin" style="display: none;">
-                    {% include "view/Admin/usuariosAdmin.html" %}
+                <div id="mostrarUsuarioCoordinador" style="display: none;">
+                    {% include "view/Coordinador/usuariosCoordinador.html" %}
                 </div>
                 <div id="mostrarModulosAdmin" style="display: none;">
                     {% include "view/Admin/modulosAdmin.html" %}
