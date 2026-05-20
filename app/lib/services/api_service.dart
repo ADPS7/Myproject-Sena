@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'aut_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.133.30:5000';
+  static const String baseUrl = 'http://10.2.125.166:5000';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,
@@ -193,20 +193,38 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> guardarNota({
+    int? idNota,
     required int idUsuario,
     required int idModulo,
     required double nota,
   }) async {
+    if (nota > 5.0) {
+      return {
+        'success': false,
+        'error': 'La nota no puede ser mayor a 5.0.',
+      };
+    }
+
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/notas'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'id_usuario': idUsuario,
-          'id_modulo': idModulo,
-          'nota': nota,
-        }),
-      );
+      final uri = idNota != null
+          ? Uri.parse('$baseUrl/notas/$idNota')
+          : Uri.parse('$baseUrl/notas');
+
+      final response = idNota != null
+          ? await http.put(
+              uri,
+              headers: {'Content-Type': 'application/json'},
+              body: json.encode({'nota': nota}),
+            )
+          : await http.post(
+              uri,
+              headers: {'Content-Type': 'application/json'},
+              body: json.encode({
+                'id_usuario': idUsuario,
+                'id_modulo': idModulo,
+                'nota': nota,
+              }),
+            );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return {'success': true};

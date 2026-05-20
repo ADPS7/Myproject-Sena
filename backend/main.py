@@ -570,16 +570,44 @@ def guardar_nota():
         id_modulo = data['id_modulo']
         nota = data['nota']
 
+        if nota is None or float(nota) > 5.0:
+            return jsonify({"error": "La nota no puede ser mayor a 5.0."}), 400
+
         conn = get_db_connection()
         cursor = conn.cursor()
 
         query = """
             INSERT INTO Notas (id_usuario, id_modulo, nota)
             VALUES (%s, %s, %s)
-            ON DUPLICATE KEY UPDATE nota = VALUES(nota)
         """
 
         cursor.execute(query, (id_usuario, id_modulo, nota))
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({"success": True}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/notas/<int:id_nota>', methods=['PUT'])
+def actualizar_nota(id_nota):
+    try:
+        data = request.json
+        nota = data['nota']
+
+        if nota is None or float(nota) > 5.0:
+            return jsonify({"error": "La nota no puede ser mayor a 5.0."}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "UPDATE Notas SET nota = %s WHERE id_nota = %s",
+            (nota, id_nota)
+        )
         conn.commit()
 
         cursor.close()
@@ -618,6 +646,7 @@ def obtener_notas_estudiante(id_usuario):
                 c.nombre AS curso_nombre,
                 m.id_modulo,
                 m.nombre AS modulo_nombre,
+                n.id_nota,
                 n.nota
             FROM alumnos a
             JOIN cursos c ON a.id_curso = c.id_curso
@@ -644,6 +673,7 @@ def obtener_notas_estudiante(id_usuario):
         for row in resultados:
             modulo_id = row['id_modulo']
             modulo_nombre = row['modulo_nombre']
+            nota_id = row['id_nota']
             nota = row['nota']
 
             if modulo_id is None:
@@ -653,7 +683,10 @@ def obtener_notas_estudiante(id_usuario):
                 modulos_dict[modulo_id] = {'nombre': modulo_nombre, 'notas': []}
 
             if nota is not None:
-                modulos_dict[modulo_id]['notas'].append(nota)
+                modulos_dict[modulo_id]['notas'].append({
+                    'id_nota': nota_id,
+                    'nota': float(nota)
+                })
 
         resultado_modulos = [
             {
