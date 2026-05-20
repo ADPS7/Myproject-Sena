@@ -23,7 +23,7 @@ class _RegisterViewState extends State<RegisterView> {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFE2E8F0), 
+      backgroundColor: const Color(0xFFE2E8F0),
       body: Stack(
         children: [
           Positioned(
@@ -69,7 +69,10 @@ class _RegisterViewState extends State<RegisterView> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
+                      border: Border.all(
+                        color: const Color(0xFFCBD5E1),
+                        width: 1,
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.05),
@@ -92,26 +95,41 @@ class _RegisterViewState extends State<RegisterView> {
                         const SizedBox(height: 8),
                         const Text(
                           "Regístrate para acceder a Edullinas",
-                          style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
+                          style: TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 14,
+                          ),
                         ),
                         const SizedBox(height: 30),
-                        _customInput(hint: "Nombres", controller: nombresController, icon: Icons.person_outline),
-                        const SizedBox(height: 15),
-                        _customInput(hint: "Apellidos", controller: apellidosController, icon: Icons.badge_outlined),
-                        const SizedBox(height: 15),
-                        _customInput(hint: "Correo", controller: emailController, icon: Icons.email_outlined),
+                        _customInput(
+                          hint: "Nombres",
+                          controller: nombresController,
+                          icon: Icons.person_outline,
+                        ),
                         const SizedBox(height: 15),
                         _customInput(
-                          hint: "Fecha de Nacimiento", 
-                          controller: fechaController, 
+                          hint: "Apellidos",
+                          controller: apellidosController,
+                          icon: Icons.badge_outlined,
+                        ),
+                        const SizedBox(height: 15),
+                        _customInput(
+                          hint: "Correo",
+                          controller: emailController,
+                          icon: Icons.email_outlined,
+                        ),
+                        const SizedBox(height: 15),
+                        _customInput(
+                          hint: "Fecha de Nacimiento",
+                          controller: fechaController,
                           icon: Icons.calendar_today_outlined,
                           readOnly: true,
                           onTap: () => _selectDate(context),
                         ),
                         const SizedBox(height: 15),
                         _customInput(
-                          hint: "Contraseña", 
-                          controller: passwordController, 
+                          hint: "Contraseña",
+                          controller: passwordController,
                           icon: Icons.lock_outline,
                           isPassword: true,
                         ),
@@ -129,7 +147,14 @@ class _RegisterViewState extends State<RegisterView> {
     );
   }
 
-  Widget _customInput({required String hint, required TextEditingController controller, required IconData icon, bool isPassword = false, bool readOnly = false, VoidCallback? onTap}) {
+  Widget _customInput({
+    required String hint,
+    required TextEditingController controller,
+    required IconData icon,
+    bool isPassword = false,
+    bool readOnly = false,
+    VoidCallback? onTap,
+  }) {
     return TextField(
       controller: controller,
       obscureText: isPassword ? _obscureText : false,
@@ -139,7 +164,14 @@ class _RegisterViewState extends State<RegisterView> {
         labelText: hint,
         labelStyle: const TextStyle(color: Color(0xFF64748B)),
         prefixIcon: Icon(icon, color: const Color(0xFF7C4DFF)),
-        suffixIcon: isPassword ? IconButton(icon: Icon(_obscureText ? Icons.visibility_off : Icons.visibility), onPressed: () => setState(() => _obscureText = !_obscureText)) : null,
+        suffixIcon: isPassword
+            ? IconButton(
+                icon: Icon(
+                  _obscureText ? Icons.visibility_off : Icons.visibility,
+                ),
+                onPressed: () => setState(() => _obscureText = !_obscureText),
+              )
+            : null,
         filled: true,
         fillColor: const Color(0xFFF8FAFC),
         enabledBorder: OutlineInputBorder(
@@ -163,13 +195,17 @@ class _RegisterViewState extends State<RegisterView> {
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF7C4DFF),
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           elevation: 0,
         ),
-        child: isLoading 
+        child: isLoading
             ? const CircularProgressIndicator(color: Colors.white)
-            : const Text("Registrarse", 
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            : const Text(
+                "Registrarse",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
       ),
     );
   }
@@ -184,7 +220,8 @@ class _RegisterViewState extends State<RegisterView> {
 
     if (picked != null) {
       setState(() {
-        fechaController.text = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+        fechaController.text =
+            "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
       });
     }
   }
@@ -195,7 +232,6 @@ class _RegisterViewState extends State<RegisterView> {
         emailController.text.trim().isEmpty ||
         fechaController.text.isEmpty ||
         passwordController.text.trim().isEmpty) {
-      
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Por favor completa todos los campos"),
@@ -237,7 +273,8 @@ class _RegisterViewState extends State<RegisterView> {
         clave: passwordController.text,
       );
 
-      if (result['message'] != null && result['message'].toString().contains("exitosamente")) {
+      if (result['message'] != null &&
+          result['message'].toString().contains("exitosamente")) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("¡Registro exitoso! Ahora puedes iniciar sesión"),
@@ -255,7 +292,9 @@ class _RegisterViewState extends State<RegisterView> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result['error']?.toString() ?? "Error al registrar usuario"),
+            content: Text(
+              result['error']?.toString() ?? "Error al registrar usuario",
+            ),
             backgroundColor: Colors.red,
           ),
         );

@@ -15,25 +15,49 @@ class HomeTeacher extends StatefulWidget {
 }
 
 class _HomeTeacherState extends State<HomeTeacher> {
-  // Paleta de colores original
   final Color primaryPurple = const Color(0xFF7C4DFF);
   final Color darkBlue = const Color(0xFF1A202C);
   final Color bgGrey = const Color(0xFFF8FAFC);
   final Color borderGrey = const Color(0xFFE2E8F0);
 
   final ApiService _apiService = ApiService();
+
   late Future<List<dynamic>> _cursosFuture;
+  late Future<int> _totalAlumnosFuture;
 
   @override
   void initState() {
     super.initState();
-    _cargarCursos();
+    _cargarDatos();
   }
 
-  void _cargarCursos() {
+  void _cargarDatos() {
     setState(() {
-      _cursosFuture = _apiService.getCursosPorProfesor(widget.user['id_usuario']);
+      _cursosFuture = _apiService.getCursosPorProfesor(
+        widget.user['id_usuario'],
+      );
+      _totalAlumnosFuture = _obtenerTotalAlumnos();
     });
+  }
+
+  Future<int> _obtenerTotalAlumnos() async {
+    try {
+      final cursos = await _apiService.getCursosPorProfesor(
+        widget.user['id_usuario'],
+      );
+      int total = 0;
+
+      for (var curso in cursos) {
+        final estudiantes = await _apiService.getEstudiantesPorCurso(
+          curso['id_curso'],
+        );
+        total += estudiantes.length;
+      }
+      return total;
+    } catch (e) {
+      print("Error obteniendo total de alumnos: $e");
+      return 0;
+    }
   }
 
   void _cerrarSesion(BuildContext context) {
@@ -116,7 +140,12 @@ class _HomeTeacherState extends State<HomeTeacher> {
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, {bool isLoading = false}) {
+  Widget _buildStatCard(
+    String label,
+    String value,
+    IconData icon, {
+    bool isLoading = false,
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -131,15 +160,18 @@ class _HomeTeacherState extends State<HomeTeacher> {
           const Spacer(),
           isLoading
               ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF7C4DFF)),
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2.5),
                 )
               : Text(
                   value,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-          Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+          Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 13)),
         ],
       ),
     );
@@ -208,10 +240,12 @@ class _HomeTeacherState extends State<HomeTeacher> {
       backgroundColor: bgGrey,
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () async => _cargarCursos(),
+          onRefresh: () async => _cargarDatos(),
           color: primaryPurple,
           child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
             slivers: [
               // Header
               SliverToBoxAdapter(
@@ -261,52 +295,55 @@ class _HomeTeacherState extends State<HomeTeacher> {
               // Tarjetas de Resumen
               SliverToBoxAdapter(
                 child: Container(
-                  height: 120,
+                  height: 130,
                   margin: const EdgeInsets.symmetric(vertical: 24),
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     children: [
-                      // TARJETA DE FICHAS DINÁMICA
+                      // Cursos
                       FutureBuilder<List<dynamic>>(
                         future: _cursosFuture,
                         builder: (context, snapshot) {
                           String total = "0";
-                          bool loading = snapshot.connectionState == ConnectionState.waiting;
-                          if (snapshot.hasData) {
+                          bool loading =
+                              snapshot.connectionState ==
+                              ConnectionState.waiting;
+                          if (snapshot.hasData)
                             total = snapshot.data!.length.toString();
-                          }
                           return SizedBox(
-                            width: 140,
-                            child: FutureBuilder<List<dynamic>>(
-                              future: _cursosFuture,
-                              builder: (context, snapshot) {
-                                String total = "0";
-                                bool loading = snapshot.connectionState == ConnectionState.waiting;
-                                
-                                if (snapshot.hasData) {
-                                  total = snapshot.data!.length.toString();
-                                }
-                                
-                                return _buildStatCard(
-                                  "Cursos",
-                                  total,
-                                  Icons.school_rounded, // <--- Este icono representa mejor "Cursos"
-                                  isLoading: loading,
-                                );
-                              },
+                            width: 155,
+                            child: _buildStatCard(
+                              "Cursos",
+                              total,
+                              Icons.school_rounded,
+                              isLoading: loading,
                             ),
                           );
                         },
                       ),
                       const SizedBox(width: 16),
-                      SizedBox(
-                        width: 140,
-                        child: _buildStatCard(
-                          "Pendientes",
-                          "12",
-                          Icons.pending_actions_rounded,
-                        ),
+
+                      // Alumnos
+                      FutureBuilder<int>(
+                        future: _totalAlumnosFuture,
+                        builder: (context, snapshot) {
+                          String total = "0";
+                          bool loading =
+                              snapshot.connectionState ==
+                              ConnectionState.waiting;
+                          if (snapshot.hasData)
+                            total = snapshot.data.toString();
+                          return SizedBox(
+                            width: 155,
+                            child: _buildStatCard(
+                              "Alumnos",
+                              total,
+                              Icons.people_outline_rounded,
+                              isLoading: loading,
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(width: 16),
                     ],
@@ -314,7 +351,7 @@ class _HomeTeacherState extends State<HomeTeacher> {
                 ),
               ),
 
-              // Acciones principales
+              // Acciones principales (con recarga automática)
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 sliver: SliverList(
@@ -329,6 +366,7 @@ class _HomeTeacherState extends State<HomeTeacher> {
                       ),
                     ),
                     const SizedBox(height: 16),
+
                     _buildDashboardItem(
                       Icons.book_outlined,
                       "Mis Cursos",
@@ -336,10 +374,12 @@ class _HomeTeacherState extends State<HomeTeacher> {
                       () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => MyCoursesTeacherScreen(user: widget.user),
+                          builder: (context) =>
+                              MyCoursesTeacherScreen(user: widget.user),
                         ),
-                      ),
+                      ).then((_) => _cargarDatos()),
                     ),
+
                     _buildDashboardItem(
                       Icons.assignment_turned_in_outlined,
                       "Calificar Notas",
@@ -351,8 +391,9 @@ class _HomeTeacherState extends State<HomeTeacher> {
                             idUsuario: widget.user['id_usuario'] ?? 0,
                           ),
                         ),
-                      ),
+                      ).then((_) => _cargarDatos()),
                     ),
+
                     _buildDashboardItem(
                       Icons.fact_check_outlined,
                       "Control de Asistencia",
@@ -360,10 +401,13 @@ class _HomeTeacherState extends State<HomeTeacher> {
                       () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AsistsTeacher(idUsuario: widget.user['id_usuario'] ?? 0),
+                          builder: (context) => AsistsTeacher(
+                            idUsuario: widget.user['id_usuario'] ?? 0,
+                          ),
                         ),
-                      ),
+                      ).then((_) => _cargarDatos()),
                     ),
+
                     const SizedBox(height: 40),
                   ]),
                 ),
@@ -373,7 +417,6 @@ class _HomeTeacherState extends State<HomeTeacher> {
         ),
       ),
 
-      // Bottom Navigation Bar
       bottomNavigationBar: BottomNavigationBar(
         elevation: 8,
         backgroundColor: Colors.white,
@@ -388,7 +431,7 @@ class _HomeTeacherState extends State<HomeTeacher> {
               MaterialPageRoute(
                 builder: (context) => AjustesScreen(user: widget.user),
               ),
-            );
+            ).then((_) => _cargarDatos());
           }
         },
         items: const [
