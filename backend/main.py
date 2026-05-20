@@ -570,6 +570,9 @@ def guardar_nota():
         id_modulo = data['id_modulo']
         nota = data['nota']
 
+        if nota is None or float(nota) > 5.0:
+            return jsonify({"error": "La nota no puede ser mayor a 5.0."}), 400
+
         conn = get_db_connection()
         cursor = conn.cursor()
 
@@ -594,6 +597,9 @@ def actualizar_nota(id_nota):
     try:
         data = request.json
         nota = data['nota']
+
+        if nota is None or float(nota) > 5.0:
+            return jsonify({"error": "La nota no puede ser mayor a 5.0."}), 400
 
         conn = get_db_connection()
         cursor = conn.cursor()

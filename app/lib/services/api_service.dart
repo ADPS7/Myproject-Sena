@@ -198,6 +198,13 @@ class ApiService {
     required int idModulo,
     required double nota,
   }) async {
+    if (nota > 5.0) {
+      return {
+        'success': false,
+        'error': 'La nota no puede ser mayor a 5.0.',
+      };
+    }
+
     try {
       final uri = idNota != null
           ? Uri.parse('$baseUrl/notas/$idNota')
