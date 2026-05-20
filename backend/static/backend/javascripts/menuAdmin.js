@@ -37,4 +37,3 @@ function mostrarvistaAsistenciaAdmin() {
     asistencia = document.getElementById("mostrarAsistenciaAdmin").style = "display: block;"
 }
 
-
