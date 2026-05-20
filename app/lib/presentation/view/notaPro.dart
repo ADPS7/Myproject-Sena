@@ -189,52 +189,60 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
                           ],
                         )
                         else
-                          ...notas.map((nota) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: (nota != null && nota is num && nota < 3)
-                                      ? Colors.red.withOpacity(0.3)
-                                      : Colors.grey.withOpacity(0.2),
+                          ...notas.map((notaItem) {
+                            final notaValor = notaItem is Map ? notaItem['nota'] : notaItem;
+                            final notaId = notaItem is Map ? notaItem['id_nota'] : null;
+                            final notaNumero = notaValor is num
+                                ? notaValor.toDouble()
+                                : double.tryParse(notaValor?.toString() ?? '');
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: (notaNumero != null && notaNumero < 3)
+                                        ? Colors.red.withOpacity(0.3)
+                                        : Colors.grey.withOpacity(0.2),
+                                  ),
                                 ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      "Nota: ${nota?.toString() ?? 'N/A'}",
-                                      style: TextStyle(
-                                        color: (nota != null && nota is num && nota < 3)
-                                            ? Colors.red
-                                            : Colors.black,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        "Nota: ${notaNumero?.toStringAsFixed(2) ?? 'N/A'}",
+                                        style: TextStyle(
+                                          color: (notaNumero != null && notaNumero < 3)
+                                              ? Colors.red
+                                              : Colors.black,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
-                                    tooltip: 'Editar nota',
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                      _mostrarDialogoEditarNota(
-                                        estudiante,
-                                        modulo['nombre'] ?? 'Módulo',
-                                        nota,
-                                        modulo['id_modulo'],
-                                      );
-                                    },
-                                  ),
-                                ],
+                                    IconButton(
+                                      icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                                      tooltip: 'Editar nota',
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                        _mostrarDialogoEditarNota(
+                                          estudiante,
+                                          modulo['nombre'] ?? 'Módulo',
+                                          notaItem,
+                                          modulo['id_modulo'],
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          )),
+                            );
+                          }).toList(),
                       ],
                     ),
                   );
@@ -254,15 +262,18 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
   }
 
   void _mostrarDialogoEditarNota(Map estudiante, String moduloNombre, dynamic notaActual, int idModulo) {
+    final existingNotaValue = notaActual is Map ? notaActual['nota'] : notaActual;
+    final existingNotaId = notaActual is Map ? notaActual['id_nota'] as int? : null;
+
     final TextEditingController controller = TextEditingController(
-      text: notaActual?.toString() ?? '',
+      text: existingNotaValue?.toString() ?? '',
     );
     
-    final bool esNueveNota = notaActual == null;
-    final String tituloDialogo = esNueveNota 
+    final bool esNuevaNota = notaActual == null;
+    final String tituloDialogo = esNuevaNota 
         ? "Agregar Nota - $moduloNombre" 
         : "Editar Nota - $moduloNombre";
-    final String labelBoton = esNueveNota ? "Agregar" : "Actualizar";
+    final String labelBoton = esNuevaNota ? "Agregar" : "Actualizar";
 
     showDialog(
       context: context,
@@ -297,6 +308,7 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
               }
 
               final result = await _api.guardarNota(
+                idNota: existingNotaId,
                 idUsuario: estudiante['id_usuario'],
                 idModulo: idModulo,
                 nota: nota,
@@ -311,7 +323,7 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      esNueveNota 
+                      esNuevaNota 
                           ? 'Nota agregada correctamente.' 
                           : 'Nota actualizada correctamente.'
                     ),
