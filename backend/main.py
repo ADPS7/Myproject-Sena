@@ -1494,28 +1494,50 @@ def actualizar_rol(id_usuario):
     
 @app.route('/verificar_datos_vacios')
 def verificar_datos_vacios():
-    # Captura el id_usuario que mandaste en el fetch (?id_usuario=...)
     id_usuario = request.args.get('id_usuario')
     
     if not id_usuario:
         return jsonify({"error": "Falta el id de usuario"}), 400
         
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # Buscamos en la base de datos usando el ID recibido
-    cursor.execute("SELECT id_datos_usuario FROM DatosUsuarios WHERE id_usuario = %s", (id_usuario,))
-    existe = cursor.fetchone()
-    print("si",existe)
-    
-    cursor.close()
-    conn.close()
-    
-    if existe is None:
+    try:
+        conn = get_db_connection()
+        # Usamos dictionary=True para poder leer los campos por su nombre
+        cursor = conn.cursor(dictionary=True)
+        
+        # Traemos todos los campos obligatorios del perfil
+        query = """
+            SELECT Sexo, tipo_documento, numero_documento, departamento, 
+                   municipio, direccion, telefono, telefono_emergencia, Estrato, eps 
+            FROM DatosUsuarios 
+            WHERE id_usuario = %s
+        """
+        cursor.execute(query, (id_usuario,))
+        registro = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        # Caso 1: Ni siquiera tiene una fila creada en la tabla DatosUsuarios
+        if registro is None:
+            return jsonify({"vacios": True, "mensaje": "Por favor, complete su perfil de estudiante."})
+            
+        # Lista de campos que queremos verificar estrictamente uno por uno
+        campos_a_verificar = [
+            'Sexo', 'tipo_documento', 'numero_documento', 'departamento', 
+            'municipio', 'direccion', 'telefono', 'telefono_emergencia', 'Estrato', 'eps'
+        ]
+        
+        # Caso 2: La fila existe, pero iteramos para revisar si algún campo está vacío o NULL
+        for campo in campos_a_verificar:
+            valor = registro.get(campo)
+            if valor is None or str(valor).strip() == "":
+                return jsonify({"vacios": True, "mensaje": f"El campo '{campo}' está incompleto. Debe actualizar su perfil."})
+                
+        # Caso 3: Encontró la fila y absolutamente todos los campos tienen datos
         return jsonify({"vacios": False})
-    else:
-        return jsonify({"vacios": True})
-    
+
+    except Exception as err:
+        return jsonify({"error": f"Error interno: {str(err)}"}), 500   
 
 @app.route('/completar-perfil')
 def completar_perfil():
