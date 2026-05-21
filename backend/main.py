@@ -3,6 +3,7 @@ from flask_cors import CORS
 import mysql.connector
 from mysql.connector import Error
 import hashlib
+from datetime import datetime
 from collections import defaultdict
 
 
@@ -280,6 +281,63 @@ def get_estudiantes_modulo(id_modulo):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/modulo/<int:id_modulo>/asistencia', methods=['GET'])
+def get_asistencia_modulo_fecha(id_modulo):
+    fecha = request.args.get('fecha')
+    if not fecha:
+        return jsonify({"success": False, "error": "Falta la fecha para consultar la asistencia."}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        query = "SELECT COUNT(*) as total FROM Asistencia WHERE id_modulo = %s AND fecha = %s"
+        cursor.execute(query, (id_modulo, fecha))
+        resultado = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            "success": True,
+            "registrada": resultado['total'] > 0,
+            "total": resultado['total']
+        }), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/modulo/<int:id_modulo>/asistencias', methods=['GET'])
+def get_historial_asistencias_modulo(id_modulo):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT 
+                u.id_usuario,
+                CONCAT(u.nombres, ' ', u.apellidos) AS estudiante,
+                a.fecha,
+                a.asistio
+            FROM Asistencia a
+            JOIN Usuarios u ON a.id_usuario = u.id_usuario
+            WHERE a.id_modulo = %s
+            ORDER BY a.fecha DESC, u.nombres
+        """
+        cursor.execute(query, (id_modulo,))
+        historial_raw = cursor.fetchall()
+        # Asegurarnos de devolver la fecha en formato YYYY-MM-DD (sin hora)
+        historial = []
+        for row in historial_raw:
+            historial.append({
+                'id_usuario': row.get('id_usuario'),
+                'estudiante': row.get('estudiante'),
+                'fecha': str(row.get('fecha')) if row.get('fecha') is not None else None,
+                'asistio': row.get('asistio')
+            })
+        cursor.close()
+        conn.close()
+
+        return jsonify({"success": True, "historial": historial}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 @app.route('/asistencia/registrar', methods=['POST'])
 def registrar_asistencia():
     try:
@@ -292,9 +350,54 @@ def registrar_asistencia():
         if not id_modulo or (ids_estudiantes_presentes is None and asistencias is None):
             return jsonify({"error": "Faltan datos requeridos"}), 400
 
+        if not fecha:
+            return jsonify({"error": "Falta la fecha para registrar la asistencia."}), 400
+
+        try:
+            fecha_obj = datetime.strptime(fecha, "%Y-%m-%d").date()
+        except ValueError:
+            return jsonify({"error": "Formato de fecha inválido. Use YYYY-MM-DD."}), 400
+
+        # Normalizamos la fecha a cadena YYYY-MM-DD para almacenar sin hora
+        fecha_iso = fecha_obj.isoformat()
+
         conn = get_db_connection()
         cursor = conn.cursor()
 
+        cursor.execute(
+            "SELECT fecha_inicio, fecha_fin FROM Modulos WHERE id_modulo = %s",
+            (id_modulo,)
+        )
+        modulo_rango = cursor.fetchone()
+        if not modulo_rango:
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Módulo no encontrado."}), 404
+
+        fecha_inicio = modulo_rango[0]
+        fecha_fin = modulo_rango[1]
+        if fecha_obj < fecha_inicio or fecha_obj > fecha_fin:
+            cursor.close()
+            conn.close()
+            return jsonify({
+                "success": False,
+                "error": f"La fecha debe estar entre {fecha_inicio.isoformat()} y {fecha_fin.isoformat()}."
+            }), 400
+
+        # Evitamos que la asistencia se registre más de una vez por módulo y fecha.
+        cursor.execute(
+            "SELECT COUNT(*) as total FROM Asistencia WHERE id_modulo = %s AND fecha = %s",
+            (id_modulo, fecha_iso)
+        )
+        registro_existente = cursor.fetchone()[0]
+        if registro_existente > 0:
+            cursor.close()
+            conn.close()
+            return jsonify({
+                "success": False,
+                "error": "No se puede registrar la asistencia porque ya la registraste para esta fecha y módulo."
+            }), 409
+        
         # 1. Primero buscamos a TODOS los estudiantes inscritos en ese módulo
         # Para saber quiénes NO vinieron (asistio = 0)
         query_todos = """
@@ -327,7 +430,8 @@ def registrar_asistencia():
                 asistio_texto = estado_por_estudiante[id_estudiante]
             else:
                 asistio_texto = 'SI' if ids_estudiantes_presentes and id_estudiante in ids_estudiantes_presentes else 'NO'
-            cursor.execute(insert_query, (id_estudiante, id_modulo, fecha, asistio_texto))
+            # Insertamos usando la fecha normalizada (sin hora)
+            cursor.execute(insert_query, (id_estudiante, id_modulo, fecha_iso, asistio_texto))
 
         conn.commit()
         cursor.close()
