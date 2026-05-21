@@ -1816,6 +1816,60 @@ def actualizar_perfil_completo(id_usuario):
     except Exception as e:
         print(f"Error en actualizar_perfil_completo: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
+    
+
+#mostrar datos del perfil completo flutter
+@app.route('/obtener_datos_adicionales/<int:id_usuario>', methods=['GET'])
+def obtener_datos_adicionales(id_usuario):
+    try:
+        conn = get_db_connection()
+        # Usamos el cursor normal para evitar problemas de compatibilidad con DictCursor
+        cursor = conn.cursor()
+
+        # Seleccionamos las columnas explícitamente en un orden conocido
+        query = """
+            SELECT direccion, departamento, municipio, telefono, 
+                   telefono_emergencia, tipo_documento, numero_documento, 
+                   Estrato, Sexo, eps 
+            FROM DatosUsuarios 
+            WHERE id_usuario = %s
+        """
+        cursor.execute(query, (id_usuario,))
+        row = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        if row:
+            # Construimos el diccionario manualmente mapeando cada posición de la tupla
+            datos = {
+                "direccion": row[0],
+                "departamento": row[1],
+                "municipio": row[2],
+                "telefono": row[3],
+                "telefono_emergencia": row[4],
+                "tipo_documento": row[5],
+                "numero_documento": row[6],
+                "Estrato": row[7],
+                "Sexo": row[8],
+                "eps": row[9]
+            }
+            return jsonify({
+                "success": True,
+                "existe": True,
+                "data": datos
+            }), 200
+        else:
+            return jsonify({
+                "success": True,
+                "existe": False,
+                "data": {}
+            }), 200
+
+    except Exception as e:
+        # Esto imprimirá el error exacto en tu consola de Python si algo más ocurre
+        print(f"Error detallado en el servidor: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 if __name__ == '__main__':

@@ -734,4 +734,24 @@ class ApiService {
       return {'success': false, 'message': e.toString()};
     }
   }
+
+  /// Consulta los datos exclusivos de la tabla DatosUsuarios
+  Future<Map<String, dynamic>> obtenerDatosAdicionales(int idUsuario) async {
+    final url = Uri.parse('$baseUrl/obtener_datos_adicionales/$idUsuario');
+    
+    try {
+      final response = await http.get(
+        url,
+        headers: {"Content-Type": "application/json"},
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        return {"success": false, "error": "Error del servidor: ${response.statusCode}"};
+      }
+    } catch (e) {
+      return {"success": false, "error": "No se pudo conectar con el servidor: $e"};
+    }
+  }
 }
