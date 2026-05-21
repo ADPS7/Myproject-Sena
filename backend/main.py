@@ -1613,16 +1613,34 @@ def guardar_datos_perfil():
         'municipio', 'direccion', 'telefono', 'telefono_emergencia', 'estrato', 'eps'
     ]
     
-    # Validación estricta en el Backend: que nada llegue vacío
+    # 1. Validación de campos vacíos
     for campo in campos_obligatorios:
         if not datos.get(campo) or str(datos.get(campo)).strip() == "":
-            return jsonify({"exito": False, "mensaje": "Todos los campos son estrictamente obligatorios."}), 400
+            return jsonify({"exito": False, "tipo_error": "advertencia", "mensaje": "Todos los campos son estrictamente obligatorios."}), 400
 
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True) # Usamos dictionary=True para leer fácil por nombre de columna
         
-        # Actualizar Datos de Cuenta básicos
+        # 2. NUEVA VALIDACIÓN: Verificar si el documento ya existe en OTRO usuario
+        query_verificar_doc = """
+            SELECT id_usuario FROM DatosUsuarios 
+            WHERE numero_documento = %s AND id_usuario != %s
+        """
+        cursor.execute(query_verificar_doc, (datos['numero_documento'], datos['id_usuario']))
+        documento_duplicado = cursor.fetchone()
+        
+        if documento_duplicado:
+            cursor.close()
+            conn.close()
+            # Retornamos un flag "tipo_error" para que JS sepa que debe ser un Toast Amarillo
+            return jsonify({
+                "exito": False, 
+                "tipo_error": "advertencia", 
+                "mensaje": f"El número de documento {datos['numero_documento']} ya se encuentra registrado en el sistema por otro usuario."
+            }), 200 # Lo enviamos con 200 para que el .then() de JS lo procese limpiamente
+
+        # 3. Actualizar Datos de Cuenta básicos en Usuarios
         query_usuarios = """
             UPDATE Usuarios 
             SET nombres = %s, apellidos = %s, correo = %s, fecha_nacimiento = %s
@@ -1630,12 +1648,12 @@ def guardar_datos_perfil():
         """
         cursor.execute(query_usuarios, (datos['nombres'], datos['apellidos'], datos['correo'], datos['fecha_nacimiento'], datos['id_usuario']))
 
-        # Verificar si ya existe registro en DatosUsuarios
+        # 4. Verificar si ya existe fila en DatosUsuarios para el usuario actual
         cursor.execute("SELECT id_datos_usuario FROM DatosUsuarios WHERE id_usuario = %s", (datos['id_usuario'],))
         existe_perfil = cursor.fetchone()
         
         if existe_perfil:
-            # UPDATE si ya existía
+            # UPDATE
             query_datos = """
                 UPDATE DatosUsuarios 
                 SET Sexo = %s, tipo_documento = %s, numero_documento = %s, departamento = %s, 
@@ -1649,7 +1667,7 @@ def guardar_datos_perfil():
                 datos['estrato'], datos['eps'], datos['id_usuario']
             ))
         else:
-            # INSERT si es su primera vez completando el perfil
+            # INSERT
             query_datos = """
                 INSERT INTO DatosUsuarios (id_usuario, Sexo, tipo_documento, numero_documento, departamento, 
                                           municipio, direccion, telefono, telefono_emergencia, Estrato, eps, estado)
@@ -1665,11 +1683,10 @@ def guardar_datos_perfil():
         cursor.close()
         conn.close()
         
-        return jsonify({"exito": True, "mensaje": "Perfil actualizado con éxito."})
+        return jsonify({"exito": True, "mensaje": "Perfil actualizado exitosamente."})
 
     except Exception as err:
-        return jsonify({"exito": False, "mensaje": f"Error en el servidor: {str(err)}"}), 500
-
+        return jsonify({"exito": False, "tipo_error": "error", "mensaje": f"Error en el servidor: {str(err)}"}), 500
 
 
 if __name__ == '__main__':
