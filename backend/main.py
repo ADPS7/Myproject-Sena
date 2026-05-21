@@ -113,18 +113,23 @@ def login():
         conn.close()
 
         if user:
-            # Si es Flutter, devolvemos el JSON original
+            # Usuario inactivo
+            if user.get('id_rol') == 5:
+                return jsonify({
+                    "error": "Tu cuenta está inactiva. Por favor contacta al administrador."
+                }), 403
+
+            # Login exitoso
             if request.is_json:
                 return jsonify({"success": True, "user": user}), 200
             
-            # Si es la Web, guardamos en sesión y redirigimos
             session['usuario'] = user
             return redirect(url_for('dashboard'))
-        else:
-            if request.is_json:
-                return jsonify({"error": "Correo o contraseña incorrectos"}), 401
-            return "Correo o contraseña incorrectos", 401
 
+        else:
+            # Credenciales incorrectas - Mensaje genérico
+            return jsonify({"error": "Correo o contraseña incorrectos"}), 401
+        
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
