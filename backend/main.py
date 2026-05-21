@@ -57,7 +57,7 @@ def create_user():
         
         cursor.execute(
             "INSERT INTO usuarios (nombres, apellidos, correo, fecha_nacimiento, clave, id_rol) VALUES (%s, %s, %s, %s, %s, %s)",
-            (nombres, apellidos, correo, fecha_nacimiento, hashed_password, 0)
+            (nombres, apellidos, correo, fecha_nacimiento, hashed_password, 2)
         )
         conn.commit()
         cursor.close()
