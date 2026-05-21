@@ -1709,6 +1709,91 @@ def guardar_datos_perfil():
 
     except Exception as err:
         return jsonify({"exito": False, "tipo_error": "error", "mensaje": f"Error en el servidor: {str(err)}"}), 500
+    
+@app.route('/actualizar_perfil_completo/<int:id_usuario>', methods=['PUT'])
+def actualizar_perfil_completo(id_usuario):
+    try:
+        data = request.json
+        
+        # 1. Obtener datos destinados a la tabla 'Usuarios'
+        nombres = data.get('nombres')
+        apellidos = data.get('apellidos')
+        correo = data.get('correo')
+        fecha_nacimiento = data.get('fecha_nacimiento')
+        nueva_clave = data.get('nueva_clave') or data.get('clave')
+
+        # 2. Obtener datos destinados a la tabla 'DatosUsuarios'
+        direccion = data.get('direccion')
+        departamento = data.get('departamento')
+        municipio = data.get('municipio')
+        telefono = data.get('telefono')
+        telefono_emergencia = data.get('telefono_emergencia')
+        tipo_documento = data.get('tipo_documento')
+        numero_documento = data.get('numero_documento')
+        estrato = data.get('estrato')
+        sexo = data.get('sexo')
+        eps = data.get('eps')
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 3. Actualizar datos en la tabla 'Usuarios'
+        if nueva_clave:  # Si el usuario decidió cambiar su contraseña
+            hashed_password = hashlib.sha256(nueva_clave.encode('utf-8')).hexdigest()
+            query_user = """
+                UPDATE Usuarios 
+                SET nombres = %s, apellidos = %s, correo = %s, fecha_nacimiento = %s, clave = %s
+                WHERE id_usuario = %s
+            """
+            cursor.execute(query_user, (nombres, apellidos, correo, fecha_nacimiento, hashed_password, id_usuario))
+        else:            # Si la contraseña se dejó vacía, se mantiene la actual
+            query_user = """
+                UPDATE Usuarios 
+                SET nombres = %s, apellidos = %s, correo = %s, fecha_nacimiento = %s
+                WHERE id_usuario = %s
+            """
+            cursor.execute(query_user, (nombres, apellidos, correo, fecha_nacimiento, id_usuario))
+
+        # 4. Verificar si el usuario ya tiene una fila creada en 'DatosUsuarios'
+        cursor.execute("SELECT id_datos_usuario FROM DatosUsuarios WHERE id_usuario = %s", (id_usuario,))
+        existe_registro_datos = cursor.fetchone()
+
+        if existe_registro_datos:
+            # Si ya tiene registro, actualizamos todos sus campos correspondientes
+            query_datos = """
+                UPDATE DatosUsuarios 
+                SET direccion = %s, departamento = %s, municipio = %s, telefono = %s, 
+                    telefono_emergencia = %s, tipo_documento = %s, numero_documento = %s, 
+                    Estrato = %s, Sexo = %s, eps = %s
+                WHERE id_usuario = %s
+            """
+            cursor.execute(query_datos, (direccion, departamento, municipio, telefono, 
+                                         telefono_emergencia, tipo_documento, numero_documento, 
+                                         estrato, sexo, eps, id_usuario))
+        else:
+            # Si no existe (por ejemplo, si es un usuario semilla antiguo), creamos su fila
+            # Le asignamos el estado 'Activo' por defecto al ser una actualización de perfil
+            query_datos = """
+                INSERT INTO DatosUsuarios (estado, direccion, departamento, municipio, telefono, 
+                                           telefono_emergencia, tipo_documento, numero_documento, Estrato, Sexo, eps, id_usuario)
+                VALUES ('Activo', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(query_datos, (direccion, departamento, municipio, telefono, 
+                                         telefono_emergencia, tipo_documento, numero_documento, 
+                                         estrato, sexo, eps, id_usuario))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            "success": True, 
+            "message": "Todos los datos del perfil se han actualizado con éxito"
+        }), 200
+
+    except Exception as e:
+        print(f"Error en actualizar_perfil_completo: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 if __name__ == '__main__':
