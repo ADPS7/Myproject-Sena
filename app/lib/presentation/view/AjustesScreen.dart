@@ -13,7 +13,7 @@ class AjustesScreen extends StatefulWidget {
 class _AjustesScreenState extends State<AjustesScreen> {
   final ApiService _apiService = ApiService();
 
-  // Controladores originales
+  // Controladores principales
   late TextEditingController nombresController;
   late TextEditingController apellidosController;
   late TextEditingController emailController;
@@ -21,7 +21,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
   late TextEditingController passwordController;
   late TextEditingController confirmPasswordController;
 
-  // NUEVOS CONTROLADORES VISIBLES
+  // Controladores de la tabla DatosUsuarios
   late TextEditingController direccionController;
   late TextEditingController departamentoController;
   late TextEditingController municipioController;
@@ -30,7 +30,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
   late TextEditingController numeroDocumentoController;
   late TextEditingController epsController;
 
-  // NUEVAS VARIABLES PARA DROPDOWNS VISIBLES
+  // Variables para Dropdowns
   String? selectedTipoDocumento;
   String? selectedEstrato;
   String? selectedSexo;
@@ -44,22 +44,22 @@ class _AjustesScreenState extends State<AjustesScreen> {
   void initState() {
     super.initState();
 
-    // Inicialización de datos originales
-    nombresController = TextEditingController(text: widget.user['nombres'] ?? '');
-    apellidosController = TextEditingController(text: widget.user['apellidos'] ?? '');
-    emailController = TextEditingController(text: widget.user['correo'] ?? '');
+    // Inicialización segura contra valores nulos (Previene LateInitializationError)
+    nombresController = TextEditingController(text: (widget.user['nombres'] ?? '').toString());
+    apellidosController = TextEditingController(text: (widget.user['apellidos'] ?? '').toString());
+    emailController = TextEditingController(text: (widget.user['correo'] ?? '').toString());
     passwordController = TextEditingController();
     confirmPasswordController = TextEditingController();
 
-    // Inicialización de nuevos campos visibles
-    direccionController = TextEditingController(text: widget.user['direccion'] ?? '');
-    departamentoController = TextEditingController(text: widget.user['departamento'] ?? '');
-    municipioController = TextEditingController(text: widget.user['municipio'] ?? '');
-    telefonoController = TextEditingController(text: widget.user['telefono'] ?? '');
-    telefonoEmergenciaController = TextEditingController(text: widget.user['telefono_emergencia'] ?? '');
-    numeroDocumentoController = TextEditingController(text: widget.user['numero_documento'] ?? '');
-    epsController = TextEditingController(text: widget.user['eps'] ?? '');
+    direccionController = TextEditingController(text: (widget.user['direccion'] ?? '').toString());
+    departamentoController = TextEditingController(text: (widget.user['departamento'] ?? '').toString());
+    municipioController = TextEditingController(text: (widget.user['municipio'] ?? '').toString());
+    telefonoController = TextEditingController(text: (widget.user['telefono'] ?? '').toString());
+    telefonoEmergenciaController = TextEditingController(text: (widget.user['telefono_emergencia'] ?? '').toString());
+    numeroDocumentoController = TextEditingController(text: (widget.user['numero_documento'] ?? '').toString());
+    epsController = TextEditingController(text: (widget.user['eps'] ?? '').toString());
 
+    // Validar y asignar Dropdowns
     List<String> tiposDoc = ['DNI', 'Pasaporte', 'Cedula de Extranjería', 'Cedula', 'Tarjeta de Identidad'];
     if (tiposDoc.contains(widget.user['tipo_documento'])) {
       selectedTipoDocumento = widget.user['tipo_documento'];
@@ -75,7 +75,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
       selectedSexo = widget.user['Sexo'];
     }
 
-    // === PARSEO FUERTE DE FECHA ===
+    // Parseo de fechas seguro
     String fechaRaw = widget.user['fecha_nacimiento']?.toString() ?? '';
     String fechaLimpia = "";
 
@@ -101,13 +101,12 @@ class _AjustesScreenState extends State<AjustesScreen> {
             int month = months[monthStr] ?? 1;
             fechaLimpia = "$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}";
           }
-        } catch (e2) {
+        } catch (_) {
           fechaLimpia = fechaRaw.split(' ')[0];
         }
       }
     }
 
-    // CORREGIDO AQUÍ: Se asigna la variable correcta fechaLimpia
     fechaController = TextEditingController(text: fechaLimpia);
   }
 
@@ -164,6 +163,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
   }
 
   Future<void> _saveChanges() async {
+    // 1. Validaciones de campos obligatorios básicos
     if (nombresController.text.trim().isEmpty || 
         apellidosController.text.trim().isEmpty || 
         emailController.text.trim().isEmpty) {
@@ -173,15 +173,40 @@ class _AjustesScreenState extends State<AjustesScreen> {
       return;
     }
 
-    if(passwordController.text.isNotEmpty){
-      if(passwordController.text.length < 5 ){
+    // 2. Validaciones de Dropdowns seleccionados
+    if (selectedSexo == null || selectedTipoDocumento == null || selectedEstrato == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Por favor, completa los campos de Sexo, Tipo de Documento y Estrato"), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    // 3. VALIDACIÓN: Teléfono Móvil vs Teléfono de Emergencia
+    String telefonoMovil = telefonoController.text.trim();
+    String telefonoEmergencia = telefonoEmergenciaController.text.trim();
+
+    if (telefonoMovil.isNotEmpty && telefonoEmergencia.isNotEmpty) {
+      if (telefonoMovil == telefonoEmergencia) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("⚠️ El número de teléfono móvil no puede ser el mismo que el de emergencia"), 
+            backgroundColor: Colors.amber, // Color amarillo/advertencia
+          ),
+        );
+        return; // Frena la ejecución del guardado
+      }
+    }
+
+    // 4. Validación opcional de contraseña
+    if (passwordController.text.isNotEmpty) {
+      if (passwordController.text.length < 6) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("La contraseña debe tener mínimo 6 caracteres"), backgroundColor: Colors.red),
         );
         return;
       }
 
-      if(passwordController.text != confirmPasswordController.text){
+      if (passwordController.text != confirmPasswordController.text) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Las contraseñas no coinciden"), backgroundColor: Colors.red),
         );
@@ -192,19 +217,30 @@ class _AjustesScreenState extends State<AjustesScreen> {
     setState(() => isLoading = true);
 
     try {
-      final result = await _apiService.actualizarPerfil(
+      // Envío de todo el formulario unificado hacia la nueva ruta de Python
+      final result = await _apiService.actualizarPerfilCompleto(
         idUsuario: widget.user['id_usuario'],
         nombres: nombresController.text.trim(),
         apellidos: apellidosController.text.trim(),
         correo: emailController.text.trim(),
         fechaNacimiento: fechaController.text,
-        password: passwordController.text.isNotEmpty ? passwordController.text : null
+        direccion: direccionController.text.trim(),
+        departamento: departamentoController.text.trim(),
+        municipio: municipioController.text.trim(),
+        telefono: telefonoMovil,
+        telefonoEmergencia: telefonoEmergencia,
+        tipoDocumento: selectedTipoDocumento!,
+        numeroDocumento: numeroDocumentoController.text.trim(),
+        estrato: selectedEstrato!,
+        sexo: selectedSexo!,
+        eps: epsController.text.trim(),
+        password: passwordController.text.isNotEmpty ? passwordController.text : null,
       );
 
       if (result['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("✅ Datos actualizados correctamente"),
+            content: Text("✅ Todos los datos se han actualizado correctamente"),
             backgroundColor: Colors.green,
           ),
         );
@@ -212,8 +248,12 @@ class _AjustesScreenState extends State<AjustesScreen> {
         confirmPasswordController.clear();
         setState(() => isEditing = false);
       } else {
+        // Muestra los errores controlados por Python (Ej: documento duplicado)
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['error'] ?? "Error al actualizar"), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(result['error'] ?? "Error al actualizar"), 
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
@@ -239,16 +279,14 @@ class _AjustesScreenState extends State<AjustesScreen> {
         foregroundColor: const Color(0xFF0F172A),
         elevation: 0,
         surfaceTintColor: Colors.white,
-        shape: const Border(
-          bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
-        ),
+        shape: const Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1)),
       ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
         child: Column(
           children: [
-            // AVATAR
+            // Sección Avatar
             Center(
               child: Stack(
                 children: [
@@ -278,10 +316,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
                       right: 4,
                       child: Container(
                         padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF10B981),
-                          shape: BoxShape.circle,
-                        ),
+                        decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle),
                         child: const Icon(Icons.edit_rounded, color: Colors.white, size: 16),
                       ),
                     ),
@@ -290,25 +325,21 @@ class _AjustesScreenState extends State<AjustesScreen> {
             ),
             const SizedBox(height: 28),
 
-            // CONTENEDOR PRINCIPAL
+            // Formulario en Bloques Estilizados
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF0F172A).withOpacity(0.03),
-                    blurRadius: 15,
-                    offset: const Offset(0, 4),
-                  )
+                  BoxShadow(color: const Color(0xFF0F172A).withOpacity(0.03), blurRadius: 15, offset: const Offset(0, 4))
                 ],
                 border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- SECCIÓN 1: DATOS BÁSICOS ---
+                  // --- BLOQUE 1: DATOS PERSONALES ---
                   _buildSectionHeader("Datos Personales", Icons.badge_rounded, primaryPurple),
                   _buildTextField("Nombres", nombresController, isEditing, Icons.person_outline_rounded),
                   const SizedBox(height: 18),
@@ -341,7 +372,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
                   const SizedBox(height: 28),
 
-                  // --- SECCIÓN 2: DOCUMENTACIÓN Y SALUD ---
+                  // --- BLOQUE 2: DOCUMENTACIÓN Y SALUD ---
                   _buildSectionHeader("Documentación y Salud", Icons.assignment_ind_outlined, primaryPurple),
                   _buildDropdownField(
                     "Tipo de Documento", 
@@ -358,7 +389,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
                   const SizedBox(height: 28),
 
-                  // --- SECCIÓN 3: UBICACIÓN Y CONTACTO ---
+                  // --- BLOQUE 3: UBICACIÓN Y CONTACTO ---
                   _buildSectionHeader("Ubicación y Contacto", Icons.home_work_outlined, primaryPurple),
                   _buildTextField("Dirección residencial", direccionController, isEditing, Icons.location_on_outlined),
                   const SizedBox(height: 18),
@@ -381,7 +412,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
                   const SizedBox(height: 28),
 
-                  // --- SECCIÓN 4: SEGURIDAD ---
+                  // --- BLOQUE 4: SEGURIDAD ---
                   _buildSectionHeader("Seguridad & Contraseña", Icons.lock_outline_rounded, primaryPurple),
                   _buildPasswordField("Nueva Contraseña", passwordController, isEditing, _showPassword, () => setState(() => _showPassword = !_showPassword)),
                   const SizedBox(height: 18),
@@ -392,7 +423,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
             const SizedBox(height: 32),
 
-            // BOTONERÍA
+            // Botones de Acción inferior
             Row(
               children: [
                 Expanded(
@@ -455,10 +486,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
           children: [
             Icon(icon, color: purpleColor, size: 20),
             const SizedBox(width: 8),
-            Text(
-              title, 
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-            ),
+            Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
           ],
         ),
         const Padding(
