@@ -61,12 +61,6 @@ function abrirPerfilCoordinador() {
 function datosPersonales() {
     const idUsuario = window.USER_ID || (window.usuarioAdmin ? window.usuarioAdmin.id_usuario : null);
 
-    // Validación de seguridad para prevenir llamadas con datos corruptos o vacíos
-    if (!idUsuario || idUsuario === "undefined" || idUsuario === "None") {
-        console.error("Fallo de sesión: No se detectó un ID de usuario válido en el entorno local.");
-        return;
-    }
-
     // Petición asíncrona hacia la ruta estructurada de verificación en Flask
     fetch(`/verificar_datos_vacios?id_usuario=${idUsuario}`)
         .then(response => response.json())
@@ -101,24 +95,12 @@ function datosPersonales() {
                 }).then((result) => {
                     // Este evento se dispara estrictamente cuando el usuario presiona el botón verde de confirmación
                     if (result.isConfirmed) {
-                        // Control de apertura nativa del perfil del Coordinador (Móvil vs Escritorio)
-                        if (window.innerWidth < 768) {
-                            if (typeof abrirPerfilAdminYcerrarMenu === 'function') {
-                                abrirPerfilAdminYcerrarMenu();
-                            } else if (typeof abrirPerfilCoordinador === 'function') {
-                                abrirPerfilCoordinador();
-                            }
-                        } else {
-                            if (typeof abrirPerfilCoordinador === 'function') {
-                                abrirPerfilCoordinador();
-                            }
-                        }
+                        window.location.href = `/completar-perfil?id_usuario=${idUsuario}`;
                     }
                 });
 
             }
         })
-        .catch(error => console.error("Error crítico en el proceso de escaneo de campos:", error));
 }
 
 // Inicialización automática del análisis tan pronto se renderiza el módulo en el cliente
