@@ -151,14 +151,20 @@ function renderizarModulosAsistencia(nombreCurso, modulos) {
 
     contenedor.innerHTML = modulos.map(mod => `
         <div class="col-12 col-md-6">
-            <div class="card card-asistencia shadow-sm p-3 border-start border-primary border-4" 
-                 onclick="verEstudiantesAsistencia(${mod.id_modulo}, '${mod.nombre.replace(/'/g, "\\'")}')" style="cursor:pointer">
-                <div class="d-flex justify-content-between align-items-center">
+            <div class="card card-asistencia shadow-sm p-3 border-start border-primary border-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
                     <div>
                         <h6 class="fw-bold mb-0">${mod.nombre}</h6>
                         <small class="text-muted">Ver alumnos y registrar asistencia</small>
                     </div>
-                    <span class="badge bg-light text-dark border">Ver lista</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-primary rounded-pill" onclick="verEstudiantesAsistencia(${mod.id_modulo}, '${mod.nombre.replace(/'/g, "\\'")}')">
+                        <i class="bi bi-pencil-square"></i> Tomar asistencia
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="verHistorialModulo(${mod.id_modulo}, '${mod.nombre.replace(/'/g, "\\'")}'); event.stopPropagation();">
+                        <i class="bi bi-clock-history"></i> Ver asistencia
+                    </button>
                 </div>
             </div>
         </div>
@@ -185,6 +191,60 @@ async function verEstudiantesAsistencia(idModulo, nombreModulo) {
     }
 }
 
+function parseDateString(dateString) {
+    if (!dateString) return null;
+    const fecha = new Date(dateString);
+    return isNaN(fecha.getTime()) ? null : fecha;
+}
+
+function formatDateForInput(dateString) {
+    const fecha = parseDateString(dateString);
+    return fecha ? fecha.toISOString().split('T')[0] : '';
+}
+
+async function verHistorialModulo(idModulo, nombreModulo) {
+    const contenedor = document.getElementById('contenedor-asistencia');
+    const navContainer = document.getElementById('back-button-asistencia');
+    document.getElementById('view-title').innerText = nombreModulo;
+    document.getElementById('view-subtitle').innerText = 'Historial de asistencia del módulo';
+    if (navContainer) {
+        navContainer.innerHTML = `
+            <button class="btn btn-outline-secondary rounded-pill btn-sm" onclick="renderizarModulosAsistencia('${cursoSeleccionado ? cursoSeleccionado.nombre.replace(/'/g, "\\'") : ''}', modulosSeleccionados)">
+                <i class="bi bi-arrow-left"></i> Volver a Módulos
+            </button>`;
+    }
+
+    contenedor.innerHTML = `
+        <div class="col-12">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2 text-muted">Cargando historial de asistencias...</p>
+            </div>
+        </div>
+    `;
+
+    try {
+        const response = await fetch(`/modulo/${idModulo}/asistencias`);
+        const res = await response.json();
+        if (!res.success) {
+            throw new Error(res.error || 'No se pudo cargar el historial de asistencia.');
+        }
+        contenedor.innerHTML = `<div class="col-12" id="historial-asistencia"></div>`;
+        renderizarHistorialAsistencia(res.historial);
+    } catch (error) {
+        console.error('Error al cargar historial de asistencia:', error);
+        contenedor.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-danger shadow-sm">
+                    No se pudo cargar el historial de asistencia. Intenta de nuevo.
+                </div>
+            </div>
+        `;
+    }
+}
+
 function renderizarAsistenciaEstudiantes(idModulo, nombreModulo, estudiantes) {
     const contenedor = document.getElementById('contenedor-asistencia');
     const navContainer = document.getElementById('back-button-asistencia');
@@ -193,12 +253,24 @@ function renderizarAsistenciaEstudiantes(idModulo, nombreModulo, estudiantes) {
     document.getElementById('view-subtitle').innerText = 'Marca presente o ausente para cada estudiante.';
     if (navContainer) {
         navContainer.innerHTML = `
-            <button class="btn btn-outline-secondary rounded-pill btn-sm" onclick="renderizarModulosAsistencia('${cursoSeleccionado ? cursoSeleccionado.nombre.replace(/'/g, "\\'") : ''}', modulosSeleccionados)">
-                <i class="bi bi-arrow-left"></i> Volver a Módulos
-            </button>`;
+            <div class="d-flex flex-column flex-md-row gap-2 justify-content-md-end">
+                <button class="btn btn-outline-secondary rounded-pill btn-sm" onclick="renderizarModulosAsistencia('${cursoSeleccionado ? cursoSeleccionado.nombre.replace(/'/g, "\\'") : ''}', modulosSeleccionados)">
+                    <i class="bi bi-arrow-left"></i> Volver a Módulos
+                </button>
+                <button class="btn btn-outline-primary rounded-pill btn-sm" onclick="verHistorialModulo(${idModulo}, '${nombreModulo.replace(/'/g, "\\'")}');">
+                    <i class="bi bi-clock-history"></i> Ver asistencia
+                </button>
+            </div>`;
     }
 
     const hoy = new Date().toISOString().split('T')[0];
+    const moduloSeleccionado = modulosSeleccionados.find(m => m.id_modulo == idModulo) || {};
+    const minFecha = formatDateForInput(moduloSeleccionado.fecha_inicio) || hoy;
+    const maxFecha = formatDateForInput(moduloSeleccionado.fecha_fin) || hoy;
+    let fechaPredeterminada = hoy;
+    if (fechaPredeterminada < minFecha) fechaPredeterminada = minFecha;
+    if (fechaPredeterminada > maxFecha) fechaPredeterminada = maxFecha;
+
     contenedor.innerHTML = `
         <div class="col-12 mb-4">
             <div class="card border-0 shadow-sm overflow-hidden rounded-4">
@@ -206,7 +278,7 @@ function renderizarAsistenciaEstudiantes(idModulo, nombreModulo, estudiantes) {
                     <div class="row g-3 align-items-end">
                         <div class="col-12 col-md-4">
                             <label class="form-label fw-semibold">Fecha</label>
-                            <input id="fecha-asistencia" type="date" class="form-control" value="${hoy}">
+                            <input id="fecha-asistencia" type="date" class="form-control" value="${fechaPredeterminada}" min="${minFecha}" max="${maxFecha}">
                         </div>
                         <div class="col-12 col-md-4">
                             <div class="form-check">
@@ -261,7 +333,20 @@ function renderizarAsistenciaEstudiantes(idModulo, nombreModulo, estudiantes) {
                 </div>
             </div>
         </div>
+
     `;
+
+    // Aplicar colores de estado y listeners a los selects de asistencia
+    document.querySelectorAll('.asistencia-status').forEach(select => {
+        const tr = select.closest('tr');
+        if (!tr) return;
+        tr.classList.toggle('asistio-si', select.value === 'SI');
+        tr.classList.toggle('asistio-no', select.value !== 'SI');
+        select.addEventListener('change', () => {
+            tr.classList.toggle('asistio-si', select.value === 'SI');
+            tr.classList.toggle('asistio-no', select.value !== 'SI');
+        });
+    });
 }
 
 function toggleSeleccionTodos(checked) {
@@ -290,7 +375,30 @@ async function guardarAsistencia(idModulo) {
         return;
     }
 
+    const moduloSeleccionado = modulosSeleccionados.find(m => m.id_modulo == idModulo);
+    if (moduloSeleccionado) {
+        const fechaDate = parseDateString(fecha);
+        const minFechaDate = parseDateString(moduloSeleccionado.fecha_inicio);
+        const maxFechaDate = parseDateString(moduloSeleccionado.fecha_fin);
+
+        if (!fechaDate || !minFechaDate || !maxFechaDate) {
+            mostrarToast('Atención', 'No se pudo validar correctamente la fecha seleccionada.', 'warning');
+            return;
+        }
+
+        if (fechaDate < minFechaDate || fechaDate > maxFechaDate) {
+            mostrarToast('Atención', `La fecha debe estar entre ${formatDateForInput(moduloSeleccionado.fecha_inicio)} y ${formatDateForInput(moduloSeleccionado.fecha_fin)}.`, 'warning');
+            return;
+        }
+    }
+
     try {
+        const yaRegistrada = await consultarAsistenciaRegistrada(idModulo, fecha);
+        if (yaRegistrada) {
+            mostrarToast('Aviso', 'No puedes registrar la asistencia de nuevo para esta fecha, ya fue tomada.', 'warning');
+            return;
+        }
+
         const response = await fetch('/asistencia/registrar', {
             method: 'POST',
             headers: {
@@ -308,12 +416,146 @@ async function guardarAsistencia(idModulo) {
             mostrarToast('Éxito', 'Asistencia registrada correctamente.', 'success');
             renderizarCursosAsistencia();
         } else {
-            throw new Error(res.error || 'Error al guardar la asistencia.');
+            mostrarToast('Error', res.error || 'Error al guardar la asistencia.', 'danger');
         }
     } catch (error) {
         console.error('Error al guardar asistencia:', error);
         mostrarToast('Error', 'No se pudo guardar la asistencia. Revisa la consola para más detalles.', 'danger');
     }
+}
+
+async function consultarAsistenciaRegistrada(idModulo, fecha) {
+    try {
+        const response = await fetch(`/modulo/${idModulo}/asistencia?fecha=${encodeURIComponent(fecha)}`);
+        const res = await response.json();
+        return res.success && res.registrada;
+    } catch (error) {
+        console.error('Error verificando asistencia existente:', error);
+        return false;
+    }
+}
+
+async function cargarHistorialAsistencia(idModulo) {
+    try {
+        const response = await fetch(`/modulo/${idModulo}/asistencias`);
+        const res = await response.json();
+        if (!res.success) {
+            throw new Error(res.error || 'No se pudo cargar el historial de asistencia.');
+        }
+        renderizarHistorialAsistencia(res.historial);
+    } catch (error) {
+        console.error('Error cargando historial de asistencia:', error);
+        const historialContainer = document.getElementById('historial-asistencia');
+        if (historialContainer) {
+            historialContainer.innerHTML = `
+                <div class="alert alert-warning shadow-sm">
+                    No se pudo cargar el historial de asistencia. Intenta nuevamente.
+                </div>
+            `;
+        }
+    }
+}
+
+function renderizarHistorialAsistencia(historial) {
+    const historialContainer = document.getElementById('historial-asistencia');
+    if (!historialContainer) return;
+
+    if (!historial || historial.length === 0) {
+        historialContainer.innerHTML = `
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <div class="text-muted">Aún no hay historial de asistencia para este módulo.</div>
+            </div>
+        `;
+        return;
+    }
+
+    // Helper para obtener campos con varios posibles nombres
+    function getField(obj, keys) {
+        for (const k of keys) {
+            if (obj[k] !== undefined && obj[k] !== null) return obj[k];
+        }
+        return null;
+    }
+
+    // Agrupar por estudiante y calcular métricas similares a la vista admin
+    const alumnos = {};
+    historial.forEach(item => {
+        const nombre = getField(item, ['estudiante', 'nombre']) || (`Usuario ${getField(item, ['id_usuario']) || ''}`);
+        const fechaVal = getField(item, ['fecha', 'date', 'fecha_registro']);
+        const asistioVal = getField(item, ['asistio', 'asistió', 'asistencia']) || 'NO';
+
+        if (!alumnos[nombre]) alumnos[nombre] = { id_usuario: getField(item, ['id_usuario']), nombre: nombre, asistencias: [], inasistencias: 0 };
+        alumnos[nombre].asistencias.push({ fecha: fechaVal ? String(fechaVal) : null, asistio: String(asistioVal) });
+        if ((asistioVal + '').toUpperCase() !== 'SI') alumnos[nombre].inasistencias += 1;
+    });
+
+    const rows = Object.values(alumnos).map(est => {
+        // ordenar registros por fecha desc (más recientes primero)
+        est.asistencias.sort((a,b) => (b.fecha || '').localeCompare(a.fecha || ''));
+        const maxBadges = 20; // mostrar hasta 20 registros en la fila
+        const ultimos = est.asistencias.slice(0, maxBadges);
+        const restantes = Math.max(0, est.asistencias.length - ultimos.length);
+        const alerta = est.inasistencias > 3;
+        // construir badges (limpiando hora si existe y mostrando DD/MM)
+        const badgesHtml = (ultimos.length > 0 ? ultimos.map(a => {
+            let fechaStr = a.fecha ? String(a.fecha).slice(0,10) : '';
+            const parts = fechaStr.split('-');
+            // Mostrar día/mes/año (DD/MM/YYYY) sin hora ni día de la semana
+            const dayMonth = (parts.length >= 3) ? `${parts[2]}/${parts[1]}/${parts[0]}` : (fechaStr || '—');
+            const asistText = (a.asistio || '').toString().toUpperCase() || 'NO';
+            const badgeClass = asistText === 'SI' ? 'bg-success text-white' : 'bg-danger text-white';
+            return `\n                                <span class="badge-date ${badgeClass}" title="${dayMonth}">${dayMonth}</span>\n                            `;
+        }).join('') : '<small class="text-muted">Sin registros</small>') + (restantes > 0 ? ` <span class="badge bg-secondary">+${restantes}</span>` : '');
+
+        return `
+            <tr class="${alerta ? 'table-danger' : ''}">
+                <td class="ps-4">
+                    <div class="fw-bold">${est.nombre}</div>
+                </td>
+                <td class="text-center">
+                    <span class="fw-bold ${est.inasistencias > 0 ? 'text-danger' : 'text-muted'}">${est.inasistencias}</span>
+                </td>
+                <td class="text-center">
+                    ${alerta ? '<span class="badge bg-danger">Alerta de Deserción</span>' : '<span class="badge bg-success">Al día</span>'}
+                </td>
+                <td class="ps-4">
+                    <div class="d-flex gap-1">
+                        ${ultimos.length > 0 ? ultimos.map(a => {
+                            const fechaStr = a.fecha ? String(a.fecha) : '';
+                            const parts = fechaStr.split('-');
+                            const dayMonth = (parts.length >= 3) ? `${parts[2]}/${parts[1]}` : (fechaStr || '—');
+                            const asistText = (a.asistio || '').toString().toUpperCase() || 'NO';
+                            const badgeClass = asistText === 'SI' ? 'bg-success text-white' : 'bg-danger text-white';
+                            return `
+                                <span class="badge-date ${badgeClass}" title="${fechaStr}">${dayMonth}</span>
+                            `;
+                        }).join('') : '<small class="text-muted">Sin registros</small>'}
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    historialContainer.innerHTML = `
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+            <h5 class="fw-semibold mb-3">Historial de asistencias</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Estudiante</th>
+                            <th class="text-center">Total Faltas</th>
+                            <th class="text-center">Estado</th>
+                            <th class="ps-4">Últimos Registros</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
 }
 
 function mostrarToast(titulo, mensaje, tipo = 'primary') {

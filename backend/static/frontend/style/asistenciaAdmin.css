@@ -56,3 +56,14 @@
 .table-responsive {
     border-radius: 15px;
 }
+
+/* Estados de asistencia */
+.asistio-si {
+    background-color: rgba(16,185,129,0.06); /* verde claro */
+}
+.asistio-no {
+    background-color: rgba(239,68,68,0.06); /* rojo claro */
+}
+.asistio-si td, .asistio-no td {
+    transition: background-color 0.2s ease;
+}
