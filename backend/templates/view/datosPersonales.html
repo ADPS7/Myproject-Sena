@@ -1,10 +1,16 @@
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Completar Perfil Docente</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body class="bg-light">
 
-<!-- view/Profesor/perfilProfesor.html -->
 <div class="container-fluid p-4">
     <div class="card border-0 shadow-sm rounded-4">
-        <!-- Encabezado de la Sección -->
         <div class="card-header bg-success text-white py-3 rounded-top-4">
             <h5 class="card-title mb-0 fw-bold">
                 <i class="bi bi-person-workspace me-2"></i> Mi Perfil Docente Completo
@@ -13,133 +19,122 @@
         
         <div class="card-body p-4">
             <div class="row">
-                <!-- Columna Izquierda: Foto/Avatar -->
                 <div class="col-lg-3 text-center border-end">
-                    <div class="avatar mx-auto mb-3" style="width: 100px; height: 100px; font-size: 2.5rem; background-color: #198754; color: white; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
-                        {{ user.nombres[0] }}
-                    </div>
-                    <h5 class="fw-bold mb-0" id="nombreCompletoProfesorVista"></h5>
-                    <p class="text-muted mb-2" id="rolProfesorVista"></p>
-                    <span class="badge rounded-pill {% if user.estado == 'Activo' %}bg-success{% elif user.estado == 'Pendiente' %}bg-warning text-dark{% else %}bg-danger{% endif %} px-3 py-2 fs-6">
-                        Estado: {{ user.estado }}
+                    <div class="avatar mx-auto mb-3" id="avatarProfesor" style="width: 100px; height: 100px; font-size: 2.5rem; background-color: #198754; color: white; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                        </div>
+                    <h5 class="fw-bold mb-0" id="nombreCompletoProfesorVista">Cargando...</h5>
+                    <p class="text-muted mb-2" id="rolProfesorVista">Consultando...</p>
+                    <span class="badge rounded-pill bg-warning text-dark px-3 py-2 fs-6" id="estadoProfesorBadge">
+                        Estado: Pendiente
                     </span>
                 </div>
 
-                <!-- Columna Derecha: Formulario -->
                 <div class="col-lg-9">
                     <form id="formPerfilProfesor">
-                        <!-- IDs Ocultos -->
-                        <input type="hidden" id="id_usuario_prof" value="{{ user.id_usuario }}" readonly>
-                        <input type="hidden" id="id_datos_usuario_prof" value="{{ user.id_datos_usuario }}" readonly>
+                        <input type="hidden" id="id_usuario_prof" readonly>
+                        <input type="hidden" id="id_datos_usuario_prof" readonly>
 
-                        <!-- SECCIÓN 1: DATOS BÁSICOS -->
                         <h6 class="text-success fw-bold mb-3"><i class="bi bi-card-text me-2"></i>Datos de Cuenta</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label fw-medium text-secondary">Nombres</label>
-                                <input type="text" class="form-control rounded-3" id="nombres_prof" value="{{ user.nombres }}" required>
+                                <input type="text" class="form-control rounded-3" id="nombres_prof" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-medium text-secondary">Apellidos</label>
-                                <input type="text" class="form-control rounded-3" id="apellidos_prof" value="{{ user.apellidos }}" required>
+                                <input type="text" class="form-control rounded-3" id="apellidos_prof" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-medium text-secondary">Correo Electrónico</label>
-                                <input type="email" class="form-control rounded-3" id="correo_prof" value="{{ user.correo }}" required>
+                                <input type="email" class="form-control rounded-3" id="correo_prof" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-medium text-secondary">Fecha de Nacimiento</label>
-                                <input type="date" class="form-control rounded-3" id="fecha_nacimiento_prof" value="{{ user.fecha_nacimiento }}" required>
+                                <input type="date" class="form-control rounded-3" id="fecha_nacimiento_prof" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-medium text-secondary">Cargo / Rol</label>
-                                <input type="text" class="form-control rounded-3 bg-light" id="rol_prof" value="{{ user.rol }}" readonly>
+                                <input type="text" class="form-control rounded-3 bg-light" id="rol_prof" readonly>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-medium text-secondary">Sexo</label>
                                 <select class="form-select rounded-3" id="sexo_prof" required>
-                                    <option value="" disabled>Seleccione...</option>
-                                    <option value="M" {% if user.Sexo == 'M' %}selected{% endif %}>Masculino</option>
-                                    <option value="F" {% if user.Sexo == 'F' %}selected{% endif %}>Femenino</option>
-                                    <option value="O" {% if user.Sexo == 'O' %}selected{% endif %}>Otro</option>
+                                    <option value="" disabled selected>Seleccione...</option>
+                                    <option value="M">Masculino</option>
+                                    <option value="F">Femenino</option>
+                                    <option value="O">Otro</option>
                                 </select>
                             </div>
                         </div>
 
-                        <!-- SECCIÓN 2: IDENTIFICACIÓN LEGAL -->
                         <hr class="text-muted my-4">
                         <h6 class="text-success fw-bold mb-3"><i class="bi bi-shield-lock me-2"></i>Documento de Identidad</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label fw-medium text-secondary">Tipo de Documento</label>
                                 <select class="form-select rounded-3" id="tipo_documento_prof" required>
-                                    <option value="" disabled>Seleccione...</option>
-                                    <option value="DNI" {% if user.tipo_documento == 'DNI' %}selected{% endif %}>DNI</option>
-                                    <option value="Cedula" {% if user.tipo_documento == 'Cedula' %}selected{% endif %}>Cédula de Ciudadanía</option>
-                                    <option value="Cedula de Extranjería" {% if user.tipo_documento == 'Cedula de Extranjería' %}selected{% endif %}>Cédula de Extranjería</option>
-                                    <option value="Pasaporte" {% if user.tipo_documento == 'Pasaporte' %}selected{% endif %}>Pasaporte</option>
-                                    <option value="Tarjeta de Identidad" {% if user.tipo_documento == 'Tarjeta de Identidad' %}selected{% endif %}>Tarjeta de Identidad</option>
+                                    <option value="" disabled selected>Seleccione...</option>
+                                    <option value="DNI">DNI</option>
+                                    <option value="Cedula">Cédula de Ciudadanía</option>
+                                    <option value="Cedula de Extranjería">Cédula de Extranjería</option>
+                                    <option value="Pasaporte">Pasaporte</option>
+                                    <option value="Tarjeta de Identidad">Tarjeta de Identidad</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-medium text-secondary">Número de Documento</label>
-                                <input type="text" class="form-control rounded-3" id="numero_documento_prof" value="{{ user.numero_documento }}" required>
+                                <input type="text" class="form-control rounded-3" id="numero_documento_prof" required>
                             </div>
                         </div>
 
-                        <!-- SECCIÓN 3: CONTACTO Y UBICACIÓN -->
                         <hr class="text-muted my-4">
                         <h6 class="text-success fw-bold mb-3"><i class="bi bi-geo-alt me-2"></i>Ubicación y Contacto</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
                                 <label class="form-label fw-medium text-secondary">Departamento</label>
-                                <input type="text" class="form-control rounded-3" id="departamento_prof" value="{{ user.departamento }}" required>
+                                <input type="text" class="form-control rounded-3" id="departamento_prof" required>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-medium text-secondary">Municipio / Ciudad</label>
-                                <input type="text" class="form-control rounded-3" id="municipio_prof" value="{{ user.municipio }}" required>
+                                <input type="text" class="form-control rounded-3" id="municipio_prof" required>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-medium text-secondary">Dirección de Residencia</label>
-                                <input type="text" class="form-control rounded-3" id="direccion_prof" value="{{ user.direccion }}" required>
+                                <input type="text" class="form-control rounded-3" id="direccion_prof" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-medium text-secondary">Teléfono Personal</label>
-                                <input type="tel" class="form-control rounded-3" id="telefono_prof" value="{{ user.telefono }}" required>
+                                <input type="tel" class="form-control rounded-3" id="telefono_prof" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-medium text-secondary">Teléfono de Emergencia</label>
-                                <input type="tel" class="form-control rounded-3" id="telefono_emergencia_prof" value="{{ user.telefono_emergencia }}" required>
+                                <input type="tel" class="form-control rounded-3" id="telefono_emergencia_prof" required>
                             </div>
                         </div>
 
-                        <!-- SECCIÓN 4: INFORMACIÓN SOCIOECONÓMICA Y SALUD -->
                         <hr class="text-muted my-4">
                         <h6 class="text-success fw-bold mb-3"><i class="bi bi-heart-pulse me-2"></i>Otros Datos Importantes</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label fw-medium text-secondary">Estrato Socioeconómico</label>
                                 <select class="form-select rounded-3" id="estrato_prof" required>
-                                    <option value="" disabled>Seleccione...</option>
-                                    {% for i in range(1, 7) %}
-                                        <option value="{{ i }}" {% if user.Estrato == i|string %}selected{% endif %}>Estrato {{ i }}</option>
-                                    {% endfor %}
+                                    <option value="" disabled selected>Seleccione...</option>
+                                    <option value="1">Estrato 1</option>
+                                    <option value="2">Estrato 2</option>
+                                    <option value="3">Estrato 3</option>
+                                    <option value="4">Estrato 4</option>
+                                    <option value="5">Estrato 5</option>
+                                    <option value="6">Estrato 6</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-medium text-secondary">Entidad de Salud (EPS)</label>
-                                <input type="text" class="form-control rounded-3" id="eps_prof" value="{{ user.eps }}" placeholder="Ej: Sura, Sanitas, Famisanar..." required>
+                                <input type="text" class="form-control rounded-3" id="eps_prof" placeholder="Ej: Sura, Sanitas..." required>
                             </div>
                         </div>
 
-                        <!-- SECCIÓN 5: SEGURIDAD (CONTRASEÑA) -->
                         <hr class="my-4">
-                        <div class="row g-3 align-items-end">
-                            <div class="col-md-6">
-                                <label class="form-label fw-medium text-secondary">Actualizar Contraseña</label>
-                                <input type="password" class="form-control rounded-3" id="nueva_clave_prof" 
-                                       placeholder="Dejar en blanco para mantener la actual">
-                            </div>
+                        <div class="row g-3 justify-content-end">
                             <div class="col-md-6">
                                 <button type="button" class="btn btn-success rounded-3 px-5 w-100 py-2 fw-bold" onclick="guardarPerfilProfesor()">
                                     <i class="bi bi-save me-2"></i> Guardar Cambios
@@ -153,18 +148,21 @@
     </div>
 </div>
 
-<!-- Contenedor para las notificaciones (Toasts) -->
 <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
-    <div id="toastNotificacion" class="toast align-items-center text-white bg-success border-0 rounded-3 shadow" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="d-flex">
-            <div class="toast-body">
-                <strong id="toastTitulo" class="d-block"></strong>
-                <span id="toastMensaje"></span>
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    <div id="toastNotificacion" class="toast border-0 rounded-4 shadow" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
+        <div class="toast-header border-0 rounded-top-4 py-2" id="toastHeader">
+            <i class="bi me-2 fs-5" id="toastIcono"></i>
+            <strong class="me-auto fw-bold fs-6" id="toastTitulo"></strong>
+            <button type="button" class="btn-close" id="toastBtnCerrar" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
+        <div class="toast-body rounded-bottom-4 py-3" id="toastMensaje" style="font-size: 0.95rem;">
+            </div>
     </div>
 </div>
 
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="{{ url_for('static', filename='backend/javascripts/perfilProfesor.js') }}?v=4"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='backend/javascripts/datosPersonales.js') }}?v=4"></script>
+</body>
+</html>

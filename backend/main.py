@@ -1439,7 +1439,125 @@ def completar_perfil():
 
     except mysql.connector.Error as err:
         return f"Error en la base de datos: {str(err)}", 500
+    
 
+
+@app.route('/obtener_perfil_completo')
+def obtener_perfil_completo():
+    # 1. Capturamos el id_usuario que viene en la URL (?id_usuario=X)
+    id_usuario = request.args.get('id_usuario')
+    
+    if not id_usuario:
+        return jsonify({"error": "ID de usuario no proporcionado"}), 400
+        
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # 2. Consulta SQL con LEFT JOIN 
+        # Esto asegura que si la tabla DatosUsuarios está vacía, igual traiga los Datos de Cuenta
+        query = """
+            SELECT 
+                u.id_usuario, u.nombres, u.apellidos, u.correo, u.fecha_nacimiento, 
+                r.nombre AS rol,
+                d.id_datos_usuario, d.estado, d.Sexo, d.tipo_documento, 
+                d.numero_documento, d.departamento, d.municipio, d.direccion, 
+                d.telefono, d.telefono_emergencia, d.Estrato, d.eps
+            FROM Usuarios u
+            JOIN Roles r ON u.id_rol = r.id_rol
+            LEFT JOIN DatosUsuarios d ON u.id_usuario = d.id_usuario
+            WHERE u.id_usuario = %s
+        """
+        cursor.execute(query, (id_usuario,))
+        usuario = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        # 3. Si el usuario existe, procesamos y respondemos
+        if usuario:
+            # Formateamos la fecha de nacimiento a 'YYYY-MM-DD' para que el input type="date" la reconozca
+            if usuario['fecha_nacimiento']:
+                usuario['fecha_nacimiento'] = usuario['fecha_nacimiento'].strftime('%Y-%m-%d')
+            
+            # Si el estado viene como None (porque la tabla DatosUsuarios estaba vacía), le ponemos 'Pendiente'
+            if not usuario['estado']:
+                usuario['estado'] = 'Pendiente'
+                
+            return jsonify(usuario)
+        else:
+            return jsonify({"error": "Usuario no encontrado en el sistema"}), 404
+
+    except Exception as err:
+        return jsonify({"error": f"Error en el servidor o base de datos: {str(err)}"}), 500
+
+# 2. RUTA PARA GUARDAR LOS DATOS ACTUALIZADOS
+@app.route('/guardar_datos_perfil', methods=['POST'])
+def guardar_datos_perfil():
+    datos = request.get_json()
+    
+    campos_obligatorios = [
+        'id_usuario', 'nombres', 'apellidos', 'correo', 'fecha_nacimiento',
+        'sexo', 'tipo_documento', 'numero_documento', 'departamento',
+        'municipio', 'direccion', 'telefono', 'telefono_emergencia', 'estrato', 'eps'
+    ]
+    
+    # Validación estricta en el Backend: que nada llegue vacío
+    for campo in campos_obligatorios:
+        if not datos.get(campo) or str(datos.get(campo)).strip() == "":
+            return jsonify({"exito": False, "mensaje": "Todos los campos son estrictamente obligatorios."}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Actualizar Datos de Cuenta básicos
+        query_usuarios = """
+            UPDATE Usuarios 
+            SET nombres = %s, apellidos = %s, correo = %s, fecha_nacimiento = %s
+            WHERE id_usuario = %s
+        """
+        cursor.execute(query_usuarios, (datos['nombres'], datos['apellidos'], datos['correo'], datos['fecha_nacimiento'], datos['id_usuario']))
+
+        # Verificar si ya existe registro en DatosUsuarios
+        cursor.execute("SELECT id_datos_usuario FROM DatosUsuarios WHERE id_usuario = %s", (datos['id_usuario'],))
+        existe_perfil = cursor.fetchone()
+        
+        if existe_perfil:
+            # UPDATE si ya existía
+            query_datos = """
+                UPDATE DatosUsuarios 
+                SET Sexo = %s, tipo_documento = %s, numero_documento = %s, departamento = %s, 
+                    municipio = %s, direccion = %s, telefono = %s, telefono_emergencia = %s, 
+                    Estrato = %s, eps = %s, estado = 'Activo'
+                WHERE id_usuario = %s
+            """
+            cursor.execute(query_datos, (
+                datos['sexo'], datos['tipo_documento'], datos['numero_documento'], datos['departamento'],
+                datos['municipio'], datos['direccion'], datos['telefono'], datos['telefono_emergencia'],
+                datos['estrato'], datos['eps'], datos['id_usuario']
+            ))
+        else:
+            # INSERT si es su primera vez completando el perfil
+            query_datos = """
+                INSERT INTO DatosUsuarios (id_usuario, Sexo, tipo_documento, numero_documento, departamento, 
+                                          municipio, direccion, telefono, telefono_emergencia, Estrato, eps, estado)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Activo')
+            """
+            cursor.execute(query_datos, (
+                datos['id_usuario'], datos['sexo'], datos['tipo_documento'], datos['numero_documento'], 
+                datos['departamento'], datos['municipio'], datos['direccion'], datos['telefono'], 
+                datos['telefono_emergencia'], datos['estrato'], datos['eps']
+            ))
+            
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"exito": True, "mensaje": "Perfil actualizado con éxito."})
+
+    except Exception as err:
+        return jsonify({"exito": False, "mensaje": f"Error en el servidor: {str(err)}"}), 500
 
 
 
