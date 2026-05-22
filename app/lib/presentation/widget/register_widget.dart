@@ -227,6 +227,7 @@ class _RegisterViewState extends State<RegisterView> {
   }
 
   Future<void> _registerUser() async {
+    // Validaciones locales
     if (nombresController.text.trim().isEmpty ||
         apellidosController.text.trim().isEmpty ||
         emailController.text.trim().isEmpty ||
@@ -251,7 +252,6 @@ class _RegisterViewState extends State<RegisterView> {
       return;
     }
 
-    // ACTUALIZACIÓN: Ahora valida que la contraseña sea mayor a 6 caracteres
     if (passwordController.text.length <= 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -273,8 +273,7 @@ class _RegisterViewState extends State<RegisterView> {
         clave: passwordController.text,
       );
 
-      if (result['message'] != null &&
-          result['message'].toString().contains("exitosamente")) {
+      if (result['message']?.toString().contains("exitosamente") == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("¡Registro exitoso! Ahora puedes iniciar sesión"),
@@ -290,13 +289,18 @@ class _RegisterViewState extends State<RegisterView> {
           );
         }
       } else {
+        String errorMsg =
+            result['error']?.toString() ?? "Error al registrar usuario";
+
+        // Mensaje específico para correo duplicado
+        if (errorMsg.toLowerCase().contains("correo") ||
+            errorMsg.toLowerCase().contains("duplicate") ||
+            errorMsg.toLowerCase().contains("ya existe")) {
+          errorMsg = "Este correo electrónico ya está registrado";
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              result['error']?.toString() ?? "Error al registrar usuario",
-            ),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
         );
       }
     } catch (e) {

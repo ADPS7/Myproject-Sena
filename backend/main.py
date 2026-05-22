@@ -53,6 +53,13 @@ def create_user():
         
         conn = get_db_connection()
         cursor = conn.cursor()
+
+        cursor.execute("SELECT id_usuario FROM usuarios WHERE correo = %s", (correo,))
+        if cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Este correo electrónico ya está registrado"}), 409
+        
         hashed_password = hashlib.sha256(clave.encode('utf-8')).hexdigest()
         
         cursor.execute(

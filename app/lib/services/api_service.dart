@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'aut_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.125.166:5000';
+  static const String baseUrl = 'http://10.2.133.30:5000';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,
@@ -199,10 +199,7 @@ class ApiService {
     required double nota,
   }) async {
     if (nota > 5.0) {
-      return {
-        'success': false,
-        'error': 'La nota no puede ser mayor a 5.0.',
-      };
+      return {'success': false, 'error': 'La nota no puede ser mayor a 5.0.'};
     }
 
     try {
