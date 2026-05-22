@@ -106,6 +106,7 @@ INSERT INTO Roles (nombre) values ('admin');
 INSERT INTO Roles (nombre) values ('estudiante');
 INSERT INTO Roles (nombre) values ('profesor');
 INSERT INTO Roles (nombre) values ('coordinacion');
+INSERT INTO Roles (nombre) values ('inactivo');
 
 
 INSERT INTO Usuarios (nombres, apellidos, correo, fecha_nacimiento, clave, id_rol) 
