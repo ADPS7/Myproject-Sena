@@ -916,18 +916,22 @@ def crear_modulo():
 def get_modulos():
     try:
         conn = get_db_connection()
-        # Usamos un cursor de diccionario para manejar los datos como objetos JSON fácilmente
         cursor = conn.cursor(dictionary=True)
         
-        # Hacemos un JOIN para obtener el nombre del curso junto con el módulo
+        # FIX: Usamos DATE_FORMAT para retornar 'YYYY-MM-DD' directamente desde la base de datos
         query = """
-            SELECT m.id_modulo, m.nombre, m.fecha_inicio, m.fecha_fin, c.nombre as nombre_curso 
+            SELECT 
+                m.id_modulo, 
+                m.nombre, 
+                DATE_FORMAT(m.fecha_inicio, '%Y-%m-%d') as fecha_inicio, 
+                DATE_FORMAT(m.fecha_fin, '%Y-%m-%d') as fecha_fin, 
+                m.id_curso, 
+                c.nombre as nombre_curso 
             FROM Modulos m
             JOIN Cursos c ON m.id_curso = c.id_curso
         """
         cursor.execute(query)
         modulos = cursor.fetchall()
-        print(modulos)
         
         cursor.close()
         conn.close()
@@ -935,7 +939,7 @@ def get_modulos():
         return jsonify(modulos), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
+            
 @app.route('/modulos/editar/<int:id_modulo>', methods=['PUT'])
 def editar_modulo(id_modulo):
     data = request.json
