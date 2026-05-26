@@ -1499,28 +1499,50 @@ def actualizar_rol(id_usuario):
     
 @app.route('/verificar_datos_vacios')
 def verificar_datos_vacios():
-    # Captura el id_usuario que mandaste en el fetch (?id_usuario=...)
     id_usuario = request.args.get('id_usuario')
     
     if not id_usuario:
         return jsonify({"error": "Falta el id de usuario"}), 400
         
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # Buscamos en la base de datos usando el ID recibido
-    cursor.execute("SELECT id_datos_usuario FROM DatosUsuarios WHERE id_usuario = %s", (id_usuario,))
-    existe = cursor.fetchone()
-    print("si",existe)
-    
-    cursor.close()
-    conn.close()
-    
-    if existe is None:
+    try:
+        conn = get_db_connection()
+        # Usamos dictionary=True para poder leer los campos por su nombre
+        cursor = conn.cursor(dictionary=True)
+        
+        # Traemos todos los campos obligatorios del perfil
+        query = """
+            SELECT Sexo, tipo_documento, numero_documento, departamento, 
+                   municipio, direccion, telefono, telefono_emergencia, Estrato, eps 
+            FROM DatosUsuarios 
+            WHERE id_usuario = %s
+        """
+        cursor.execute(query, (id_usuario,))
+        registro = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        # Caso 1: Ni siquiera tiene una fila creada en la tabla DatosUsuarios
+        if registro is None:
+            return jsonify({"vacios": True, "mensaje": "Por favor, complete su perfil de estudiante."})
+            
+        # Lista de campos que queremos verificar estrictamente uno por uno
+        campos_a_verificar = [
+            'Sexo', 'tipo_documento', 'numero_documento', 'departamento', 
+            'municipio', 'direccion', 'telefono', 'telefono_emergencia', 'Estrato', 'eps'
+        ]
+        
+        # Caso 2: La fila existe, pero iteramos para revisar si algún campo está vacío o NULL
+        for campo in campos_a_verificar:
+            valor = registro.get(campo)
+            if valor is None or str(valor).strip() == "":
+                return jsonify({"vacios": True, "mensaje": f"El campo '{campo}' está incompleto. Debe actualizar su perfil."})
+                
+        # Caso 3: Encontró la fila y absolutamente todos los campos tienen datos
         return jsonify({"vacios": False})
-    else:
-        return jsonify({"vacios": True})
-    
+
+    except Exception as err:
+        return jsonify({"error": f"Error interno: {str(err)}"}), 500   
 
 @app.route('/completar-perfil')
 def completar_perfil():
@@ -1618,16 +1640,34 @@ def guardar_datos_perfil():
         'municipio', 'direccion', 'telefono', 'telefono_emergencia', 'estrato', 'eps'
     ]
     
-    # Validación estricta en el Backend: que nada llegue vacío
+    # 1. Validación de campos vacíos
     for campo in campos_obligatorios:
         if not datos.get(campo) or str(datos.get(campo)).strip() == "":
-            return jsonify({"exito": False, "mensaje": "Todos los campos son estrictamente obligatorios."}), 400
+            return jsonify({"exito": False, "tipo_error": "advertencia", "mensaje": "Todos los campos son estrictamente obligatorios."}), 400
 
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True) # Usamos dictionary=True para leer fácil por nombre de columna
         
-        # Actualizar Datos de Cuenta básicos
+        # 2. NUEVA VALIDACIÓN: Verificar si el documento ya existe en OTRO usuario
+        query_verificar_doc = """
+            SELECT id_usuario FROM DatosUsuarios 
+            WHERE numero_documento = %s AND id_usuario != %s
+        """
+        cursor.execute(query_verificar_doc, (datos['numero_documento'], datos['id_usuario']))
+        documento_duplicado = cursor.fetchone()
+        
+        if documento_duplicado:
+            cursor.close()
+            conn.close()
+            # Retornamos un flag "tipo_error" para que JS sepa que debe ser un Toast Amarillo
+            return jsonify({
+                "exito": False, 
+                "tipo_error": "advertencia", 
+                "mensaje": f"El número de documento {datos['numero_documento']} ya se encuentra registrado en el sistema por otro usuario."
+            }), 200 # Lo enviamos con 200 para que el .then() de JS lo procese limpiamente
+
+        # 3. Actualizar Datos de Cuenta básicos en Usuarios
         query_usuarios = """
             UPDATE Usuarios 
             SET nombres = %s, apellidos = %s, correo = %s, fecha_nacimiento = %s
@@ -1635,12 +1675,12 @@ def guardar_datos_perfil():
         """
         cursor.execute(query_usuarios, (datos['nombres'], datos['apellidos'], datos['correo'], datos['fecha_nacimiento'], datos['id_usuario']))
 
-        # Verificar si ya existe registro en DatosUsuarios
+        # 4. Verificar si ya existe fila en DatosUsuarios para el usuario actual
         cursor.execute("SELECT id_datos_usuario FROM DatosUsuarios WHERE id_usuario = %s", (datos['id_usuario'],))
         existe_perfil = cursor.fetchone()
         
         if existe_perfil:
-            # UPDATE si ya existía
+            # UPDATE
             query_datos = """
                 UPDATE DatosUsuarios 
                 SET Sexo = %s, tipo_documento = %s, numero_documento = %s, departamento = %s, 
@@ -1654,7 +1694,7 @@ def guardar_datos_perfil():
                 datos['estrato'], datos['eps'], datos['id_usuario']
             ))
         else:
-            # INSERT si es su primera vez completando el perfil
+            # INSERT
             query_datos = """
                 INSERT INTO DatosUsuarios (id_usuario, Sexo, tipo_documento, numero_documento, departamento, 
                                           municipio, direccion, telefono, telefono_emergencia, Estrato, eps, estado)
@@ -1670,11 +1710,171 @@ def guardar_datos_perfil():
         cursor.close()
         conn.close()
         
-        return jsonify({"exito": True, "mensaje": "Perfil actualizado con éxito."})
+        return jsonify({"exito": True, "mensaje": "Perfil actualizado exitosamente."})
 
     except Exception as err:
-        return jsonify({"exito": False, "mensaje": f"Error en el servidor: {str(err)}"}), 500
+        return jsonify({"exito": False, "tipo_error": "error", "mensaje": f"Error en el servidor: {str(err)}"}), 500
 
+#Actualizar perfil flutter 
+@app.route('/actualizar_perfil_completo/<int:id_usuario>', methods=['PUT'])
+def actualizar_perfil_completo(id_usuario):
+    try:
+        data = request.json
+        
+        # 1. Obtener datos destinados a la tabla 'Usuarios'
+        nombres = data.get('nombres')
+        apellidos = data.get('apellidos')
+        correo = data.get('correo')
+        fecha_nacimiento = data.get('fecha_nacimiento')
+        nueva_clave = data.get('nueva_clave') or data.get('clave')
+
+        # 2. Obtener datos destinados a la tabla 'DatosUsuarios'
+        direccion = data.get('direccion')
+        departamento = data.get('departamento')
+        municipio = data.get('municipio')
+        telefono = data.get('telefono')
+        telefono_emergencia = data.get('telefono_emergencia')
+        tipo_documento = data.get('tipo_documento')
+        numero_documento = data.get('numero_documento')
+        estrato = data.get('estrato')
+        sexo = data.get('sexo')
+        eps = data.get('eps')
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        try:
+            # 3. Actualizar datos en la tabla 'Usuarios'
+            if nueva_clave:  
+                hashed_password = hashlib.sha256(nueva_clave.encode('utf-8')).hexdigest()
+                query_user = """
+                    UPDATE Usuarios 
+                    SET nombres = %s, apellidos = %s, correo = %s, fecha_nacimiento = %s, clave = %s
+                    WHERE id_usuario = %s
+                """
+                cursor.execute(query_user, (nombres, apellidos, correo, fecha_nacimiento, hashed_password, id_usuario))
+            else:            
+                query_user = """
+                    UPDATE Usuarios 
+                    SET nombres = %s, apellidos = %s, correo = %s, fecha_nacimiento = %s
+                    WHERE id_usuario = %s
+                """
+                cursor.execute(query_user, (nombres, apellidos, correo, fecha_nacimiento, id_usuario))
+
+            # 4. Verificar si el usuario ya tiene una fila creada en 'DatosUsuarios'
+            cursor.execute("SELECT id_datos_usuario FROM DatosUsuarios WHERE id_usuario = %s", (id_usuario,))
+            existe_registro_datos = cursor.fetchone()
+
+            if existe_registro_datos:
+                query_datos = """
+                    UPDATE DatosUsuarios 
+                    SET direccion = %s, departamento = %s, municipio = %s, telefono = %s, 
+                        telefono_emergencia = %s, tipo_documento = %s, numero_documento = %s, 
+                        Estrato = %s, Sexo = %s, eps = %s
+                    WHERE id_usuario = %s
+                """
+                cursor.execute(query_datos, (direccion, departamento, municipio, telefono, 
+                                             telefono_emergencia, tipo_documento, numero_documento, 
+                                             estrato, sexo, eps, id_usuario))
+            else:
+                query_datos = """
+                    INSERT INTO DatosUsuarios (estado, direccion, departamento, municipio, telefono, 
+                                               telefono_emergencia, tipo_documento, numero_documento, Estrato, Sexo, eps, id_usuario)
+                    VALUES ('Activo', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """
+                cursor.execute(query_datos, (direccion, departamento, municipio, telefono, 
+                                             telefono_emergencia, tipo_documento, numero_documento, 
+                                             estrato, sexo, eps, id_usuario))
+
+            conn.commit()
+
+        # --- CAPTURA DE ERROR CORREGIDA PARA CUALQUIER CONECTOR ---
+        except Exception as db_error:
+            conn.rollback()
+            error_msg = str(db_error)
+            
+            # El código 1062 es universal en MySQL para entradas duplicadas (Unique Key)
+            if "1062" in error_msg:
+                if 'numero_documento' in error_msg:
+                    return jsonify({
+                        "success": False, 
+                        "error": "El número de documento ya está registrado por otro usuario."
+                    }), 400
+                elif 'correo' in error_msg:
+                    return jsonify({
+                        "success": False, 
+                        "error": "El correo electrónico ya está registrado por otro usuario."
+                    }), 400
+            
+            # Si es otro error de base de datos lo mandamos directamente
+            return jsonify({"success": False, "error": f"Error interno en base de datos: {error_msg}"}), 400
+
+        finally:
+            cursor.close()
+            conn.close()
+
+        return jsonify({
+            "success": True, 
+            "message": "Todos los datos del perfil se han actualizado con éxito"
+        }), 200
+
+    except Exception as e:
+        print(f"Error en actualizar_perfil_completo: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+    
+
+#mostrar datos del perfil completo flutter
+@app.route('/obtener_datos_adicionales/<int:id_usuario>', methods=['GET'])
+def obtener_datos_adicionales(id_usuario):
+    try:
+        conn = get_db_connection()
+        # Usamos el cursor normal para evitar problemas de compatibilidad con DictCursor
+        cursor = conn.cursor()
+
+        # Seleccionamos las columnas explícitamente en un orden conocido
+        query = """
+            SELECT direccion, departamento, municipio, telefono, 
+                   telefono_emergencia, tipo_documento, numero_documento, 
+                   Estrato, Sexo, eps 
+            FROM DatosUsuarios 
+            WHERE id_usuario = %s
+        """
+        cursor.execute(query, (id_usuario,))
+        row = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        if row:
+            # Construimos el diccionario manualmente mapeando cada posición de la tupla
+            datos = {
+                "direccion": row[0],
+                "departamento": row[1],
+                "municipio": row[2],
+                "telefono": row[3],
+                "telefono_emergencia": row[4],
+                "tipo_documento": row[5],
+                "numero_documento": row[6],
+                "Estrato": row[7],
+                "Sexo": row[8],
+                "eps": row[9]
+            }
+            return jsonify({
+                "success": True,
+                "existe": True,
+                "data": datos
+            }), 200
+        else:
+            return jsonify({
+                "success": True,
+                "existe": False,
+                "data": {}
+            }), 200
+
+    except Exception as e:
+        # Esto imprimirá el error exacto en tu consola de Python si algo más ocurre
+        print(f"Error detallado en el servidor: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 if __name__ == '__main__':

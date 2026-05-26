@@ -40,46 +40,66 @@ function mostrarvistaNotasProfesor() {
     document.getElementById("mostrarNotasProfesor").style.display = "block";
 }
 
+
+// =========================================================================
+// FUNCIÓN PRINCIPAL: Escanea campos del profesor y bloquea si hay vacíos
+// =========================================================================
 function datosPersonales() {
     const idUsuario = window.USER_ID; 
 
+    // Consultamos al backend la verificación campo por campo
     fetch(`/verificar_datos_vacios?id_usuario=${idUsuario}`)
         .then(response => response.json())
         .then(data => {
-            // Si los datos NO están vacíos (data.vacios === false)
-            if (data.vacios === false) {
+            // Si el backend responde que 'vacios' es true (falta algún dato obligatorio)
+            if (data.vacios === true) {
                 
-                Swal.fire({
-                    title: '¡Información Registrada!',
-                    html: `
-                        <p class="mb-2">Sus datos ya se encuentran en el sistema.</p>
-                        <strong class="text-danger d-block mb-1">
-                            <i class="bi bi-exclamation-triangle-fill me-1"></i> Es obligatorio mantenerlos actualizados para continuar.
-                        </strong>
-                    `,
-                    icon: 'info',
-                    iconColor: '#198754', // El verde éxito de tu imagen
-                    showCancelButton: false,
-                    confirmButtonText: 'Actualizar Datos Ahora <i class="bi bi-arrow-right ms-2"></i>',
-                    confirmButtonColor: '#198754', // Botón principal verde
-                    background: '#ffffff',
-                    allowOutsideClick: false, // Evita que la cierren haciendo clic afuera
-                    allowEscapeKey: false,    // Evita que la cierren con la tecla Escape
-                    customClass: {
-                        popup: 'rounded-4 shadow border-0',
-                        title: 'fw-bold text-success',
-                        confirmButton: 'btn btn-success px-4 py-2 rounded-3 fw-bold'
-                    }
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = `/completar-perfil?id_usuario=${window.USER_ID}`;
-                    }
-                });
+                // Ejecución segura esperando que la librería externa esté lista en el DOM
+                const desplegarAlerta = () => {
+                    Swal.fire({
+                        title: '¡Perfil Incompleto!',
+                        html: `
+                            <p class="mb-2 text-secondary" style="font-size: 0.95rem;">
+                                Detectamos que tiene campos pendientes por diligenciar en su perfil docente.
+                            </p>
+                            <strong class="d-block mb-1" style="color: #664d03; font-size: 0.9rem;">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i> Es estrictamente obligatorio completar todos sus datos para continuar en la plataforma.
+                            </strong>
+                        `,
+                        icon: 'warning',
+                        iconColor: '#ffc107',                  // Amarillo de advertencia corporativo
+                        showCancelButton: false,               // Deshabilitado: Obligatorio rellenar
+                        confirmButtonText: 'Actualizar Datos Ahora <i class="bi bi-arrow-right ms-2"></i>',
+                        confirmButtonColor: '#198754',          // Verde éxito unificado
+                        background: '#ffffff',
+                        allowOutsideClick: false,              // Bloquea clics accidentales fuera del modal
+                        allowEscapeKey: false,                 // Bloquea cierre mediante teclado (Esc)
+                        customClass: {
+                            popup: 'rounded-4 shadow border-0 p-4',
+                            title: 'fw-bold text-dark fs-4',
+                            confirmButton: 'btn btn-success px-4 py-2 rounded-3 fw-bold fs-6'
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // En lugar de redirigir de página, disparamos tu función nativa
+                            // para que abra el contenedor de edición ahí mismo sin romper el flujo
+                            if (typeof mostrarvistaPerfilProfesor === 'function') {
+                                window.location.href = `/completar-perfil?id_usuario=${idUsuario}`;
+                            }
+                        }
+                    });
+                };
 
+                // Si la librería tardó milisegundos en cargar, esperamos un breve instante
+                if (typeof Swal !== 'undefined') {
+                    desplegarAlerta();
+                } else {
+                    setTimeout(desplegarAlerta, 300);
+                }
             }
         })
-        .catch(error => console.error("Error al verificar los datos:", error));
+        .catch(error => console.error("Error al ejecutar la verificación del perfil docente:", error));
 }
 
-// Se ejecuta automáticamente al cargar el menú del profesor
+// Ejecución automática inmediata al cargar el entorno del profesor
 datosPersonales();
