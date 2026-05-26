@@ -90,9 +90,15 @@ class NotasEstudiantesScreen extends StatelessWidget {
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
                         final modulo = modulos[index];
-                        final notas = (modulo['notas'] as List<dynamic>)
-                            .map((e) => double.parse(e.toString()))
-                            .toList();
+                        
+                        // CORRECCIÓN AQUÍ: Accedemos a la clave 'nota' dentro del mapa
+                        final notasRaw = modulo['notas'] as List<dynamic>? ?? [];
+                        final List<double> notas = notasRaw.map((e) {
+                          if (e is Map && e.containsKey('nota')) {
+                            return double.parse(e['nota'].toString());
+                          }
+                            return double.parse(e.toString());
+                        }).toList();
 
                         double promedio = 0;
                         if (notas.isNotEmpty) {
@@ -122,7 +128,7 @@ class NotasEstudiantesScreen extends StatelessWidget {
                                 child: Icon(Icons.book_rounded, color: statusColor, size: 22),
                               ),
                               title: Text(
-                                modulo['nombre'],
+                                modulo['nombre'] ?? 'Sin nombre',
                                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: darkBlue),
                               ),
                               subtitle: Text(
@@ -148,7 +154,7 @@ class NotasEstudiantesScreen extends StatelessWidget {
                                         style: TextStyle(
                                           color: nota >= 3.0 ? Colors.green : Colors.red,
                                           fontWeight: FontWeight.bold,
-                                        ),
+                                          ),
                                       ),
                                     ),
                                   );
