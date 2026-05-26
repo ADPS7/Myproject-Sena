@@ -1,6 +1,6 @@
 <div class="container mt-4">
-    <h2 class="text-primary mb-1">Gestión de Notas</h2>
-    <p class="text-secondary mb-2">Aquí puedes ver y actualizar las calificaciones de tus estudiantes.</p>
+    <h2 class="fw-bold text-dark mb-1" id="view-title">Notas</h2>
+    <p class="text-muted mb-2" id="view-subtitle">Aquí puedes ver y actualizar las calificaciones de tus estudiantes.</p>
 
     <!-- Barra de información -->
     <div class="row mb-3">
@@ -15,9 +15,43 @@
                             <strong>Módulo:</strong> <span id="selectedModuleName">—</span>
                         </div>
                         <div class="ms-md-auto text-end">
-                            <small class="text-muted">Selecciona curso y módulo para listar estudiantes</small>
+                            <div class="d-flex gap-2 justify-content-end align-items-center">
+                                <small class="text-muted">Selecciona curso y módulo para listar estudiantes</small>
+                                <button id="viewAllNotasBtn" class="btn btn-outline-primary btn-sm" disabled>Ver notas del módulo</button>
+                            </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para ver todas las notas -->
+    <div class="modal fade" id="notasModal" tabindex="-1" aria-labelledby="notasModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="notasModalLabel">Notas del módulo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Estudiante</th>
+                                    <th>Correo</th>
+                                    <th>Nota</th>
+                                </tr>
+                            </thead>
+                            <tbody id="notasModalBody">
+                                <!-- filas generadas dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>

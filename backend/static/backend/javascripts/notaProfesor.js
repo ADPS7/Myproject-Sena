@@ -5,14 +5,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectedCourseName = document.getElementById("selectedCourseName");
     const selectedModuleName = document.getElementById("selectedModuleName");
     const notaFeedback = document.getElementById("notaFeedback");
+    const viewAllNotasBtn = document.getElementById("viewAllNotasBtn");
+    const notasModalBody = document.getElementById("notasModalBody");
+    const notasModalEl = document.getElementById("notasModal");
 
-    // 🔹 Cargar cursos desde el backend
+    // 🔹 Cargar cursos desde el backend (usa `id_curso`)
     fetch("/cursos")
         .then(res => res.json())
         .then(cursos => {
             cursos.forEach(c => {
                 const option = document.createElement("option");
-                option.value = c.id;
+                option.value = c.id_curso || c.id || c.idCurso;
                 option.textContent = c.nombre;
                 cursoSelect.appendChild(option);
             });
@@ -31,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 .then(modulos => {
                     modulos.forEach(m => {
                         const option = document.createElement("option");
-                        option.value = m.id;
+                        option.value = m.id_modulo || m.id;
                         option.textContent = m.nombre;
                         moduloSelect.appendChild(option);
                     });
@@ -48,21 +51,30 @@ document.addEventListener("DOMContentLoaded", () => {
         selectedModuleName.textContent = moduloSelect.options[moduloSelect.selectedIndex].text || '—';
 
         if (moduloId) {
-            fetch(`/modulo/${moduloId}/students`)
+            // habilitar botón ver notas
+            if (viewAllNotasBtn) viewAllNotasBtn.disabled = false;
+            // endpoint que devuelve estudiantes (y notas si existen): /notas/modulo/<id_modulo>
+            fetch(`/notas/modulo/${moduloId}`)
                 .then(res => res.json())
                 .then(estudiantes => {
+                    // esperar array con objetos que incluyan: id_usuario, nombres, apellidos, correo, nota, id_nota
                     estudiantes.forEach(e => {
+                        const studentName = e.nombre || `${e.nombres || ''} ${e.apellidos || ''}`.trim();
+                        const studentId = e.id_usuario || e.id || e.user_id;
+                        const studentEmail = e.correo || e.email || '';
+                        const notaVal = (e.nota !== undefined && e.nota !== null) ? e.nota : '';
+
                         const fila = document.createElement("tr");
                         fila.innerHTML = `
-                            <td>${e.nombre}</td>
-                            <td>${e.correo}</td>
-                            <td><input type="number" class="form-control nota-input" min="0" max="5" step="0.1" data-id="${e.id}"></td>
-                            <td class="text-nowrap"><button class="btn btn-success btn-sm guardar-btn" data-id="${e.id}">Guardar</button></td>
+                            <td>${studentName}</td>
+                            <td>${studentEmail}</td>
+                            <td><input type="number" class="form-control nota-input" min="0" max="5" step="0.1" data-id="${studentId}" value="${notaVal}"></td>
+                            <td class="text-nowrap"><button class="btn btn-success btn-sm guardar-btn" data-id="${studentId}">Guardar</button></td>
                         `;
                         tablaEstudiantes.appendChild(fila);
                     });
 
-                    // Acción de guardar nota
+                    // Acción de guardar nota (por estudiante)
                     document.querySelectorAll(".guardar-btn").forEach(btn => {
                         btn.addEventListener("click", () => {
                             const id = btn.dataset.id;
@@ -89,6 +101,46 @@ document.addEventListener("DOMContentLoaded", () => {
                         });
                     });
                 });
+        } else {
+            if (viewAllNotasBtn) viewAllNotasBtn.disabled = true;
         }
     });
+
+    // Ver todas las notas en modal
+    if (viewAllNotasBtn) {
+        viewAllNotasBtn.addEventListener('click', () => {
+            const moduloId = moduloSelect.value;
+            if (!moduloId) return;
+            notasModalBody.innerHTML = '<tr><td colspan="3" class="text-center py-3">Cargando...</td></tr>';
+
+            fetch(`/notas/modulo/${moduloId}`)
+                .then(res => res.json())
+                .then(list => {
+                    notasModalBody.innerHTML = '';
+
+                    if (!Array.isArray(list) || !list.length) {
+                        notasModalBody.innerHTML = '<tr><td colspan="3" class="text-center text-secondary">No hay notas para este módulo.</td></tr>';
+                        return;
+                    }
+
+                    list.forEach(e => {
+                        const studentName = e.nombre || `${e.nombres || ''} ${e.apellidos || ''}`.trim();
+                        const studentEmail = e.correo || e.email || '';
+                        const notaVal = (e.nota !== undefined && e.nota !== null) ? e.nota : '-';
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `<td>${studentName}</td><td>${studentEmail}</td><td>${notaVal}</td>`;
+                        notasModalBody.appendChild(tr);
+                    });
+
+                    if (typeof bootstrap !== 'undefined' && notasModalEl) {
+                        const modal = new bootstrap.Modal(notasModalEl);
+                        modal.show();
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    notasModalBody.innerHTML = '<tr><td colspan="3" class="text-danger text-center">Error al cargar notas.</td></tr>';
+                });
+        });
+    }
 });

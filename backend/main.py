@@ -154,6 +154,16 @@ def dashboard():
     else:
         return render_template('view/estudiante/menuEstudiante.html', user=user)
 
+
+@app.route('/profesor/notaProfesor')
+def profesor_nota_profesor():
+    if 'usuario' not in session:
+        return redirect('/login')
+    user = session['usuario']
+    return render_template('view/profesor/menuProfesor.html', user=user)
+
+
+
 @app.route('/asistencias/<int:id_usuario>', methods=['GET'])
 def get_asistencias(id_usuario):
     try:
