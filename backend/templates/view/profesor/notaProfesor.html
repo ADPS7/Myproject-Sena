@@ -17,7 +17,8 @@
                         <div class="ms-md-auto text-end">
                             <div class="d-flex gap-2 justify-content-end align-items-center">
                                 <small class="text-muted">Selecciona curso y módulo para listar estudiantes</small>
-                                <button id="viewAllNotasBtn" class="btn btn-outline-primary btn-sm" disabled>Ver notas del módulo</button>
+                                <button id="applyAllNotaBtn" class="btn btn-outline-success btn-sm ms-2" type="button" disabled>Aplicar notas</button>
+                                <button id="viewAllNotasBtn" class="btn btn-outline-primary btn-sm ms-2" disabled>Ver notas del módulo</button>
                             </div>
                         </div>
                     </div>
@@ -26,36 +27,7 @@
         </div>
     </div>
 
-    <!-- Modal para ver todas las notas -->
-    <div class="modal fade" id="notasModal" tabindex="-1" aria-labelledby="notasModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="notasModalLabel">Notas del módulo</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="table-responsive">
-                        <table class="table table-sm table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Estudiante</th>
-                                    <th>Correo</th>
-                                    <th>Nota</th>
-                                </tr>
-                            </thead>
-                            <tbody id="notasModalBody">
-                                <!-- filas generadas dinámicamente -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Nota: modales removidos — la vista completa reemplaza al modal -->
 
     <!-- Selección de curso y módulo -->
     <div class="row mb-3 gx-2 gy-2">
@@ -70,6 +42,13 @@
             <select id="moduloSelect" class="form-select">
                 <option value="">-- Selecciona un módulo --</option>
             </select>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-12 col-md-6">
+            <label for="searchStudentInput" class="form-label fw-bold">Buscar estudiante:</label>
+            <input id="searchStudentInput" type="text" class="form-control" placeholder="Buscar por nombre o correo" disabled>
         </div>
     </div>
 
