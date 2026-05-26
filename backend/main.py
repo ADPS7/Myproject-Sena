@@ -1876,6 +1876,44 @@ def obtener_datos_adicionales(id_usuario):
         print(f"Error detallado en el servidor: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route('/get_usuarios/coordinador', methods=['GET'])
+def get_coordinadores():
+    connection = None
+    cursor = None
+    try:
+        # Abrimos la conexión usando tu función
+        connection = get_db_connection()
+        
+        # 'dictionary=True' hace que mysql.connector devuelva los datos como dict en vez de tuplas
+        cursor = connection.cursor(dictionary=True) 
+        
+        query = """
+            SELECT 
+                id_usuario, 
+                nombres, 
+                apellidos, 
+                CONCAT(nombres, ' ', apellidos) AS nombre_completo, 
+                correo, 
+                DATE_FORMAT(fecha_nacimiento, '%Y-%m-%d') AS fecha_nacimiento, 
+                id_rol 
+            FROM Usuarios 
+            WHERE id_rol = 4
+        """
+        cursor.execute(query)
+        coordinadores = cursor.fetchall()
+        
+        return jsonify(coordinadores), 200
+        
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+        
+    finally:
+        # Buena práctica: Cerramos cursor y conexión siempre al terminar
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
