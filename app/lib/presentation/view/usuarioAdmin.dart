@@ -37,11 +37,27 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
   }
 
   Future<void> cambiarRol(int userId, String nuevoRol) async {
-    final response = await _apiService.actualizarRol(userId, nuevoRol);
+    // Si desde el Dropdown seleccionan 'coordinador', al backend le mandamos 'coordinacion'
+    String rolParaBackend = nuevoRol;
+    if (nuevoRol == 'coordinador') {
+      rolParaBackend = 'coordinacion';
+    }
+
+    if (rolParaBackend == 'admin') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Acción denegada: No puedes asignar el rol de Administrador"),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final response = await _apiService.actualizarRol(userId, rolParaBackend);
 
     if (response['success']) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text("Rol actualizado correctamente"),
           backgroundColor: Colors.green,
         ),
@@ -50,7 +66,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
       cargarUsuarios();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text("Error al actualizar rol"),
           backgroundColor: Colors.red,
         ),
@@ -58,8 +74,19 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
     }
   }
 
+  // --- EL TRUCO ESTÁ AQUÍ ---
   List obtenerPorRol(String rol) {
-    return usuarios.where((u) => u['rol'] == rol).toList();
+    return usuarios.where((u) {
+      final rolUsuario = u['rol'];
+      
+      // Si la interfaz pide 'coordinador', filtramos por 'coordinacion'
+      if (rol == 'coordinador') {
+        return rolUsuario == 'coordinacion';
+      }
+      
+      // Para profesores y estudiantes, se mantiene igual
+      return rolUsuario == rol;
+    }).toList();
   }
 
   @override
@@ -78,7 +105,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  buildCategoria("Administradores", "admin"),
+                  buildCategoria("Coordinadores", "coordinador"),
                   buildCategoria("Profesores", "profesor"),
                   buildCategoria("Estudiantes", "estudiante"),
                 ],
@@ -115,6 +142,12 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
           ),
 
         ...lista.map((usuario) {
+          // Mapeamos el valor actual para el Dropdown de la interfaz
+          String rolInterfaz = usuario['rol'];
+          if (rolInterfaz == 'coordinacion') {
+            rolInterfaz = 'coordinador';
+          }
+
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(16),
@@ -151,11 +184,11 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                 ),
 
                 DropdownButton<String>(
-                  value: usuario['rol'],
+                  value: rolInterfaz, // Usa el rol adaptado ('coordinador')
                   items: const [
                     DropdownMenuItem(
-                      value: 'admin',
-                      child: Text("Admin"),
+                      value: 'coordinador',
+                      child: Text("Coordinador"),
                     ),
                     DropdownMenuItem(
                       value: 'profesor',
