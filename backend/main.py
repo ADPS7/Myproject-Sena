@@ -277,7 +277,36 @@ def get_modulos_curso(id_curso):
         return jsonify({"error": str(e)}), 500
     except Exception as e:
         return jsonify({"error": "Error interno del servidor"}), 500
-    
+
+@app.route('/modulos/estudiante/<int:id_usuario>', methods=['GET'])
+def get_modulos_estudiante(id_usuario):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT
+                m.id_modulo,
+                m.nombre,
+                DATE_FORMAT(m.fecha_inicio, '%Y-%m-%d') AS fecha_inicio,
+                DATE_FORMAT(m.fecha_fin, '%Y-%m-%d') AS fecha_fin,
+                c.nombre AS curso_nombre
+            FROM Modulos m
+            JOIN Cursos c ON m.id_curso = c.id_curso
+            JOIN Alumnos a ON a.id_curso = m.id_curso
+            WHERE a.id_usuario = %s
+              AND (m.fecha_inicio IS NOT NULL OR m.fecha_fin IS NOT NULL)
+            ORDER BY m.fecha_inicio ASC
+        """
+        cursor.execute(query, (id_usuario,))
+        modulos = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify(modulos), 200
+    except Error as e:
+        return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        return jsonify({"error": "Error interno del servidor"}), 500
+
 @app.route('/modulo/<int:id_modulo>/students', methods=['GET'])
 def get_estudiantes_modulo(id_modulo):
     try:
