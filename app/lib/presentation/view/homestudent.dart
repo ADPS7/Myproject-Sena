@@ -27,10 +27,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   @override
   void initState() {
     super.initState();
-    _cargarDatos(); // Encapsulamos la carga en una función
+    _cargarDatos();
   }
 
-  // Función para cargar o refrescar los datos
   Future<void> _cargarDatos() async {
     setState(() {
       _studentStatsFuture = Future.wait([
@@ -110,10 +109,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bgGrey,
-      // Envolvemos todo en RefreshIndicator
       body: RefreshIndicator(
         color: primaryPurple,
-        onRefresh: _cargarDatos, // Al deslizar, se llama a esta función
+        onRefresh: _cargarDatos,
         child: SafeArea(
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
@@ -147,7 +145,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                 ),
               ),
 
-              // Tarjetas de Resumen
+              // Tarjetas de Resumen (Solo Inasistencias)
               SliverToBoxAdapter(
                 child: Container(
                   height: 120,
@@ -155,39 +153,21 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   child: FutureBuilder<Map<String, dynamic>>(
                     future: _studentStatsFuture,
                     builder: (context, snapshot) {
-                      String promedio = "0.0";
                       String inasistencias = "0";
-                      String modulosRealizados = "0";
                       bool loading = snapshot.connectionState == ConnectionState.waiting;
 
                       if (snapshot.hasData && snapshot.data!['success'] == true) {
                         var data = snapshot.data!;
-                        
-                        List notas = data['notas'] ?? [];
-                        if (notas.isNotEmpty) {
-                          double suma = 0;
-                          for (var item in notas) {
-                            suma += double.tryParse(item['nota'].toString()) ?? 0.0;
-                          }
-                          promedio = (suma / notas.length).toStringAsFixed(1);
-                        }
-
                         List listaAsistencias = data['lista_asistencia'] ?? [];
                         int contadorFaltas = listaAsistencias.where((a) => a['asistio'] == 'NO').length;
                         inasistencias = contadorFaltas.toString();
-
-                        modulosRealizados = data['modulos_completados']?.toString() ?? "0";
                       }
 
                       return ListView(
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: 24),
                         children: [
-                          _buildStatCard("Promedio", promedio, Icons.auto_graph_rounded, loading),
-                          const SizedBox(width: 16),
                           _buildStatCard("Inasistencias", inasistencias, Icons.person_off_rounded, loading),
-                          const SizedBox(width: 16),
-                          _buildStatCard("Módulos", modulosRealizados, Icons.view_module_rounded, loading),
                         ],
                       );
                     },
