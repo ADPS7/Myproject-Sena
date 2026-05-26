@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'aut_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.137.130:5000';
+  static const String baseUrl = 'http://10.2.129.7:5000';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,
@@ -627,59 +627,59 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> actualizarPerfilCompleto({
-  required int idUsuario,
-  required String nombres,
-  required String apellidos,
-  required String correo,
-  required String fechaNacimiento,
-  required String direccion,
-  required String departamento,
-  required String municipio,
-  required String telefono,
-  required String telefonoEmergencia,
-  required String tipoDocumento,
-  required String numeroDocumento,
-  required String estrato,
-  required String sexo,
-  required String eps,
-  String? password,
-}) async {
-  try {
-    // Armamos el JSON con todos los datos que pide la nueva función de Python
-    final Map<String, dynamic> body = {
-      'nombres': nombres,
-      'apellidos': apellidos,
-      'correo': correo,
-      'fecha_nacimiento': fechaNacimiento,
-      'direccion': direccion,
-      'departamento': departamento,
-      'municipio': municipio,
-      'telefono': telefono,
-      'telefono_emergencia': telefonoEmergencia,
-      'tipo_documento': tipoDocumento,
-      'numero_documento': numeroDocumento,
-      'estrato': estrato,
-      'sexo': sexo,
-      'eps': eps,
-    };
+    required int idUsuario,
+    required String nombres,
+    required String apellidos,
+    required String correo,
+    required String fechaNacimiento,
+    required String direccion,
+    required String departamento,
+    required String municipio,
+    required String telefono,
+    required String telefonoEmergencia,
+    required String tipoDocumento,
+    required String numeroDocumento,
+    required String estrato,
+    required String sexo,
+    required String eps,
+    String? password,
+  }) async {
+    try {
+      // Armamos el JSON con todos los datos que pide la nueva función de Python
+      final Map<String, dynamic> body = {
+        'nombres': nombres,
+        'apellidos': apellidos,
+        'correo': correo,
+        'fecha_nacimiento': fechaNacimiento,
+        'direccion': direccion,
+        'departamento': departamento,
+        'municipio': municipio,
+        'telefono': telefono,
+        'telefono_emergencia': telefonoEmergencia,
+        'tipo_documento': tipoDocumento,
+        'numero_documento': numeroDocumento,
+        'estrato': estrato,
+        'sexo': sexo,
+        'eps': eps,
+      };
 
-    // Si el usuario escribió una contraseña nueva, la anexamos
-    if (password != null && password.isNotEmpty) {
-      body['nueva_clave'] = password;
+      // Si el usuario escribió una contraseña nueva, la anexamos
+      if (password != null && password.isNotEmpty) {
+        body['nueva_clave'] = password;
+      }
+
+      // Apuntamos a la NUEVA ruta que creamos en Flask
+      final response = await http.put(
+        Uri.parse('$baseUrl/actualizar_perfil_completo/$idUsuario'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(body),
+      );
+
+      return json.decode(response.body);
+    } catch (e) {
+      return {"success": false, "error": "Error de conexión"};
     }
-
-    // Apuntamos a la NUEVA ruta que creamos en Flask
-    final response = await http.put(
-      Uri.parse('$baseUrl/actualizar_perfil_completo/$idUsuario'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(body),
-    );
-
-    return json.decode(response.body);
-  } catch (e) {
-    return {"success": false, "error": "Error de conexión"};
   }
-}
   // Estos son los metodos del archibo usuarioAdmin.dart que hacen uso de los servicios del ApiService, por eso se encuentran aqui para no perder el contexto de su uso
 
   // primer metodo
@@ -738,7 +738,7 @@ class ApiService {
   /// Consulta los datos exclusivos de la tabla DatosUsuarios
   Future<Map<String, dynamic>> obtenerDatosAdicionales(int idUsuario) async {
     final url = Uri.parse('$baseUrl/obtener_datos_adicionales/$idUsuario');
-    
+
     try {
       final response = await http.get(
         url,
@@ -748,10 +748,16 @@ class ApiService {
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else {
-        return {"success": false, "error": "Error del servidor: ${response.statusCode}"};
+        return {
+          "success": false,
+          "error": "Error del servidor: ${response.statusCode}",
+        };
       }
     } catch (e) {
-      return {"success": false, "error": "No se pudo conectar con el servidor: $e"};
+      return {
+        "success": false,
+        "error": "No se pudo conectar con el servidor: $e",
+      };
     }
   }
 }

@@ -1,4 +1,5 @@
-let cacheAdmins = [], cacheProfesores = [], cacheEstudiantes = [];
+// Declaración de cachés compartidas (Removido cacheAdmins)
+let cacheProfesores = [], cacheEstudiantes = [], cacheCoordinadores = [];
 let idUsuarioAEliminar = null;
 
 // --- 1. FUNCIÓN PARA PINTAR LAS FILAS ---
@@ -29,9 +30,9 @@ function refrescarTablaPorRol(idRol) {
     let tablaId = '';
     let cacheName = '';
 
-    if (idRol == "1") { endpoint = 'admin'; tablaId = 'tabla-admins-body'; cacheName = 'cacheAdmins'; }
-    else if (idRol == "2") { endpoint = 'estudiante'; tablaId = 'tabla-estudiantes-body'; cacheName = 'cacheEstudiantes'; }
+    if (idRol == "2") { endpoint = 'estudiante'; tablaId = 'tabla-estudiantes-body'; cacheName = 'cacheEstudiantes'; }
     else if (idRol == "3") { endpoint = 'profesor'; tablaId = 'tabla-profesores-body'; cacheName = 'cacheProfesores'; }
+    else if (idRol == "4") { endpoint = 'coordinador'; tablaId = 'tabla-coordinadores-body'; cacheName = 'cacheCoordinadores'; }
 
     if (endpoint) {
         fetch(`/get_usuarios/${endpoint}`).then(res => res.json()).then(data => {
@@ -41,16 +42,18 @@ function refrescarTablaPorRol(idRol) {
     }
 }
 
-// --- 3. GESTIÓN DE CARGA INICIAL Y BUSCADORES ---
+// --- 3. GESTIÓN DE CARGA INICIAL Y BUSCADORES (Removido Administradores) ---
 function gestionarRoles() {
     const configuraciones = [
-        { modal: 'modalAdmins', tabla: 'tabla-admins-body', buscador: 'buscarAdminModal', endpoint: 'admin', cache: 'cacheAdmins' },
         { modal: 'modalProfesores', tabla: 'tabla-profesores-body', buscador: 'buscarProfesorModal', endpoint: 'profesor', cache: 'cacheProfesores' },
-        { modal: 'modalEstudiantes', tabla: 'tabla-estudiantes-body', buscador: 'buscarEstudianteModal', endpoint: 'estudiante', cache: 'cacheEstudiantes' }
+        { modal: 'modalEstudiantes', tabla: 'tabla-estudiantes-body', buscador: 'buscarEstudianteModal', endpoint: 'estudiante', cache: 'cacheEstudiantes' },
+        { modal: 'modalCoordinadores', tabla: 'tabla-coordinadores-body', buscador: 'buscarCoordinadorModal', endpoint: 'coordinador', cache: 'cacheCoordinadores' }
     ];
 
     configuraciones.forEach(conf => {
         const modalEl = document.getElementById(conf.modal);
+        if (!modalEl) return;
+
         modalEl.addEventListener('show.bs.modal', () => {
             fetch(`/get_usuarios/${conf.endpoint}`).then(res => res.json()).then(data => {
                 window[conf.cache] = data;
@@ -68,11 +71,11 @@ function gestionarRoles() {
     });
 }
 
-// --- 4. GESTIÓN DE EDICIÓN (CON RESTRICCIÓN DE ADMIN) ---
+// --- 4. GESTIÓN DE EDICIÓN CON BLINDAJE ANTI-ADMIN ---
 window.abrirModalEdicion = (id, nom, ape, mail, fecha, rol) => {
-    // BLOQUEO: Si el usuario es administrador (rol 1), no permitimos editar
+    // Si por alguna razón la consulta trae un admin, bloquear edición inmediatamente
     if (rol == "1") {
-        showToast("No tienes permisos para editar a otro Administrador", "error");
+        showToast("No tienes permisos para editar a un Administrador", "error");
         return;
     }
 
@@ -94,9 +97,9 @@ document.getElementById('formEditarUsuario').addEventListener('submit', function
     const oldRol = document.getElementById('edit_user_id').dataset.oldRol;
     const newRol = document.getElementById('edit_rol').value;
 
-    // VALIDACIÓN EXTRA: Evitar que intenten cambiar el rol a Admin desde el formulario
-    if (newRol == "1") {
-        showToast("No puedes asignar el rol de Administrador", "error");
+    // BLINDAJE: Si alteran el HTML para intentar volverse administrador, se cancela el envío
+    if (newRol == "1" || newRol === "" || newRol === null) {
+        showToast("Acción denegada: No se puede asignar el rol de Administrador", "error");
         return;
     }
 
@@ -125,7 +128,7 @@ document.getElementById('formEditarUsuario').addEventListener('submit', function
     });
 });
 
-// --- 5. GESTIÓN DE ELIMINACIÓN (CON RESTRICCIÓN) ---
+// --- 5. GESTIÓN DE ELIMINACIÓN ---
 window.eliminarUsuario = (id, nombre, rol) => {
     if (rol == "1") {
         showToast("No se puede eliminar a un Administrador", "error");
@@ -147,7 +150,9 @@ document.getElementById('btnConfirmarEliminar').addEventListener('click', functi
         if (r.status === 'success') {
             limpiarBackdrops();
             showToast("Usuario eliminado correctamente", "success");
-            refrescarTablaPorRol("2"); refrescarTablaPorRol("3");
+            refrescarTablaPorRol("2"); 
+            refrescarTablaPorRol("3");
+            refrescarTablaPorRol("4");
         }
     });
 });

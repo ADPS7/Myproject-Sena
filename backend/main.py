@@ -926,18 +926,22 @@ def crear_modulo():
 def get_modulos():
     try:
         conn = get_db_connection()
-        # Usamos un cursor de diccionario para manejar los datos como objetos JSON fácilmente
         cursor = conn.cursor(dictionary=True)
         
-        # Hacemos un JOIN para obtener el nombre del curso junto con el módulo
+        # FIX: Usamos DATE_FORMAT para retornar 'YYYY-MM-DD' directamente desde la base de datos
         query = """
-            SELECT m.id_modulo, m.nombre, m.fecha_inicio, m.fecha_fin, c.nombre as nombre_curso 
+            SELECT 
+                m.id_modulo, 
+                m.nombre, 
+                DATE_FORMAT(m.fecha_inicio, '%Y-%m-%d') as fecha_inicio, 
+                DATE_FORMAT(m.fecha_fin, '%Y-%m-%d') as fecha_fin, 
+                m.id_curso, 
+                c.nombre as nombre_curso 
             FROM Modulos m
             JOIN Cursos c ON m.id_curso = c.id_curso
         """
         cursor.execute(query)
         modulos = cursor.fetchall()
-        print(modulos)
         
         cursor.close()
         conn.close()
@@ -945,7 +949,7 @@ def get_modulos():
         return jsonify(modulos), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
+            
 @app.route('/modulos/editar/<int:id_modulo>', methods=['PUT'])
 def editar_modulo(id_modulo):
     data = request.json
@@ -1885,6 +1889,44 @@ def obtener_datos_adicionales(id_usuario):
         # Esto imprimirá el error exacto en tu consola de Python si algo más ocurre
         print(f"Error detallado en el servidor: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/get_usuarios/coordinador', methods=['GET'])
+def get_coordinadores():
+    connection = None
+    cursor = None
+    try:
+        # Abrimos la conexión usando tu función
+        connection = get_db_connection()
+        
+        # 'dictionary=True' hace que mysql.connector devuelva los datos como dict en vez de tuplas
+        cursor = connection.cursor(dictionary=True) 
+        
+        query = """
+            SELECT 
+                id_usuario, 
+                nombres, 
+                apellidos, 
+                CONCAT(nombres, ' ', apellidos) AS nombre_completo, 
+                correo, 
+                DATE_FORMAT(fecha_nacimiento, '%Y-%m-%d') AS fecha_nacimiento, 
+                id_rol 
+            FROM Usuarios 
+            WHERE id_rol = 4
+        """
+        cursor.execute(query)
+        coordinadores = cursor.fetchall()
+        
+        return jsonify(coordinadores), 200
+        
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+        
+    finally:
+        # Buena práctica: Cerramos cursor y conexión siempre al terminar
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
 
 
 if __name__ == '__main__':
