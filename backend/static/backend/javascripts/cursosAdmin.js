@@ -357,7 +357,7 @@ function eliminarCurso(id, nombre) {
     cursoAEliminar = { id, nombre };
 
     // 2. Mostramos el modal de Bootstrap
-    const modalConfirm = new bootstrap.Modal(document.getElementById('modalConfirmarEliminar'));
+    const modalConfirm = new bootstrap.Modal(document.getElementById('modalConfirmarEliminarCurso'));
     modalConfirm.show();
 }
 
@@ -371,13 +371,13 @@ document.getElementById('btnConfirmarEliminarDoc').addEventListener('click', () 
         .then(res => res.json())
         .then(data => {
             // Cerramos el modal
-            const modalEl = document.getElementById('modalConfirmarEliminar');
+            const modalEl = document.getElementById('modalConfirmarEliminarCurso');
             const modalInstance = bootstrap.Modal.getInstance(modalEl);
             modalInstance.hide();
 
             if (data.success) {
                 cargarCursos();
-                mostrarToast(`El curso "${nombre}" ha sido eliminado`, "danger");
+                mostrarToast(`El curso "${nombre}" ha sido eliminado`, "success");
             } else {
                 mostrarToast(data.error || "No se pudo eliminar", "danger");
             }
