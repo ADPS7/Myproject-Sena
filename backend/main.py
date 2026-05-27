@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template, redirect, session, redirect, url_for
+import datetime
 from flask_cors import CORS
 import mysql.connector
 from mysql.connector import Error
@@ -1928,6 +1929,69 @@ def get_coordinadores():
         if connection and connection.is_connected():
             connection.close()
 
+@app.route('/api/asistencia/detallada/<int:id_modulo>', methods=['GET'])
+def obtener_asistencia_detallada(id_modulo):
+    connection = None
+    cursor = None
+
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        query = """
+            SELECT 
+                u.id_usuario,
+                u.nombres,
+                u.apellidos,
+                a.fecha,
+                a.asistio
+            FROM asistencia a
+            INNER JOIN usuarios u 
+                ON u.id_usuario = a.id_usuario
+            WHERE a.id_modulo = %s
+            ORDER BY u.apellidos ASC, a.fecha DESC
+        """
+
+        cursor.execute(query, (id_modulo,))
+        registros = cursor.fetchall()
+
+        estudiantes_map = {}
+
+        for reg in registros:
+            id_usuario = reg['id_usuario']
+
+            fecha = reg['fecha'].strftime('%Y-%m-%d')
+
+            if id_usuario not in estudiantes_map:
+                estudiantes_map[id_usuario] = {
+                    "id_usuario": id_usuario,
+                    "nombres": reg['nombres'],
+                    "apellidos": reg['apellidos'],
+                    "historial": []
+                }
+
+            estudiantes_map[id_usuario]['historial'].append({
+                "fecha": fecha,
+                "asistio": reg['asistio']
+            })
+
+        return jsonify({
+            "success": True,
+            "asistencias": list(estudiantes_map.values())
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+
+        if connection and connection.is_connected():
+            connection.close()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

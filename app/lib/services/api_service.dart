@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'aut_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.130.230:5000';
+  static const String baseUrl = 'http://10.2.128.132:5000';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,
@@ -757,6 +757,25 @@ class ApiService {
       return {
         "success": false,
         "error": "No se pudo conectar con el servidor: $e",
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> getReporteAsistenciaPorModulo(
+    int idModulo,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '$baseUrl/api/asistencia/detallada/$idModulo',
+        ),
+      );
+
+      return json.decode(response.body);
+    } catch (e) {
+      return {
+        "success": false,
+        "error": e.toString(),
       };
     }
   }
