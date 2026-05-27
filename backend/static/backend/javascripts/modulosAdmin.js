@@ -2,31 +2,32 @@
 // 1. VARIABLES GLOBALES
 // ==========================================
 let todosLosModulos = [];
-let moduloIdParaEliminar = null; // Para gestionar el modal de borrado
+let moduloIdParaEliminar = null; 
+
+let modalAgregar = null;
+let modalEditar = null;
+let modalEliminar = null;
 
 // ==========================================
-// 2. UTILIDADES (Notificaciones Toast)
+// 2. UTILIDADES & LIMPIEZA DE MODALES
 // ==========================================
-function mostrarToast(mensaje, tipo = "primary") {
-    let toastContainer = document.getElementById("toastContainer");
-    if (!toastContainer) {
-        toastContainer = document.createElement("div");
-        toastContainer.id = "toastContainer";
-        toastContainer.className = "toast-container position-fixed bottom-0 end-0 p-3";
-        document.body.appendChild(toastContainer);
-    }
-    const toastEl = document.createElement("div");
-    toastEl.className = `toast align-items-center text-bg-${tipo} border-0`;
-    toastEl.innerHTML = `
-        <div class="d-flex">
-            <div class="toast-body">${mensaje}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>
-    `;
-    toastContainer.appendChild(toastEl);
-    const toast = new bootstrap.Toast(toastEl);
-    toast.show();
-    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+function limpiarModalesALaFuerza() {
+    // Remover clases del body
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+
+    // Remover todos los backdrops
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+        backdrop.style.opacity = '0';
+        setTimeout(() => backdrop.remove(), 300);
+    });
+
+    // Remover posibles modales huérfanos
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+    });
 }
 
 // ==========================================
@@ -43,7 +44,6 @@ function llenarSelectCursos() {
             cursos.forEach(curso => {
                 opciones += `<option value="${curso.id_curso}">${curso.nombre}</option>`;
             });
-
             if (selectAgregar) selectAgregar.innerHTML = opciones;
             if (selectEditar) selectEditar.innerHTML = opciones;
         });
@@ -63,6 +63,7 @@ function cargarModulos() {
 
 function renderizarTabla(lista) {
     const tablaBody = document.getElementById('tabla-modulos-body');
+    if (!tablaBody) return;
     tablaBody.innerHTML = '';
 
     if (lista.length === 0) {
@@ -78,6 +79,7 @@ function renderizarTabla(lista) {
             } catch(e) { return f; }
         };
 
+        // NOTA: Eliminamos onclick="" y usamos clases de control con data-id
         const fila = `
             <tr>
                 <td class="ps-4 fw-bold">${modulo.nombre}</td>
@@ -85,8 +87,8 @@ function renderizarTabla(lista) {
                 <td>${formatear(modulo.fecha_inicio)}</td>
                 <td>${formatear(modulo.fecha_fin)}</td>
                 <td class="text-end pe-4">
-                    <button onclick="prepararEdicion(${modulo.id_modulo})" class="btn btn-sm btn-light border text-primary shadow-sm"><i class="bi bi-pencil"></i></button>
-                    <button onclick="confirmarEliminacion(${modulo.id_modulo})" class="btn btn-sm btn-light border text-danger ms-1 shadow-sm"><i class="bi bi-trash"></i></button>
+                    <button data-id="${modulo.id_modulo}" class="btn-editar-modulo btn btn-sm btn-light border text-primary shadow-sm"><i class="bi bi-pencil"></i></button>
+                    <button data-id="${modulo.id_modulo}" class="btn-eliminar-modulo btn btn-sm btn-light border text-danger ms-1 shadow-sm"><i class="bi bi-trash"></i></button>
                 </td>
             </tr>`;
         tablaBody.innerHTML += fila;
@@ -96,7 +98,7 @@ function renderizarTabla(lista) {
 // ==========================================
 // 4. LÓGICA DE AGREGAR MÓDULO
 // ==========================================
-document.getElementById('formAgregarModulo').addEventListener('submit', function(e) {
+document.getElementById('formAgregarModulo')?.addEventListener('submit', function(e) {
     e.preventDefault();
 
     const datosModulo = {
@@ -119,24 +121,8 @@ document.getElementById('formAgregarModulo').addEventListener('submit', function
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            // 1. Obtener la instancia del modal y ocultarla
-            const modalEl = document.getElementById('modalAgregarModulo');
-            const modalInstance = bootstrap.Modal.getInstance(modalEl);
-            
-            if (modalInstance) {
-                modalInstance.hide();
-            }
-
-            // 2. LIMPIEZA MANUAL DEL BACKDROP (Esto quita la pantalla opaca)
-            const backdrop = document.querySelector('.modal-backdrop');
-            if (backdrop) {
-                backdrop.remove();
-            }
-            document.body.classList.remove('modal-open');
-            document.body.style.overflow = '';
-            document.body.style.paddingRight = '';
-
-            // 3. Limpiar formulario y notificar
+            if (modalAgregar) modalAgregar.hide();
+            limpiarModalesALaFuerza();
             document.getElementById('formAgregarModulo').reset();
             mostrarToast("¡Módulo creado!", "success");
             cargarModulos();
@@ -151,7 +137,7 @@ document.getElementById('formAgregarModulo').addEventListener('submit', function
 // 5. LÓGICA DE EDITAR MÓDULO
 // ==========================================
 function prepararEdicion(id) {
-    const modulo = todosLosModulos.find(m => m.id_modulo === id);
+    const modulo = todosLosModulos.find(m => m.id_modulo === parseInt(id));
 
     if (modulo) {
         document.getElementById('edit_id_modulo').value = modulo.id_modulo;
@@ -163,14 +149,14 @@ function prepararEdicion(id) {
         document.getElementById('edit_fecha_inicio').value = fInicio;
         document.getElementById('edit_fecha_fin').value = fFin;
         
-        const selectCurso = document.getElementById('edit_id_curso_modulo');
-        selectCurso.value = modulo.id_curso; 
+        document.getElementById('edit_id_curso_modulo').value = modulo.id_curso; 
 
-        const modalEdit = new bootstrap.Modal(document.getElementById('modalEditarModulo'));
-        modalEdit.show();
+        if (!modalEditar) modalEditar = new bootstrap.Modal(document.getElementById('modalEditarModulo'));
+        if (modalEditar) modalEditar.show();
     }
 }
-document.getElementById('formEditarModulo').addEventListener('submit', function(e) {
+
+document.getElementById('formEditarModulo')?.addEventListener('submit', function(e) {
     e.preventDefault();
 
     const id = document.getElementById('edit_id_modulo').value;
@@ -181,7 +167,6 @@ document.getElementById('formEditarModulo').addEventListener('submit', function(
         id_curso: document.getElementById('edit_id_curso_modulo').value
     };
 
-    // Validación de fechas
     if (new Date(datos.fecha_inicio) > new Date(datos.fecha_fin)) {
         mostrarToast("La fecha de inicio no puede ser mayor a la de fin", "warning");
         return;
@@ -195,82 +180,64 @@ document.getElementById('formEditarModulo').addEventListener('submit', function(
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            if (data.success) {
-                // 1. Cerrar modal
-                const modalEditEl = document.getElementById('modalEditarModulo');
-                const modalInstance = bootstrap.Modal.getInstance(modalEditEl);
-                if (modalInstance) modalInstance.hide();
-
-                // 2. Limpieza extrema del backdrop y clases de Bootstrap
-                setTimeout(() => {
-                    const backdrop = document.querySelector('.modal-backdrop');
-                    if (backdrop) backdrop.remove();
-                    document.body.classList.remove('modal-open');
-                    document.body.style.overflow = '';
-                    document.body.style.paddingRight = '';
-                }, 100); // Un pequeño retraso para que la animación de Bootstrap termine
-
-                // 3. Notificación azul
-                mostrarToast("¡Módulo actualizado correctamente!", "primary");
-                
-                cargarModulos(); 
-            }
-        } 
+            if (modalEditar) modalEditar.hide();
+            limpiarModalesALaFuerza();
+            mostrarToast("¡Módulo actualizado correctamente!", "primary");
+            cargarModulos(); 
+        } else {
+            mostrarToast(data.error || "Error al actualizar", "danger");
+        }
     })
     .catch(() => mostrarToast("Error de conexión con el servidor", "danger"));
 });
-// ==========================================
-// 6. LÓGICA DE ELIMINAR MÓDULO
-// ==========================================
 
 // ==========================================
-// 6. LÓGICA DE ELIMINAR MÓDULO
+// 6. LÓGICA DE ELIMINAR MÓDULO (VERSIÓN MEJORADA)
 // ==========================================
-function confirmarEliminacion(id) {
-    moduloIdParaEliminar = id;
-    const modalConfirm = new bootstrap.Modal(document.getElementById('modalConfirmarEliminar'));
-    modalConfirm.show();
-}
-
 document.getElementById('btnConfirmarEliminarModulo')?.addEventListener('click', function() {
     if (!moduloIdParaEliminar) return;
 
-    fetch(`/modulos/eliminar/${moduloIdParaEliminar}`, { method: 'DELETE' })
-        .then(res => res.json())
-        .then(data => {
-            // 1. Cerrar modal
-            const modalEl = document.getElementById('modalConfirmarEliminar');
-            const modalInstance = bootstrap.Modal.getInstance(modalEl);
-            if(modalInstance) modalInstance.hide();
+    const btn = this;
+    const textoOriginal = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Eliminando...`;
 
-            // 2. LIMPIEZA MANUAL DE PANTALLA OPACA
-            setTimeout(() => {
-                const backdrop = document.querySelector('.modal-backdrop');
-                if (backdrop) backdrop.remove();
-                document.body.classList.remove('modal-open');
-                document.body.style.overflow = '';
-                document.body.style.paddingRight = '';
-            }, 100);
+    fetch(`/modulos/eliminar/${moduloIdParaEliminar}`, { 
+        method: 'DELETE' 
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (modalEliminar) modalEliminar.hide();
+        
+        // Limpiar backdrop de forma agresiva
+        setTimeout(limpiarModalesALaFuerza, 300);
 
-            // 3. Resultados
-            if (data.success) {
-                mostrarToast("Módulo eliminado correctamente", "danger");
-                cargarModulos();
-            } else {
-                // Aquí te dirá por qué no deja eliminar (tu petición original)
-                mostrarToast(data.error || "No se pudo eliminar", "warning");
-            }
-        })
-        .catch(() => mostrarToast("Error de red", "danger"))
-        .finally(() => {
-            moduloIdParaEliminar = null;
-        });
+        if (data.success) {
+            mostrarToast("Módulo eliminado correctamente", "success");
+            cargarModulos();
+        } else {
+            mostrarToast(data.error || "No se pudo eliminar el módulo", "warning");
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        mostrarToast("Error de conexión al eliminar", "danger");
+    })
+    .finally(() => {
+        // Restaurar botón
+        btn.disabled = false;
+        btn.innerHTML = textoOriginal;
+        moduloIdParaEliminar = null;
+        
+        // Segunda limpieza por seguridad
+        setTimeout(limpiarModalesALaFuerza, 600);
+    });
 });
 
 // ==========================================
 // 7. BUSCADOR E INICIALIZACIÓN
 // ==========================================
-document.getElementById('inputBusqueda').addEventListener('input', function(e) {
+document.getElementById('inputBusqueda')?.addEventListener('input', function(e) {
     const termino = e.target.value.toLowerCase();
     const filtrados = todosLosModulos.filter(modulo => {
         return modulo.nombre.toLowerCase().includes(termino) || 
@@ -279,8 +246,35 @@ document.getElementById('inputBusqueda').addEventListener('input', function(e) {
     renderizarTabla(filtrados);
 });
 
-// EVENTO ÚNICO DE CARGA
+// EVENTO DE CARGA Y DELEGACIÓN DE EVENTOS
 document.addEventListener('DOMContentLoaded', () => {
+    // Inicializar instancias iniciales si los elementos existen
+    const elAgregar = document.getElementById('modalAgregarModulo');
+    const elEditar = document.getElementById('modalEditarModulo');
+    const elEliminar = document.getElementById('modalConfirmarEliminarModulo');
+
+    if (elAgregar) modalAgregar = new bootstrap.Modal(elAgregar);
+    if (elEditar) modalEditar = new bootstrap.Modal(elEditar);
+    if (elEliminar) modalEliminar = new bootstrap.Modal(elEliminar);
+
+    // ESCUCHADOR INTELIGENTE: Detecta clics en los botones dinámicos de la tabla
+    document.getElementById('tabla-modulos-body')?.addEventListener('click', function(e) {
+        // Buscar si el clic fue en el botón de eliminar o dentro de su ícono
+        const botonEliminar = e.target.closest('.btn-eliminar-modulo');
+        const botonEditar = e.target.closest('.btn-editar-modulo');
+
+        if (botonEliminar) {
+            moduloIdParaEliminar = botonEliminar.getAttribute('data-id');
+            if (!modalEliminar) modalEliminar = new bootstrap.Modal(document.getElementById('modalConfirmarEliminarModulo'));
+            if (modalEliminar) modalEliminar.show();
+        }
+
+        if (botonEditar) {
+            const id = botonEditar.getAttribute('data-id');
+            prepararEdicion(id);
+        }
+    });
+
     llenarSelectCursos();
     cargarModulos();
 });

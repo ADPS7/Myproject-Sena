@@ -137,7 +137,7 @@ window.eliminarUsuario = (id, nombre, rol) => {
 
     idUsuarioAEliminar = id;
     document.getElementById('nombreUsuarioEliminar').innerText = nombre;
-    const modalConfirm = new bootstrap.Modal(document.getElementById('modalConfirmarEliminar'));
+    const modalConfirm = new bootstrap.Modal(document.getElementById('modalConfirmarEliminarUsuario'));
     modalConfirm.show();
 };
 
@@ -146,7 +146,7 @@ document.getElementById('btnConfirmarEliminar').addEventListener('click', functi
 
     fetch(`/eliminar_usuario/${idUsuarioAEliminar}`, { method: 'DELETE' })
     .then(res => res.json()).then(r => {
-        bootstrap.Modal.getInstance(document.getElementById('modalConfirmarEliminar')).hide();
+        bootstrap.Modal.getInstance(document.getElementById('modalConfirmarEliminarUsuario')).hide();
         if (r.status === 'success') {
             limpiarBackdrops();
             showToast("Usuario eliminado correctamente", "success");
