@@ -142,6 +142,16 @@ body {
     }
 }
 
+.curso-summary-icon {
+    width: 58px;
+    height: 58px;
+    font-size: 1.35rem;
+}
+
+.min-w-120 {
+    min-width: 120px;
+}
+
 /* User pill */
 .user-pill {
     background: #f8fafc;

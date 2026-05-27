@@ -308,6 +308,47 @@ def get_modulos_estudiante(id_usuario):
     except Exception as e:
         return jsonify({"error": "Error interno del servidor"}), 500
 
+@app.route('/curso/estudiante/<int:id_usuario>', methods=['GET'])
+def get_curso_estudiante(id_usuario):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT
+                c.id_curso,
+                c.nombre AS curso_nombre,
+                COUNT(DISTINCT m.id_modulo) AS total_modulos,
+                GROUP_CONCAT(DISTINCT CONCAT(u.nombres, ' ', u.apellidos) SEPARATOR ', ') AS profesores
+            FROM Alumnos a
+            JOIN Cursos c ON c.id_curso = a.id_curso
+            LEFT JOIN Modulos m ON m.id_curso = c.id_curso
+            LEFT JOIN Profesor p ON p.id_curso = c.id_curso
+            LEFT JOIN Usuarios u ON u.id_usuario = p.id_usuario
+            WHERE a.id_usuario = %s
+            GROUP BY c.id_curso, c.nombre
+        """
+        cursor.execute(query, (id_usuario,))
+        curso = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not curso:
+            return jsonify({"success": False, "message": "No estás inscrito en ningún curso."}), 404
+
+        return jsonify({
+            "success": True,
+            "curso": {
+                "id_curso": curso['id_curso'],
+                "curso_nombre": curso['curso_nombre'],
+                "total_modulos": curso['total_modulos'] or 0,
+                "profesores": curso['profesores'] or 'Sin profesor asignado'
+            }
+        }), 200
+    except Error as e:
+        return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        return jsonify({"error": "Error interno del servidor"}), 500
+
 @app.route('/modulo/<int:id_modulo>/students', methods=['GET'])
 def get_estudiantes_modulo(id_modulo):
     try:
