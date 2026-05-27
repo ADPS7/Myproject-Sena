@@ -18,6 +18,7 @@ function mostrarvistaCursosEstudiante() {
     ocultarVistasEstudiante();
     document.getElementById('mostrarCursosEstudiante').style.display = 'block';
     activarMenuEstudiante('cursos');
+    cargarCursoEstudiante();
 }
 
 function mostrarvistaModulosEstudiante() {
@@ -25,6 +26,90 @@ function mostrarvistaModulosEstudiante() {
     document.getElementById('mostrarModulosEstudiante').style.display = 'block';
     activarMenuEstudiante('modulos');
     cargarModulosEstudiante();
+}
+
+async function cargarCursoEstudiante() {
+    const resumen = document.getElementById('cursoEstudianteResumen');
+    if (!resumen) return;
+
+    resumen.innerHTML = `
+        <div class="card border-0 shadow-lg rounded-4 p-4">
+            <div class="text-center mb-4">
+                <div class="mx-auto rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width:100px; height:100px;">
+                    <i class="bi bi-mortarboard-fill fs-1 text-primary"></i>
+                </div>
+            </div>
+            <div class="text-center mb-4">
+                <small class="text-uppercase text-primary fw-bold" style="letter-spacing: 1px;">Programa de formación</small>
+                <h2 class="fw-bold mt-3 mb-2" id="cursoEstudianteNombre">Cargando...</h2>
+                <p class="text-muted mb-2" id="cursoEstudianteDescripcion">Descripción general del curso.</p>
+                <p class="text-muted small mb-0" id="cursoEstudianteProfesores">Profesor: Cargando...</p>
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-6">
+                    <div class="bg-light rounded-4 p-3 text-center h-100">
+                        <div class="text-primary mb-2"><i class="bi bi-calendar-event-fill fs-5"></i></div>
+                        <small class="text-muted d-block">Periodo</small>
+                        <strong id="cursoEstudiantePeriodo">2026</strong>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="bg-light rounded-4 p-3 text-center h-100">
+                        <div class="text-primary mb-2"><i class="bi bi-check-circle-fill fs-5"></i></div>
+                        <small class="text-muted d-block">Estado</small>
+                        <strong id="cursoEstudianteEstado">Activo</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="row g-3">
+                <div class="col-6">
+                    <div class="bg-primary bg-opacity-10 rounded-4 p-3 text-center">
+                        <small class="text-muted d-block">Módulos totales</small>
+                        <h3 class="fw-bold mb-0" id="cursoEstudianteTotalModulos">0</h3>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="bg-success bg-opacity-10 rounded-4 p-3 text-center">
+                        <small class="text-muted d-block">Módulos completados</small>
+                        <h3 class="fw-bold mb-0" id="cursoEstudianteModulosCompletados">0</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 text-center">
+                <p class="small text-muted mb-0">Si tienes dudas sobre tu inscripción o el contenido, contacta con coordinación académica.</p>
+            </div>
+        </div>
+    `;
+
+    try {
+        const response = await fetch(`/curso/estudiante/${window.USER_ID}`);
+        if (!response.ok) {
+            throw new Error('No se encontró el curso del estudiante');
+        }
+
+        const data = await response.json();
+        if (!data.success || !data.curso) {
+            throw new Error(data.message || 'No hay curso asignado');
+        }
+
+        const curso = data.curso;
+        document.getElementById('cursoEstudianteNombre').textContent = curso.curso_nombre || 'Curso sin nombre';
+        document.getElementById('cursoEstudianteDescripcion').textContent = curso.curso_nombre
+            ? `Curso diseñado para desarrollar tus competencias en ${curso.curso_nombre} y avanzar con ejercicios y módulos prácticos.`
+            : 'Descripción general del curso.';
+        document.getElementById('cursoEstudianteProfesores').textContent = curso.profesores ? `Profesor: ${curso.profesores}` : 'Profesor no asignado';
+        document.getElementById('cursoEstudiantePeriodo').textContent = '2026';
+        document.getElementById('cursoEstudianteEstado').textContent = 'Activo';
+        document.getElementById('cursoEstudianteTotalModulos').textContent = curso.total_modulos || 0;
+        document.getElementById('cursoEstudianteModulosCompletados').textContent = curso.modulos_hechos || 0;
+    } catch (error) {
+        console.error(error);
+        resumen.innerHTML = `
+            <div class="alert alert-warning shadow-sm">
+                No se pudo cargar la información del curso. Recarga la página o intenta más tarde.
+            </div>
+        `;
+    }
 }
 
 function mostrarvistaNotasEstudiante() {
@@ -40,7 +125,7 @@ function mostrarvistaAsistenciaEstudiante() {
 }
 
 async function cargarModulosEstudiante() {
-    const lista = document.getElementById('listaModulosEstudiante');
+    const lista = document.getElementById('cursoEstudianteModulos') || document.getElementById('listaModulosEstudiante');
 
     if (!lista) {
         console.error('No se encontró el contenedor de módulos del estudiante.');
@@ -94,7 +179,12 @@ function formatDate(dateString) {
 }
 
 function renderizarModulosEstudiante(modulos) {
-    const lista = document.getElementById('listaModulosEstudiante');
+    const lista = document.getElementById('cursoEstudianteModulos') || document.getElementById('listaModulosEstudiante');
+
+    if (!lista) {
+        console.error('No se encontró el contenedor de módulos del estudiante.');
+        return;
+    }
 
     if (!modulos || !modulos.length) {
         lista.innerHTML = `
