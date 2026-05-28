@@ -9,8 +9,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchStudentInput = document.getElementById("searchStudentInput");
     const applyAllNotaBtn = document.getElementById("applyAllNotaBtn");
 
-    // 🔹 Cargar cursos desde el backend (usa `id_curso`)
-    fetch("/cursos")
+    // 🔹 Cargar cursos desde el backend (usa `id_curso`) - solo cursos del profesor
+    fetch(`/cursos/profesor/${window.USER_ID}`)
         .then(res => res.json())
         .then(cursos => {
             cursos.forEach(c => {
@@ -19,6 +19,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 option.textContent = c.nombre;
                 cursoSelect.appendChild(option);
             });
+        })
+        .catch(err => {
+            console.error('Error al cargar cursos del profesor:', err);
+            cursoSelect.innerHTML = '<option value="">Error al cargar cursos</option>';
         });
 
     // 🔹 Cargar módulos según curso
