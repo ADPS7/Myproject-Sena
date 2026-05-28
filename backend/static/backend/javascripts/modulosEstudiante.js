@@ -116,6 +116,113 @@ function mostrarvistaNotasEstudiante() {
     ocultarVistasEstudiante();
     document.getElementById('mostrarNotasEstudiante').style.display = 'block';
     activarMenuEstudiante('notas');
+    cargarNotasEstudiante();
+}
+
+async function cargarNotasEstudiante() {
+    const contenedor = document.getElementById('contenedorNotasEstudiante');
+    const cursoLabel = document.getElementById('estudianteNotasCurso');
+
+    if (!contenedor || !cursoLabel) return;
+
+    cursoLabel.textContent = 'Cargando...';
+    contenedor.innerHTML = `
+        <div class="col-12">
+            <div class="card border-0 shadow-sm p-4">
+                <div class="text-center py-5 text-secondary">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="mt-3 mb-0">Cargando tus notas...</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    try {
+        const response = await fetch(`/notas-alumno/${window.USER_ID}`);
+        if (!response.ok) {
+            throw new Error('No se pudieron cargar tus notas.');
+        }
+
+        const data = await response.json();
+        cursoLabel.textContent = data.curso || 'Sin curso asignado';
+        renderizarNotasEstudiante(data);
+    } catch (error) {
+        console.error(error);
+        contenedor.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-danger shadow-sm">
+                    Ocurrió un error al cargar tus notas. Intenta recargar la página.
+                </div>
+            </div>
+        `;
+    }
+}
+
+function calcularPromedioModulo(notas) {
+    if (!Array.isArray(notas) || notas.length === 0) return null;
+    const suma = notas.reduce((acc, nota) => acc + Number(nota.nota || 0), 0);
+    return (suma / notas.length).toFixed(2);
+}
+
+function renderizarNotasEstudiante(data) {
+    const contenedor = document.getElementById('contenedorNotasEstudiante');
+    if (!contenedor) return;
+
+    if (!data || !Array.isArray(data.modulos) || data.modulos.length === 0) {
+        contenedor.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-warning shadow-sm">
+                    No se encontraron notas para tu curso o todavía no se han registrado calificaciones.
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    const tarjetas = data.modulos.map(modulo => {
+        const promedioModulo = calcularPromedioModulo(modulo.notas);
+        const notasHTML = Array.isArray(modulo.notas) && modulo.notas.length
+            ? modulo.notas.map((nota, index) => `
+                <li class="list-group-item d-flex justify-content-between align-items-center py-3 px-0 border-0 border-bottom">
+                    <span>Actividad ${index + 1}</span>
+                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill py-2 px-3">${Number(nota.nota).toFixed(2)}</span>
+                </li>
+              `).join('')
+            : `
+                <div class="alert alert-warning py-3 mb-0 small">
+                    No tienes notas registradas en este módulo.
+                </div>
+              `;
+
+        return `
+            <div class="col-12 col-md-6 col-xl-4 mb-4">
+                <div class="card border-0 shadow-sm notas-card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+                            <div>
+                                <small class="text-uppercase text-primary fw-bold">Módulo</small>
+                                <h5 class="fw-bold mt-2 mb-1">${modulo.nombre || 'Sin nombre'}</h5>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge ${promedioModulo ? 'bg-success text-white' : 'bg-secondary text-white'} rounded-pill py-2 px-3">
+                                    ${promedioModulo ? promedioModulo + ' / 5.0' : 'Sin nota'}
+                                </span>
+                            </div>
+                        </div>
+                        ${Array.isArray(modulo.notas) && modulo.notas.length ? `
+                            <ul class="list-group list-group-flush mb-0 notas-list">
+                                ${notasHTML}
+                            </ul>
+                        ` : notasHTML}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    contenedor.innerHTML = `${tarjetas}`;
 }
 
 function mostrarvistaAsistenciaEstudiante() {
