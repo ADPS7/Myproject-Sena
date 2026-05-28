@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil Administrativo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <style>
+        .avatar-panel {
+            background: linear-gradient(135deg, #198754, #146c43);
+        }
+        .form-label {
+            font-size: 0.875rem;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container py-5">
+    <div class="row g-4">
+        
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-4">
+                <div class="avatar-panel mx-auto mb-3 shadow-sm d-flex align-items-center justify-content-center text-white fw-bold" 
+                     style="width: 110px; height: 110px; font-size: 3rem; border-radius: 50%;" id="avatarLetra">
+                    A
+                </div>
+                <h4 class="fw-bold mb-1 text-dark" id="nombreCompletoAdminVista">Cargando...</h4>
+                <p class="text-muted small mb-3" id="rolAdminVista">ADMINISTRADOR</p>
+                
+                <span id="estadoAdminVista" class="badge rounded-pill px-3 py-2 fs-6 bg-secondary d-inline-block mx-auto">
+                    Estado: Pendiente
+                </span>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h3 class="fw-bold text-dark mb-4">
+                    <i class="bi bi-person-gear me-2 text-success"></i>Configuración del Perfil
+                </h3>
+                
+                <form id="formPerfilAdmin" autocomplete="off">
+                    <input type="hidden" id="id_usuario_admin">
+                    <input type="hidden" id="id_datos_usuario_admin">
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12"><span class="badge bg-success-subtle text-success px-2 py-1 mb-2">Datos de Cuenta</span></div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold">Nombres</label>
+                            <input type="text" class="form-control rounded-3" id="nombres_admin" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold">Apellidos</label>
+                            <input type="text" class="form-control rounded-3" id="apellidos_admin" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold">Correo Electrónico</label>
+                            <input type="email" class="form-control rounded-3" id="correo_admin" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold">Fecha de Nacimiento</label>
+                            <input type="date" class="form-control rounded-3" id="fecha_nacimiento_admin" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold">Cargo / Rol</label>
+                            <input type="text" class="form-control rounded-3 bg-light" id="rol_admin" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold">Sexo</label>
+                            <select class="form-select rounded-3" id="sexo_admin" required>
+                                <option value="" disabled selected>Seleccione...</option>
+                                <option value="M">Masculino</option>
+                                <option value="F">Femenino</option>
+                                <option value="O">Otro</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12"><span class="badge bg-success-subtle text-success px-2 py-1 mb-2">Documento de Identidad</span></div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold">Tipo de Documento</label>
+                            <select class="form-select rounded-3" id="tipo_documento_admin" required>
+                                <option value="" disabled selected>Seleccione...</option>
+                                <option value="DNI">DNI</option>
+                                <option value="Cedula">Cédula de Ciudadanía</option>
+                                <option value="Cedula de Extranjería">Cédula de Extranjería</option>
+                                <option value="Pasaporte">Pasaporte</option>
+                                <option value="Tarjeta de Identidad">Tarjeta de Identidad</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold">Número de Documento</label>
+                            <input type="text" class="form-control rounded-3" id="numero_documento_admin" required>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12"><span class="badge bg-success-subtle text-success px-2 py-1 mb-2">Ubicación y Contacto</span></div>
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary fw-semibold">Departamento</label>
+                            <input type="text" class="form-control rounded-3" id="departamento_admin" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary fw-semibold">Municipio / Ciudad</label>
+                            <input type="text" class="form-control rounded-3" id="municipio_admin" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary fw-semibold">Dirección</label>
+                            <input type="text" class="form-control rounded-3" id="direccion_admin" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold">Teléfono Personal</label>
+                            <input type="tel" class="form-control rounded-3" id="telefono_admin" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold">Contacto de Emergencia</label>
+                            <input type="tel" class="form-control rounded-3" id="telefono_emergencia_admin" required>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12"><span class="badge bg-success-subtle text-success px-2 py-1 mb-2">Otros Datos</span></div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold">Estrato Socioeconómico</label>
+                            <select class="form-select rounded-3" id="estrato_admin" required>
+                                <option value="" disabled selected>Seleccione...</option>
+                                <option value="1">Estrato 1</option>
+                                <option value="2">Estrato 2</option>
+                                <option value="3">Estrato 3</option>
+                                <option value="4">Estrato 4</option>
+                                <option value="5">Estrato 5</option>
+                                <option value="6">Estrato 6</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold">Entidad de Salud (EPS)</label>
+                            <input type="text" class="form-control rounded-3" id="eps_admin" required>
+                        </div>
+                    </div>
+
+                    <div class="border-top pt-4 mt-4">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-7">
+                                <label class="form-label text-secondary fw-semibold">Cambiar Contraseña</label>
+                                <input type="password" class="form-control rounded-3" id="nueva_clave_admin" placeholder="Dejar vacío para mantener la actual">
+                            </div>
+                            <div class="col-md-5">
+                                <button type="button" class="btn btn-success btn-lg w-100 rounded-3 fw-bold shadow-sm" onclick="guardarPerfilweb()">
+                                    <i class="bi bi-cloud-arrow-up-fill me-2"></i>Guardar Cambios
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{url_for('static', filename='backend/javascripts/perfilWeb.js')}}"></script>
+</body>
+</html>
