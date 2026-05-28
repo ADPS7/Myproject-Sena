@@ -142,26 +142,37 @@ body {
     }
 }
 
-.curso-summary-icon {
-    width: 58px;
-    height: 58px;
-    font-size: 1.35rem;
-}
+    .notas-card {
+        border-radius: 22px;
+        overflow: hidden;
+    }
 
-.min-w-120 {
-    min-width: 120px;
-}
+    .notas-card .card-body {
+        padding: 1.5rem;
+    }
 
-/* User pill */
-.user-pill {
-    background: #f8fafc;
-    padding: 8px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    border: 1px solid #e2e8f0;
-}
+    .notas-list {
+        margin-top: 1rem;
+        padding: 1rem;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+
+    .notas-list .list-group-item {
+        background: #ffffff;
+        border-color: #e2e8f0;
+    }
+
+    .notas-list .list-group-item:last-child {
+        border-bottom: none;
+    }
+
+    @media (max-width: 576px) {
+        .notas-card .card-body {
+            padding: 1.2rem;
+        }
+    }
 
 .avatar {
     width: 35px;
