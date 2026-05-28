@@ -2065,15 +2065,16 @@ def obtener_asistencia_detallada(id_modulo):
 
 
 #de aqui
-@app.route('/api/admin/perfil-datos', methods=['GET'])
+@app.route('/api/perfil-datos', methods=['GET'])
 def obtener_datos_perfil():
-    # Simulamos el ID del administrador logueado (por ejemplo, id = 1)
-    # En tu app real usarías: id_usuario = session.get('id_usuario')
-    id_usuario = 1 
+    # 🚨 CAPTURA DINÁMICA: Extrae el ID enviado por el parámetro ?id_usuario= de JS
+    id_usuario = request.args.get('id_usuario')
+    
+    if not id_usuario:
+        return jsonify({"status": "error", "message": "Falta el ID de usuario para la consulta."}), 400
     
     try:
         conexion = get_db_connection()
-        # dictionary=True para que nos devuelva los datos como diccionario clave-valor
         cursor = conexion.cursor(dictionary=True)
         
         query = """
@@ -2096,7 +2097,6 @@ def obtener_datos_perfil():
         conexion.close()
         
         if usuario:
-            # Convertir la fecha de nacimiento a string (YYYY-MM-DD) para que JSON no falle
             if usuario['fecha_nacimiento']:
                 usuario['fecha_nacimiento'] = usuario['fecha_nacimiento'].strftime('%Y-%m-%d')
                 
@@ -2107,22 +2107,24 @@ def obtener_datos_perfil():
     except mysql.connector.Error as err:
         return jsonify({"status": "error", "message": f"Error de Base de Datos: {err}"}), 500
     
-@app.route('/api/admin/perfil-guardar-web', methods=['POST'])
-def guardar_perfil_web():
-    id_usuario_sesion = 1  # Reemplazar por: session.get('id_usuario')
-    
-    if not id_usuario_sesion:
-        return jsonify({"status": "error", "message": "Sesión no válida."}), 401
 
+@app.route('/api/perfil-guardar-web', methods=['POST'])
+def guardar_perfil_web():
     data = request.get_json()
     if not data:
         return jsonify({"status": "error", "message": "No se recibieron datos."}), 400
+
+    # 🚨 CAPTURA DINÁMICA: Obtenemos el ID de sesión enviado desde el JSON de JS
+    id_usuario_sesion = data.get('id_usuario')
+    
+    if not id_usuario_sesion:
+        return jsonify({"status": "error", "message": "Sesión o ID de usuario no válido."}), 401
 
     conexion = get_db_connection()
     cursor = conexion.cursor()
 
     try:
-        # 1. VALIDACIÓN DE SEGURIDAD
+        # 1. VALIDACIÓN DE SEGURIDAD (Mismo bloqueo estricto del documento de identidad)
         cursor.execute("SELECT numero_documento FROM DatosUsuarios WHERE id_usuario = %s", (id_usuario_sesion,))
         registro_previo = cursor.fetchone()
 
@@ -2150,7 +2152,7 @@ def guardar_perfil_web():
         )
         cursor.execute(query_usuario, valores_usuario)
 
-        # Lógica de contraseña
+        # Lógica de contraseña (encriptación limpia con SHA-256 si digita algo)
         nueva_clave = data.get('nueva_clave')
         if nueva_clave and nueva_clave.strip() != "":
             clave_encriptada = hashlib.sha256(nueva_clave.strip().encode('utf-8')).hexdigest()
@@ -2188,7 +2190,7 @@ def guardar_perfil_web():
         
         return jsonify({"status": "success", "message": "Perfil actualizado correctamente."}), 200
 
-    except Error as e:
+    except mysql.connector.Error as e:  # Cambiado a 'mysql.connector.Error' para evitar colisiones de nombres
         conexion.rollback()
         print(f"Error en la base de datos: {e}")
         return jsonify({"status": "error", "message": f"Error interno en la base de datos: {e.msg}"}), 500

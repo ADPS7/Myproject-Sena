@@ -3,10 +3,20 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /**
- * 1. OBTENER INFORMACIÓN DE LA API
+ * 1. OBTENER INFORMACIÓN DE LA API BASADO EN EL ID DE SESIÓN
  */
 function cargarDatosPerfil() {
-    fetch('/api/admin/perfil-datos')
+    // Verificamos que la variable global exista antes de hacer nada
+    if (!window.usuarioAdmin || !window.usuarioAdmin.id_usuario) {
+        console.error("No se detectó la sesión global en window.usuarioAdmin");
+        crearNotificacionNativa('Error Crítico', 'No se pudo identificar la sesión del usuario.', 'error');
+        return;
+    }
+
+    const idUsuarioLogueado = window.usuarioAdmin.id_usuario;
+
+    // Pasamos el ID dinámicamente en la URL para que el backend sepa a quién buscar
+    fetch(`/api/perfil-datos?id_usuario=${idUsuarioLogueado}`)
         .then(response => response.json())
         .then(res => {
             if (res.status === 'success') {
@@ -16,7 +26,7 @@ function cargarDatosPerfil() {
                 const inicial = user.nombres ? user.nombres[0].toUpperCase() : 'A';
                 document.getElementById('avatarLetra').textContent = inicial;
                 document.getElementById('nombreCompletoAdminVista').textContent = `${user.nombres} ${user.apellidos}`;
-                document.getElementById('rolAdminVista').textContent = user.nombre_rol ? user.nombre_rol.toUpperCase() : 'ADMINISTRADOR';
+                document.getElementById('rolAdminVista').textContent = user.nombre_rol ? user.nombre_rol.toUpperCase() : 'USUARIO';
                 
                 // Controlar Badge de Estado
                 const badgeEstado = document.getElementById('estadoAdminVista');
@@ -68,12 +78,7 @@ function cargarDatosPerfil() {
 }
 
 /**
- * 2. ENVIAR ACTUALIZACIONES
- *//**
- * 2. ENVIAR ACTUALIZACIONES (CON VALIDACIÓN ESTRICTA ANTIVACÍOS)
- */
-/**
- * 2. ENVIAR ACTUALIZACIONES (CON VALIDACIÓN ANTIVACÍOS Y LONGITUD DE CONTRASEÑA)
+ * 2. ENVIAR ACTUALIZACIONES INYECTANDO EL ID Y ROL AUTOMÁTICAMENTE
  */
 function guardarPerfilweb() {
     // 1. Capturar todos los elementos del formulario
@@ -130,12 +135,11 @@ function guardarPerfilweb() {
     const estrato = inputs['Estrato Socioeconómico'].value;
     const eps = inputs['Entidad de Salud (EPS)'].value.trim();
     
-    // Capturar y limpiar la nueva contraseña
+    // Capturar contraseña
     const inputClave = document.getElementById('nueva_clave_admin');
     const nueva_clave = inputClave.value; 
 
-    // 4. NUEVA VALIDACIÓN: Control de longitud de la contraseña
-    // Si no está vacía (el usuario escribió algo), validamos que tenga más de 6 caracteres
+    // 4. Control de longitud de la contraseña
     if (nueva_clave.length > 0 && nueva_clave.length <= 6) {
         crearNotificacionNativa(
             'Seguridad de Cuenta', 
@@ -149,25 +153,30 @@ function guardarPerfilweb() {
             inputClave.classList.remove('is-invalid');
             inputClave.removeEventListener('input', quitarErrorClave);
         });
-        return; // Detiene el flujo
+        return;
     }
 
-    // 5. Validación lógica extra: Teléfonos idénticos
+    // 5. Validación: Teléfonos idénticos
     if (telefono === telefono_emergencia) {
         crearNotificacionNativa('Validación', 'El teléfono de emergencia no puede ser el mismo que el personal.', 'warning');
         inputs['Contacto de Emergencia'].focus();
         return;
     }
 
-    // 6. Preparar el Payload si todo está perfecto
+    // 🚨 6. AVERIGUAR ID Y ROL DESDE EL OBJETO GLOBAL PARA EL PAYLOAD
+    const id_usuario = window.usuarioAdmin.id_usuario;
+    const rol_usuario = window.usuarioAdmin.rol; // Guarda si es Admin, Profesor, etc.
+
     const payload = {
+        id_usuario, // Mandamos el ID detectado
+        rol_usuario, // Mandamos el Rol detectado
         nombres, apellidos, correo, fecha_nacimiento, sexo, tipo_documento,
         numero_documento, departamento, municipio, direccion, telefono,
         telefono_emergencia, estrato, eps, nueva_clave
     };
 
-    // 7. Realizar la petición Fetch de guardado
-    fetch('/api/admin/perfil-guardar-web', {
+    // 7. Realizar la petición Fetch apuntando a una ruta global unificada
+    fetch('/api/perfil-guardar-web', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -176,7 +185,7 @@ function guardarPerfilweb() {
     .then(res => {
         if (res.status === 'success') {
             crearNotificacionNativa('¡Hecho!', 'Tu perfil ha sido actualizado con éxito.', 'success');
-            inputClave.value = ''; // Limpiar el input de contraseña tras guardar con éxito
+            inputClave.value = ''; 
             cargarDatosPerfil();
         } else {
             crearNotificacionNativa('Ocurrió un problema', res.message, 'error');
@@ -189,34 +198,30 @@ function guardarPerfilweb() {
 }
 
 /**
- * 3. CONSTRUCTOR DE NOTIFICACIÓN NATIVA (HTML Y CSS PURO SIN DEPENDER DE BOOTSTRAP JS)
+ * 3. CONSTRUCTOR DE NOTIFICACIÓN NATIVA
  */
 function crearNotificacionNativa(titulo, mensaje, tipo = 'success') {
-    // 1. Controlar que exista un contenedor maestro en la pantalla para apilar los mensajes
     let contenedorMaestro = document.getElementById('contenedor-notificaciones-nativas');
     if (!contenedorMaestro) {
         contenedorMaestro = document.createElement('div');
         contenedorMaestro.id = 'contenedor-notificaciones-nativas';
-        // Posicionamiento absoluto en la esquina inferior derecha
         contenedorMaestro.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; max-width: 350px; width: 100%;';
         document.body.appendChild(contenedorMaestro);
     }
 
-    // 2. Definir colores, fondos e iconos usando CSS nativo según el tipo
-    let colorFondo = '#198754'; // Verde éxito
+    let colorFondo = '#198754'; 
     let colorTexto = '#ffffff';
     let icono = '✓';
 
     if (tipo === 'error') {
-        colorFondo = '#dc3545'; // Rojo peligro
+        colorFondo = '#dc3545'; 
         icono = '✕';
     } else if (tipo === 'warning') {
-        colorFondo = '#ffc107'; // Amarillo advertencia
+        colorFondo = '#ffc107'; 
         colorTexto = '#212529';
         icono = '⚠';
     }
 
-    // 3. Crear la estructura de la tarjeta con transiciones y diseño moderno
     const tarjetaAlerta = document.createElement('div');
     tarjetaAlerta.style.cssText = `
         background-color: ${colorFondo};
@@ -233,7 +238,6 @@ function crearNotificacionNativa(titulo, mensaje, tipo = 'success') {
         transform: translateY(20px);
     `;
 
-    // Contenido interno (Icono, título, mensaje y botón de cierre)
     tarjetaAlerta.innerHTML = `
         <div style="font-size: 1.25rem; font-weight: bold; line-height: 1;">${icono}</div>
         <div style="flex-grow: 1;">
@@ -243,25 +247,21 @@ function crearNotificacionNativa(titulo, mensaje, tipo = 'success') {
         <button style="background: none; border: none; color: ${colorTexto}; cursor: pointer; font-size: 1rem; font-weight: bold; opacity: 0.7; padding: 0 4px;" onclick="this.parentElement.remove()">✕</button>
     `;
 
-    // 4. Inyectar al contenedor maestro
     contenedorMaestro.appendChild(tarjetaAlerta);
 
-    // 5. Animación de entrada suave (Fade-in)
     setTimeout(() => {
         tarjetaAlerta.style.opacity = '1';
         tarjetaAlerta.style.transform = 'translateY(0)';
     }, 50);
 
-    // 6. Temporizador para autodestrucción y salida limpia a los 4 segundos
     setTimeout(() => {
         tarjetaAlerta.style.opacity = '0';
         tarjetaAlerta.style.transform = 'scale(0.9)';
         setTimeout(() => {
             tarjetaAlerta.remove();
-            // Si ya no quedan más notificaciones, limpiamos el contenedor maestro de la memoria
             if (contenedorMaestro.childElementCount === 0) {
                 contenedorMaestro.remove();
             }
-        }, 400); // Espera a que termine la animación de salida antes de borrar el HTML
+        }, 400);
     }, 4000);
 }
