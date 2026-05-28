@@ -44,6 +44,7 @@
                 <a onclick="mostrarvistaInicioAdmin()" class="nav-link-item" data-bs-dismiss="offcanvas"><i class="bi bi-house"></i> Inicio</a>
                 <a onclick="mostrarvistaCursosAdmin()" class="nav-link-item" data-bs-dismiss="offcanvas"><i class="bi bi-journal-bookmark"></i> Cursos</a>
                 <a onclick="mostrarvistaModulosAdmin()" class="nav-link-item" data-bs-dismiss="offcanvas"><i class="bi bi-stack"></i> Módulos</a>
+                <a onclick="mostrarvistaPerfilAdmin()" class="nav-link-item" data-bs-dismiss="offcanvas"><i class="bi bi-person-circle"></i> Perfil</a>
                 
                 <small class="text-muted fw-bold mt-3 mb-2">CONTROL</small>
                 <a onclick="mostrarvistaUsuarioAdmin()" class="nav-link-item" data-bs-dismiss="offcanvas"><i class="bi bi-people"></i> Usuarios</a>
@@ -77,7 +78,7 @@
 
                 <!-- Perfil en Escritorio -->
                 <div class="sidebar-footer mt-auto pt-3 border-top">
-                    <div class="d-flex align-items-center mb-3 cursor-pointer" onclick="abrirPerfilAdmin()" style="cursor: pointer;">
+                    <div class="d-flex align-items-center mb-3 cursor-pointer" onclick="mostrarvistaPerfilAdmin()" style="cursor: pointer;">
                     <div class="avatar me-2">{{ user.nombres[0] }}</div>
                     <div class="overflow-hidden">
                     <p class="mb-0 fw-bold small text-truncate">{{ user.nombres }}</p>
@@ -102,7 +103,9 @@
                 <div id="mostrarCursosAdmin" style="display: none;">
                     {% include "view/Admin/cursosAdmin.html" %}
                 </div>
-                {% include "view/Admin/perfilAdmin.html" %}
+                <div id="mostrarPerfilAdmin" style="display: none;">
+                    {% include "view/Admin/perfilAdmin.html" %}
+                </div>
                 <div id="mostrarAsistenciaAdmin" style="display: none;">
                     {% include "view/Admin/asistenciaAdmin.html" %}
                 </div>

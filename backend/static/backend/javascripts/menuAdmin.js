@@ -37,6 +37,30 @@ function mostrarvistaAsistenciaAdmin() {
     asistencia = document.getElementById("mostrarAsistenciaAdmin").style = "display: block;"
 }
 
+function mostrarvistaPerfilAdmin() {
+    inicio = document.getElementById("mostrarInicioAdmin").style = "display: none;"
+    usuario = document.getElementById("mostrarUsuarioAdmin").style = "display: none;"
+    modulo = document.getElementById("mostrarModulosAdmin").style = "display:none;"
+    cursos = document.getElementById("mostrarCursosAdmin").style = "display: none;"
+    asistencia = document.getElementById("mostrarAsistenciaAdmin").style = "display: none;"
+    perfil = document.getElementById("mostrarPerfilAdmin").style = "display: block;"
+    if (typeof cargarPerfilAdmin === 'function') {
+        cargarPerfilAdmin();
+    }
+}
+
+function abrirPerfilAdminYcerrarMenu() {
+    const offcanvasElement = document.getElementById('mobileMenu');
+    const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasElement);
+    if (offcanvas) {
+        offcanvas.hide();
+    }
+
+    setTimeout(() => {
+        mostrarvistaPerfilAdmin();
+    }, 300);
+}
+
 // =========================================================================
 // FUNCIÓN PRINCIPAL: Verifica el estado del perfil campo por campo
 // =========================================================================

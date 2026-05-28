@@ -1,6 +1,19 @@
 // =========================================================================
 // FUNCIÓN PRINCIPAL: Verifica el estado del perfil campo por campo
 // =========================================================================
+function mostrarvistaPerfilEstudiante() {
+    document.getElementById("mostrarInicioEstudiante").style.display = "none";
+    document.getElementById("mostrarCursosEstudiante").style.display = "none";
+    document.getElementById("mostrarModulosEstudiante").style.display = "none";
+    document.getElementById("mostrarNotasEstudiante").style.display = "none";
+    document.getElementById("mostrarAsistenciaEstudiante").style.display = "none";
+    document.getElementById("mostrarPerfilEstudiante").style.display = "block";
+
+    if (typeof cargarPerfilEstudiante === 'function') {
+        cargarPerfilEstudiante();
+    }
+}
+
 function datosPersonales() {
     const idUsuario = window.USER_ID;
 
