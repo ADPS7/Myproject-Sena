@@ -131,7 +131,7 @@
                                 <input type="password" class="form-control rounded-3" id="nueva_clave_admin" placeholder="Dejar en blanco para mantener la actual">
                             </div>
                             <div class="col-md-6">
-                                <button type="button" class="btn btn-success rounded-3 px-5 w-100 py-2 fw-bold" onclick="guardarPerfilAdmin()">
+                                <button type="button" class="btn btn-success rounded-3 px-5 w-100 py-2 fw-bold" onclick="guardarPerfilweb()">
                                     <i class="bi bi-save me-2"></i> Guardar Cambios
                                 </button>
                             </div>
@@ -154,3 +154,5 @@
         </div>
     </div>
 </div>
+
+<script src="{{ url_for('static', filename='backend/javascripts/perfilAdmin.js') }}"></script>

@@ -3,6 +3,7 @@ function mostrarvistaInicioAdmin() {
     modulo = document.getElementById("mostrarModulosAdmin").style = "display:none;"
     usuario = document.getElementById("mostrarUsuarioAdmin").style = "display: none;"
     asistencia = document.getElementById("mostrarAsistenciaAdmin").style = "display: none;"
+    perfil = document.getElementById("mostrarPerfilAdmin").style = "display: none;"
     inicio = document.getElementById("mostrarInicioAdmin").style = "display: block;"
 }
 
@@ -11,6 +12,7 @@ function mostrarvistaUsuarioAdmin() {
     modulo = document.getElementById("mostrarModulosAdmin").style = "display:none;"
     inicio = document.getElementById("mostrarInicioAdmin").style = "display: none;"
     asistencia = document.getElementById("mostrarAsistenciaAdmin").style = "display: none;"
+    perfil = document.getElementById("mostrarPerfilAdmin").style = "display: none;"
     usuario = document.getElementById("mostrarUsuarioAdmin").style = "display: block;"
 }
 
@@ -19,6 +21,7 @@ function mostrarvistaModulosAdmin() {
     asistencia = document.getElementById("mostrarAsistenciaAdmin").style = "display: none;"
     inicio = document.getElementById("mostrarInicioAdmin").style = "display: none;"
     usuario = document.getElementById("mostrarUsuarioAdmin").style = "display: none;"
+    perfil = document.getElementById("mostrarPerfilAdmin").style = "display: none;"
     modulo = document.getElementById("mostrarModulosAdmin").style = "display:block;"
 }
 
@@ -27,6 +30,7 @@ function mostrarvistaCursosAdmin() {
     usuario = document.getElementById("mostrarUsuarioAdmin").style = "display: none;"
     modulo = document.getElementById("mostrarModulosAdmin").style = "display:none;"
     asistencia = document.getElementById("mostrarAsistenciaAdmin").style = "display: none;"
+    perfil = document.getElementById("mostrarPerfilAdmin").style = "display: none;"
     cursos = document.getElementById("mostrarCursosAdmin").style = "display: block;"
 }
 function mostrarvistaAsistenciaAdmin() {
@@ -34,6 +38,7 @@ function mostrarvistaAsistenciaAdmin() {
     usuario = document.getElementById("mostrarUsuarioAdmin").style = "display: none;"
     modulo = document.getElementById("mostrarModulosAdmin").style = "display:none;"
     cursos = document.getElementById("mostrarCursosAdmin").style = "display: none;"
+    perfil = document.getElementById("mostrarPerfilAdmin").style = "display: none;"
     asistencia = document.getElementById("mostrarAsistenciaAdmin").style = "display: block;"
 }
 
