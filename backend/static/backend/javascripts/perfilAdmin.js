@@ -1,150 +1,65 @@
-// perfilAdmin.js - Versión Completa (Toast + Menú Móvil)
+document.addEventListener('DOMContentLoaded', () => {
+    cargarDatosPerfil();
+});
 
+function cargarDatosPerfil() {
+    // Llamamos a la API de Flask que acabamos de crear
+    fetch('/api/admin/perfil-datos')
+        .then(response => response.json())
+        .then(res => {
+            if (res.status === 'success') {
+                const user = res.data;
 
-// ==================== TOAST DINÁMICO ====================
-function crearToastSiNoExiste() {
-    if (document.getElementById('toastNotificacion')) return;
+                // 1. Rellenar Panel Lateral Izquierdo (Vista rápida)
+                const inicial = user.nombres ? user.nombres[0].toUpperCase() : 'A';
+                document.querySelector('.avatar').textContent = inicial;
+                document.getElementById('nombreCompletoAdminVista').textContent = `${user.nombres} ${user.apellidos}`;
+                document.getElementById('rolAdminVista').textContent = user.nombre_rol.toUpperCase();
+                
+                // Controlar el Badge del Estado
+                const badgeEstado = document.getElementById('estadoAdminVista');
+                const estadoActual = user.estado || 'Pendiente';
+                badgeEstado.textContent = `Estado: ${estadoActual}`;
+                
+                // Cambiar colores del badge según estado
+                badgeEstado.className = "badge rounded-pill px-3 py-2 fs-6"; // Reset clases
+                if (estadoActual === 'Activo') badgeEstado.classList.add('bg-success');
+                else if (estadoActual === 'Inactivo') badgeEstado.classList.add('bg-danger');
+                else badgeEstado.classList.add('bg-secondary');
 
-    const toastHTML = `
-        <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
-            <div id="toastNotificacion" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <strong class="me-auto" id="toastTitulo">Notificación</strong>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-                </div>
-                <div class="toast-body" id="toastMensaje"></div>
-            </div>
-        </div>`;
+                // 2. Rellenar Campos Ocultos e Inputs de Cuenta
+                document.getElementById('id_usuario_admin').value = user.id_usuario || '';
+                document.getElementById('id_datos_usuario_admin').value = user.id_datos_usuario || '';
+                document.getElementById('nombres_admin').value = user.nombres || '';
+                document.getElementById('apellidos_admin').value = user.apellidos || '';
+                document.getElementById('correo_admin').value = user.correo || '';
+                document.getElementById('fecha_nacimiento_admin').value = user.fecha_nacimiento || '';
+                document.getElementById('rol_admin').value = user.nombre_rol.toUpperCase();
+                
+                // Select Sexo
+                document.getElementById('sexo_admin').value = user.Sexo || '';
 
-    document.body.insertAdjacentHTML('beforeend', toastHTML);
-}
+                // 3. Documento de Identidad
+                document.getElementById('tipo_documento_admin').value = user.tipo_documento || '';
+                document.getElementById('numero_documento_admin').value = user.numero_documento || '';
 
-let toastElement = null;
+                // 4. Ubicación y Contacto
+                document.getElementById('departamento_admin').value = user.departamento || '';
+                document.getElementById('municipio_admin').value = user.municipio || '';
+                document.getElementById('direccion_admin').value = user.direccion || '';
+                document.getElementById('telefono_admin').value = user.telefono || '';
+                document.getElementById('telefono_emergencia_admin').value = user.telefono_emergencia || '';
 
-function mostrarToast(mensaje, tipo = "success") {
-    crearToastSiNoExiste();
+                // 5. Otros Datos
+                document.getElementById('estrato_admin').value = user.Estrato || '';
+                document.getElementById('eps_admin').value = user.eps || '';
 
-    const toast = document.getElementById('toastNotificacion');
-    const titulo = document.getElementById('toastTitulo');
-    const body = document.getElementById('toastMensaje');
-
-    if (tipo === "success") {
-        titulo.innerHTML = `<i class="bi bi-check-circle-fill text-success me-2"></i>Éxito`;
-        toast.style.backgroundColor = '#198754';
-        toast.style.color = 'white';
-    } else {
-        titulo.innerHTML = `<i class="bi bi-x-circle-fill text-danger me-2"></i>Error`;
-        toast.style.backgroundColor = '#dc3545';
-        toast.style.color = 'white';
-    }
-
-    body.textContent = mensaje;
-
-    if (!toastElement) {
-        toastElement = new bootstrap.Toast(toast, { delay: 3500 });
-    }
-    toastElement.show();
-}
-
-// ==================== FUNCIONES PRINCIPALES ====================
-
-function abrirPerfilAdmin() {
-    const userData = window.usuarioAdmin;
-    if (!userData) {
-        mostrarToast("No se pudieron cargar los datos del usuario", "error");
-        return;
-    }
-
-    let fechaFormateada = userData.fecha_nacimiento;
-    if (fechaFormateada && fechaFormateada.includes("GMT")) {
-        const fecha = new Date(fechaFormateada);
-        fechaFormateada = fecha.toISOString().split('T')[0];
-    }
-
-    document.getElementById('id_usuario').value = userData.id_usuario;
-    document.getElementById('nombres').value = userData.nombres;
-    document.getElementById('apellidos').value = userData.apellidos;
-    document.getElementById('correo').value = userData.correo;
-    document.getElementById('fecha_nacimiento').value = fechaFormateada || "";
-    document.getElementById('rol').value = userData.rol;
-
-    document.getElementById('nombreCompletoModal').textContent = `${userData.nombres} ${userData.apellidos}`;
-    document.getElementById('rolModal').textContent = userData.rol;
-
-    new bootstrap.Modal(document.getElementById('modalPerfilAdmin')).show();
-}
-
-// Función especial para Menú Móvil
-function abrirPerfilAdminYcerrarMenu() {
-    const offcanvasElement = document.getElementById('mobileMenu');
-    const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasElement);
-    
-    if (offcanvas) {
-        offcanvas.hide();
-    }
-
-    setTimeout(() => {
-        abrirPerfilAdmin();
-    }, 350);
-}
-
-function guardarPerfil() {
-    const id_usuario = document.getElementById('id_usuario').value;
-    
-    const data = {
-        nombres: document.getElementById('nombres').value.trim(),
-        apellidos: document.getElementById('apellidos').value.trim(),
-        correo: document.getElementById('correo').value.trim(),
-        fecha_nacimiento: document.getElementById('fecha_nacimiento').value,
-        nueva_clave: document.getElementById('nueva_clave').value.trim()
-    };
-
-    if (!data.nombres || !data.apellidos || !data.correo || !data.fecha_nacimiento) {
-        mostrarToast("Los campos Nombres, Apellidos, Correo y Fecha son obligatorios.", "error");
-        return;
-    }
-
-    if (!data.nueva_clave) delete data.nueva_clave;
-
-    fetch(`/actualizar_perfil/${id_usuario}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    })
-    .then(res => res.json())
-    .then(result => {
-        if (result.success) {
-            window.usuarioAdmin.nombres = data.nombres;
-            window.usuarioAdmin.apellidos = data.apellidos;
-            window.usuarioAdmin.correo = data.correo;
-            window.usuarioAdmin.fecha_nacimiento = data.fecha_nacimiento;
-
-            actualizarTodoElPerfil(data.nombres, data.apellidos);
-
-            mostrarToast("Perfil actualizado correctamente");
-            bootstrap.Modal.getInstance(document.getElementById('modalPerfilAdmin')).hide();
-        } else {
-            mostrarToast(result.error || "No se pudo actualizar el perfil", "error");
-        }
-    })
-    .catch(err => {
-        console.error(err);
-        mostrarToast("Error de conexión con el servidor", "error");
-    });
-}
-
-function actualizarTodoElPerfil(nuevosNombres, nuevosApellidos) {
-    const inicial = nuevosNombres.charAt(0).toUpperCase();
-
-    document.querySelectorAll('.avatar').forEach(avatar => {
-        avatar.textContent = inicial;
-    });
-
-    document.querySelectorAll('p.fw-bold.small, .fw-bold.small').forEach(el => {
-        if (el.textContent && el.textContent.length > 1 && 
-            !el.textContent.includes("Cerrar") && 
-            !el.textContent.includes("Sesión")) {
-            el.textContent = nuevosNombres;
-        }
-    });
+            } else {
+                console.error("Error al obtener datos:", res.message);
+                alert("No se pudieron cargar los datos del perfil.");
+            }
+        })
+        .catch(error => {
+            console.error("Error en la petición Fetch:", error);
+        });
 }

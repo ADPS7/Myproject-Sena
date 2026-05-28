@@ -2063,5 +2063,49 @@ def obtener_asistencia_detallada(id_modulo):
         if connection and connection.is_connected():
             connection.close()
 
+
+#de aqui
+@app.route('/api/admin/perfil-datos', methods=['GET'])
+def obtener_datos_perfil():
+    # Simulamos el ID del administrador logueado (por ejemplo, id = 1)
+    # En tu app real usarías: id_usuario = session.get('id_usuario')
+    id_usuario = 1 
+    
+    try:
+        conexion = get_db_connection()
+        # dictionary=True para que nos devuelva los datos como diccionario clave-valor
+        cursor = conexion.cursor(dictionary=True)
+        
+        query = """
+            SELECT 
+                u.id_usuario, u.nombres, u.apellidos, u.correo, u.fecha_nacimiento,
+                r.nombre AS nombre_rol,
+                d.id_datos_usuario, d.estado, d.direccion, d.departamento, d.municipio, 
+                d.telefono, d.telefono_emergencia, d.tipo_documento, d.numero_documento, 
+                d.Estrato, d.Sexo, d.eps
+            FROM Usuarios u
+            INNER JOIN Roles r ON u.id_rol = r.id_rol
+            LEFT JOIN DatosUsuarios d ON u.id_usuario = d.id_usuario
+            WHERE u.id_usuario = %s
+        """
+        
+        cursor.execute(query, (id_usuario,))
+        usuario = cursor.fetchone()
+        
+        cursor.close()
+        conexion.close()
+        
+        if usuario:
+            # Convertir la fecha de nacimiento a string (YYYY-MM-DD) para que JSON no falle
+            if usuario['fecha_nacimiento']:
+                usuario['fecha_nacimiento'] = usuario['fecha_nacimiento'].strftime('%Y-%m-%d')
+                
+            return jsonify({"status": "success", "data": usuario}), 200
+        else:
+            return jsonify({"status": "error", "message": "Usuario no encontrado."}), 404
+            
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": f"Error de Base de Datos: {err}"}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
