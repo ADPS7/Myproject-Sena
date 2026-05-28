@@ -496,6 +496,7 @@ function renderizarHistorialAsistencia(historial) {
         const ultimos = est.asistencias.slice(0, maxBadges);
         const restantes = Math.max(0, est.asistencias.length - ultimos.length);
         const alerta = est.inasistencias > 3;
+        const presentes = est.asistencias.filter(a => (a.asistio || '').toString().toUpperCase() === 'SI').length;
         // construir badges (limpiando hora si existe y mostrando DD/MM)
         const badgesHtml = (ultimos.length > 0 ? ultimos.map(a => {
             let fechaStr = a.fecha ? String(a.fecha).slice(0,10) : '';
@@ -516,7 +517,7 @@ function renderizarHistorialAsistencia(historial) {
                     <span class="fw-bold ${est.inasistencias > 0 ? 'text-danger' : 'text-muted'}">${est.inasistencias}</span>
                 </td>
                 <td class="text-center">
-                    ${alerta ? '<span class="badge bg-danger">Alerta de Deserción</span>' : '<span class="badge bg-success">Al día</span>'}
+                    <span class="fw-bold ${presentes > 0 ? 'text-success' : 'text-muted'}">${presentes} </span>
                 </td>
                 <td class="ps-4">
                     <div class="d-flex gap-1">
@@ -545,7 +546,7 @@ function renderizarHistorialAsistencia(historial) {
                         <tr>
                             <th class="ps-4">Estudiante</th>
                             <th class="text-center">Total Faltas</th>
-                            <th class="text-center">Estado</th>
+                            <th class="text-center">Total Asistencias</th>
                             <th class="ps-4">Últimos Registros</th>
                         </tr>
                     </thead>
