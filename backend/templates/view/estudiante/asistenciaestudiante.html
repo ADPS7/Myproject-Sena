@@ -1,0 +1,97 @@
+<div class="container-fluid asistencia-container">
+
+    <!-- HEADER -->
+    <div class="attendance-header">
+
+        <span class="attendance-label">
+            REGISTRO DIARIO
+        </span>
+
+        <h1 class="attendance-title">
+            Mis Asistencias
+        </h1>
+
+        <p class="attendance-subtitle">
+            Control de asistencias por módulo
+        </p>
+
+    </div>
+
+    <!-- MODULOS -->
+    <div class="accordion" id="accordionAsistencia">
+
+        <!-- MODULO -->
+        <div class="accordion-item attendance-card">
+
+            <h2 class="accordion-header">
+
+                <button class="accordion-button collapsed attendance-button"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#modulo1">
+
+                    <div class="d-flex align-items-center w-100">
+
+                        <div class="attendance-icon">
+                            <i class="bi bi-calendar-check"></i>
+                        </div>
+
+                        <div class="ms-3">
+
+                            <h5 class="mb-1 fw-bold">
+                                Matemáticas
+                            </h5>
+
+                            <small class="text-muted">
+                                10 registros • 90%
+                            </small>
+
+                        </div>
+
+                    </div>
+
+                </button>
+
+            </h2>
+
+            <div id="modulo1"
+                 class="accordion-collapse collapse"
+                 data-bs-parent="#accordionAsistencia">
+
+                <div class="accordion-body">
+
+                    <!-- ITEM -->
+                    <div class="attendance-item">
+
+                        <div>
+                            <strong>2026-05-20</strong>
+                        </div>
+
+                        <div class="attendance-status success">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+
+                    </div>
+
+                    <!-- ITEM -->
+                    <div class="attendance-item">
+
+                        <div>
+                            <strong>2026-05-19</strong>
+                        </div>
+
+                        <div class="attendance-status fail">
+                            <i class="bi bi-x-circle-fill"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
