@@ -1,3 +1,39 @@
+<style>
+    .form-section {
+        border: 1px solid rgba(108, 117, 125, 0.15);
+        background: #ffffff;
+    }
+    .form-section .section-title {
+        font-size: 0.92rem;
+        letter-spacing: 0.03em;
+    }
+    .form-section .form-help {
+        font-size: 0.82rem;
+        color: #6c757d;
+    }
+    .bg-secondary-soft {
+        background-color: rgba(108, 117, 125, 0.12) !important;
+    }
+    .modal-body-scrollable {
+        max-height: 65vh;
+        overflow-y: auto;
+        padding-right: 0.5rem;
+    }
+    .modal-body-scrollable::-webkit-scrollbar {
+        width: 10px;
+    }
+    .modal-body-scrollable::-webkit-scrollbar-track {
+        background: rgba(108, 117, 125, 0.08);
+        border-radius: 10px;
+    }
+    .modal-body-scrollable::-webkit-scrollbar-thumb {
+        background: rgba(33, 37, 41, 0.25);
+        border-radius: 10px;
+    }
+    .modal-body-scrollable::-webkit-scrollbar-thumb:hover {
+        background: rgba(33, 37, 41, 0.45);
+    }
+</style>
 <div class="container-fluid px-3 py-4">
     <h2 class="fw-bold h4 mb-4">Gestión de Usuarios</h2>
     <div class="row g-3">
@@ -161,49 +197,151 @@
     </div>
 </div>
 
-<!-- Modal: Editar Usuario -->
+<!-- Modal: Editar Usuario (expandido con todos los campos) -->
 <div class="modal fade" id="modalEditarUsuario" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg rounded-4">
             <div class="modal-header bg-dark text-white rounded-top-4">
-                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Editar Usuario</h5>
+                <div>
+                    <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Editar Usuario</h5>
+                    <p class="text-muted small mb-0">Actualiza los datos del usuario para mantener el perfil completo y correcto.</p>
+                </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="formEditarUsuario">
-                <div class="modal-body p-4">
+                <div class="modal-body p-4 modal-body-scrollable">
                     <input type="hidden" id="edit_user_id">
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label small fw-bold text-muted">NOMBRES</label>
-                            <input type="text" id="edit_nombres" class="form-control rounded-3 shadow-sm" required>
+
+                    <div class="mb-4">
+                        <p class="small fw-bold text-muted mb-1"><i class="bi bi-info-circle me-1"></i> DATOS DEL USUARIO</p>
+                        <p class="form-help mb-0">Completa el formulario para actualizar el perfil. Todos los campos son obligatorios.</p>
+                    </div>
+
+                    <div class="form-section rounded-4 p-4 mb-4 shadow-sm">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div class="section-title fw-bold text-uppercase">1. Datos de cuenta</div>
+                            <span class="badge bg-secondary-soft text-secondary">Cuenta</span>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label small fw-bold text-muted">APELLIDOS</label>
-                            <input type="text" id="edit_apellidos" class="form-control rounded-3 shadow-sm" required>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-muted">Nombres</label>
+                                <input type="text" id="edit_nombres" class="form-control rounded-3 shadow-sm" placeholder="Ingresa nombres" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-muted">Apellidos</label>
+                                <input type="text" id="edit_apellidos" class="form-control rounded-3 shadow-sm" placeholder="Ingresa apellidos" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-muted">Correo electrónico</label>
+                                <input type="email" id="edit_correo" class="form-control rounded-3 shadow-sm" placeholder="usuario@ejemplo.com" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-muted">Fecha de nacimiento</label>
+                                <input type="date" id="edit_fecha_nacimiento" class="form-control rounded-3 shadow-sm" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-muted">Rol</label>
+                                <select id="edit_rol" class="form-select rounded-3 shadow-sm" required>
+                                    <option value="" disabled selected>Seleccione rol</option>
+                                    <option value="2">Estudiante</option>
+                                    <option value="3">Profesor</option>
+                                    <option value="4">Coordinador</option>
+                                    <option value="5">Inactivo</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-muted">Sexo</label>
+                                <select id="edit_sexo" class="form-select rounded-3 shadow-sm" required>
+                                    <option value="" disabled selected>Seleccione sexo</option>
+                                    <option value="M">Masculino</option>
+                                    <option value="F">Femenino</option>
+                                    <option value="O">Otro</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">CORREO ELECTRÓNICO</label>
-                        <input type="email" id="edit_correo" class="form-control rounded-3 shadow-sm" required>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label small fw-bold text-muted">FECHA DE NACIMIENTO</label>
-                            <input type="date" id="edit_fecha_nacimiento" class="form-control rounded-3 shadow-sm" required>
+
+                    <div class="form-section rounded-4 p-4 mb-4 shadow-sm">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div class="section-title fw-bold text-uppercase">2. Documento de identidad</div>
+                            <span class="badge bg-secondary-soft text-secondary">Seguridad</span>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label small fw-bold text-muted">ROL</label>
-                            <select id="edit_rol" class="form-select rounded-3 shadow-sm" required>
-                                <option value="2">Estudiante</option>
-                                <option value="3">Profesor</option>
-                                <option value="4">Coordinador</option>
-                            </select>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-muted">Tipo de documento</label>
+                                <select id="edit_tipo_documento" class="form-select rounded-3 shadow-sm" required>
+                                    <option value="" disabled selected>Seleccione tipo</option>
+                                    <option value="DNI">DNI</option>
+                                    <option value="Cedula">Cédula de Ciudadanía</option>
+                                    <option value="Cedula de Extranjería">Cédula de Extranjería</option>
+                                    <option value="Pasaporte">Pasaporte</option>
+                                    <option value="Tarjeta de Identidad">Tarjeta de Identidad</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-muted">Número de documento</label>
+                                <input type="text" id="edit_numero_documento" class="form-control rounded-3 shadow-sm" placeholder="Ingresa número de documento" required>
+                                <p class="form-help mb-0">El documento debe ser único en el sistema.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section rounded-4 p-4 mb-4 shadow-sm">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div class="section-title fw-bold text-uppercase">3. Ubicación y contacto</div>
+                            <span class="badge bg-secondary-soft text-secondary">Contacto</span>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted">Departamento</label>
+                                <input type="text" id="edit_departamento" class="form-control rounded-3 shadow-sm" placeholder="Ej: Antioquia" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted">Municipio / Ciudad</label>
+                                <input type="text" id="edit_municipio" class="form-control rounded-3 shadow-sm" placeholder="Ej: Medellín" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted">Dirección</label>
+                                <input type="text" id="edit_direccion" class="form-control rounded-3 shadow-sm" placeholder="Calle 123 #45-67" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-muted">Teléfono personal</label>
+                                <input type="tel" id="edit_telefono" class="form-control rounded-3 shadow-sm" placeholder="+57 300 123 4567" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-muted">Teléfono de emergencia</label>
+                                <input type="tel" id="edit_telefono_emergencia" class="form-control rounded-3 shadow-sm" placeholder="+57 310 987 6543" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section rounded-4 p-4 shadow-sm">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div class="section-title fw-bold text-uppercase">4. Otros datos</div>
+                            <span class="badge bg-secondary-soft text-secondary">Salud</span>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-muted">Estrato socioeconómico</label>
+                                <select id="edit_estrato" class="form-select rounded-3 shadow-sm" required>
+                                    <option value="" disabled selected>Seleccione estrato</option>
+                                    <option value="1">Estrato 1</option>
+                                    <option value="2">Estrato 2</option>
+                                    <option value="3">Estrato 3</option>
+                                    <option value="4">Estrato 4</option>
+                                    <option value="5">Estrato 5</option>
+                                    <option value="6">Estrato 6</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-muted">Entidad de salud (EPS)</label>
+                                <input type="text" id="edit_eps" class="form-control rounded-3 shadow-sm" placeholder="Ej: Sura" required>
+                                <p class="form-help mb-0">Indica la EPS asociada al usuario.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
+
                 <div class="modal-footer border-0 p-4 pt-0">
                     <button type="button" class="btn btn-light rounded-3 border" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-dark rounded-3 px-4 shadow">Actualizar Datos</button>
@@ -224,7 +362,6 @@
                 <h5 class="fw-bold">¿Estás seguro?</h5>
                 <p class="text-muted small">Esta acción no se puede deshacer. Se eliminará a:</p>
                 <p class="fw-bold mb-4" id="nombreUsuarioEliminar"></p>
-                
                 <div class="d-flex gap-2">
                     <button type="button" class="btn btn-light border rounded-3 w-100" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" id="btnConfirmarEliminar" class="btn btn-danger rounded-3 w-100 shadow-sm">Eliminar</button>
