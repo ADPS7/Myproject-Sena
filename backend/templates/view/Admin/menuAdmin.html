@@ -30,7 +30,7 @@
         <div class="offcanvas-body d-flex flex-column">
             <!-- Perfil en Móvil (Clickable) -->
             <div class="d-flex align-items-center mb-4 p-2 border-bottom" 
-                 onclick="abrirPerfilAdminYcerrarMenu()" 
+                 onclick="mostrarvistaPerfilAdmin()" 
                  style="cursor: pointer;">
                 <div class="avatar me-2">{{ user.nombres[0] }}</div>
                 <div>
@@ -79,10 +79,10 @@
                 <!-- Perfil en Escritorio -->
                 <div class="sidebar-footer mt-auto pt-3 border-top">
                     <div class="d-flex align-items-center mb-3 cursor-pointer" onclick="mostrarvistaPerfilAdmin()" style="cursor: pointer;">
-                    <div class="avatar me-2">{{ user.nombres[0] }}</div>
-                    <div class="overflow-hidden">
-                    <p class="mb-0 fw-bold small text-truncate">{{ user.nombres }}</p>
-                    <span class="text-muted" style="font-size: 0.7rem;">{{ user.rol }}</span>
+                        <div class="avatar me-2">{{ user.nombres[0] }}</div>
+                        <div class="overflow-hidden">
+                        <p class="mb-0 fw-bold small text-truncate">{{ user.nombres }}</p>
+                        <span class="text-muted" style="font-size: 0.7rem;">{{ user.rol }}</span>
                     </div>
                     </div>
                     <a href="/logout" class="btn btn-sm btn-outline-danger w-100">Cerrar Sesión</a>
@@ -104,7 +104,7 @@
                     {% include "view/Admin/cursosAdmin.html" %}
                 </div>
                 <div id="mostrarPerfilAdmin" style="display: none;">
-                    {% include "view/Admin/perfilAdmin.html" %}
+                    {% include "view/perfilWeb.html" %}
                 </div>
                 <div id="mostrarAsistenciaAdmin" style="display: none;">
                     {% include "view/Admin/asistenciaAdmin.html" %}
@@ -131,6 +131,5 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{url_for('static', filename='backend/javascripts/menuAdmin.js')}}"></script>
     <script src="{{url_for('static', filename='backend/javascripts/cursosAdmin.js')}}"></script>
-    <script src="{{ url_for('static', filename='backend/javascripts/perfilAdmin.js') }}"></script>
 </body>
 </html>

@@ -1419,22 +1419,103 @@ def actualizar_usuario(id_usuario):
         datos = request.get_json()
         db = get_db_connection()
         cursor = db.cursor()
-        query = """
-            UPDATE Usuarios 
-            SET nombres = %s, apellidos = %s, correo = %s, fecha_nacimiento = %s, id_rol = %s 
+
+        # 1. Actualizar tabla Usuarios
+        query_usuario = """
+            UPDATE Usuarios
+            SET nombres = %s,
+                apellidos = %s,
+                correo = %s,
+                fecha_nacimiento = %s,
+                id_rol = %s
             WHERE id_usuario = %s
         """
-        valores = (datos['nombres'], datos['apellidos'], datos['correo'], 
-                   datos['fecha_nacimiento'], datos['id_rol'], id_usuario)
-        cursor.execute(query, valores)
+        cursor.execute(query_usuario, (
+            datos.get('nombres'),
+            datos.get('apellidos'),
+            datos.get('correo'),
+            datos.get('fecha_nacimiento'),
+            datos.get('id_rol'),
+            id_usuario
+        ))
+
+        # 2. INSERT o UPDATE en DatosUsuarios
+        cursor.execute(
+            "SELECT id_datos_usuario FROM DatosUsuarios WHERE id_usuario = %s",
+            (id_usuario,)
+        )
+        registro_existente = cursor.fetchone()
+
+        if registro_existente:
+            query_datos = """
+                UPDATE DatosUsuarios
+                SET direccion = %s,
+                    departamento = %s,
+                    municipio = %s,
+                    telefono = %s,
+                    telefono_emergencia = %s,
+                    tipo_documento = %s,
+                    numero_documento = %s,
+                    Estrato = %s,
+                    Sexo = %s,
+                    eps = %s
+                WHERE id_usuario = %s
+            """
+            valores_datos = (
+                datos.get('direccion'),
+                datos.get('departamento'),
+                datos.get('municipio'),
+                datos.get('telefono'),
+                datos.get('telefono_emergencia'),
+                datos.get('tipo_documento'),
+                datos.get('numero_documento'),
+                datos.get('estrato'),
+                datos.get('sexo'),
+                datos.get('eps'),
+                id_usuario
+            )
+        else:
+            query_datos = """
+                INSERT INTO DatosUsuarios
+                    (direccion, departamento, municipio, telefono, telefono_emergencia,
+                     tipo_documento, numero_documento, Estrato, Sexo, eps,
+                     estado, id_usuario)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Pendiente', %s)
+            """
+            valores_datos = (
+                datos.get('direccion'),
+                datos.get('departamento'),
+                datos.get('municipio'),
+                datos.get('telefono'),
+                datos.get('telefono_emergencia'),
+                datos.get('tipo_documento'),
+                datos.get('numero_documento'),
+                datos.get('estrato'),
+                datos.get('sexo'),
+                datos.get('eps'),
+                id_usuario
+            )
+
+        cursor.execute(query_datos, valores_datos)
         db.commit()
+
         return jsonify({"status": "success"})
+
     except Exception as e:
-        if db: db.rollback()
+        if db:
+            db.rollback()
+        if "1062" in str(e):
+            return jsonify({
+                "status": "error",
+                "message": "El número de documento ya está registrado por otro usuario."
+            }), 409
         return jsonify({"status": "error", "message": str(e)}), 500
+
     finally:
-        if cursor: cursor.close()
-        if db: db.close()
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
 
 @app.route('/eliminar_usuario/<int:id_usuario>', methods=['DELETE'])
 def eliminar_usuario(id_usuario):
@@ -1681,7 +1762,7 @@ def obtener_perfil_completo():
         # Esto asegura que si la tabla DatosUsuarios está vacía, igual traiga los Datos de Cuenta
         query = """
             SELECT 
-                u.id_usuario, u.nombres, u.apellidos, u.correo, u.fecha_nacimiento, 
+                u.id_usuario, u.id_rol, u.nombres, u.apellidos, u.correo, u.fecha_nacimiento, 
                 r.nombre AS rol,
                 d.id_datos_usuario, d.estado, d.Sexo, d.tipo_documento, 
                 d.numero_documento, d.departamento, d.municipio, d.direccion, 
@@ -1707,12 +1788,12 @@ def obtener_perfil_completo():
             if not usuario['estado']:
                 usuario['estado'] = 'Pendiente'
                 
-            return jsonify(usuario)
+            return jsonify({"status": "success", "data": usuario}), 200
         else:
-            return jsonify({"error": "Usuario no encontrado en el sistema"}), 404
+            return jsonify({"status": "error", "message": "Usuario no encontrado en el sistema"}), 404
 
     except Exception as err:
-        return jsonify({"error": f"Error en el servidor o base de datos: {str(err)}"}), 500
+        return jsonify({"status": "error", "message": f"Error en el servidor o base de datos: {str(err)}"}), 500
 
 # 2. RUTA PARA GUARDAR LOS DATOS ACTUALIZADOS
 @app.route('/guardar_datos_perfil', methods=['POST'])
@@ -2062,6 +2143,143 @@ def obtener_asistencia_detallada(id_modulo):
 
         if connection and connection.is_connected():
             connection.close()
+
+
+#de aqui
+@app.route('/api/perfil-datos', methods=['GET'])
+def obtener_datos_perfil():
+    # 🚨 CAPTURA DINÁMICA: Extrae el ID enviado por el parámetro ?id_usuario= de JS
+    id_usuario = request.args.get('id_usuario')
+    
+    if not id_usuario:
+        return jsonify({"status": "error", "message": "Falta el ID de usuario para la consulta."}), 400
+    
+    try:
+        conexion = get_db_connection()
+        cursor = conexion.cursor(dictionary=True)
+        
+        query = """
+            SELECT 
+                u.id_usuario, u.nombres, u.apellidos, u.correo, u.fecha_nacimiento,
+                r.nombre AS nombre_rol,
+                d.id_datos_usuario, d.estado, d.direccion, d.departamento, d.municipio, 
+                d.telefono, d.telefono_emergencia, d.tipo_documento, d.numero_documento, 
+                d.Estrato, d.Sexo, d.eps
+            FROM Usuarios u
+            INNER JOIN Roles r ON u.id_rol = r.id_rol
+            LEFT JOIN DatosUsuarios d ON u.id_usuario = d.id_usuario
+            WHERE u.id_usuario = %s
+        """
+        
+        cursor.execute(query, (id_usuario,))
+        usuario = cursor.fetchone()
+        
+        cursor.close()
+        conexion.close()
+        
+        if usuario:
+            if usuario['fecha_nacimiento']:
+                usuario['fecha_nacimiento'] = usuario['fecha_nacimiento'].strftime('%Y-%m-%d')
+                
+            return jsonify({"status": "success", "data": usuario}), 200
+        else:
+            return jsonify({"status": "error", "message": "Usuario no encontrado."}), 404
+            
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "message": f"Error de Base de Datos: {err}"}), 500
+    
+
+@app.route('/api/perfil-guardar-web', methods=['POST'])
+def guardar_perfil_web():
+    data = request.get_json()
+    if not data:
+        return jsonify({"status": "error", "message": "No se recibieron datos."}), 400
+
+    # 🚨 CAPTURA DINÁMICA: Obtenemos el ID de sesión enviado desde el JSON de JS
+    id_usuario_sesion = data.get('id_usuario')
+    
+    if not id_usuario_sesion:
+        return jsonify({"status": "error", "message": "Sesión o ID de usuario no válido."}), 401
+
+    conexion = get_db_connection()
+    cursor = conexion.cursor()
+
+    try:
+        # 1. VALIDACIÓN DE SEGURIDAD (Mismo bloqueo estricto del documento de identidad)
+        cursor.execute("SELECT numero_documento FROM DatosUsuarios WHERE id_usuario = %s", (id_usuario_sesion,))
+        registro_previo = cursor.fetchone()
+
+        if registro_previo and registro_previo[0] is not None:
+            documento_actual_bd = str(registro_previo[0]).strip()
+            documento_recibido_frontend = str(data.get('numero_documento')).strip()
+            
+            if documento_actual_bd != documento_recibido_frontend:
+                cursor.close()
+                conexion.close()
+                return jsonify({
+                    "status": "error", 
+                    "message": "Por motivos de seguridad, no está permitido modificar el número de documento de identidad."
+                }), 400
+
+        # 2. ACTUALIZAR TABLA `Usuarios`
+        query_usuario = """
+            UPDATE Usuarios 
+            SET nombres = %s, apellidos = %s, correo = %s, fecha_nacimiento = %s 
+            WHERE id_usuario = %s
+        """
+        valores_usuario = (
+            data.get('nombres'), data.get('apellidos'), 
+            data.get('correo'), data.get('fecha_nacimiento'), id_usuario_sesion
+        )
+        cursor.execute(query_usuario, valores_usuario)
+
+        # Lógica de contraseña (encriptación limpia con SHA-256 si digita algo)
+        nueva_clave = data.get('nueva_clave')
+        if nueva_clave and nueva_clave.strip() != "":
+            clave_encriptada = hashlib.sha256(nueva_clave.strip().encode('utf-8')).hexdigest()
+            cursor.execute("UPDATE Usuarios SET clave = %s WHERE id_usuario = %s", (clave_encriptada, id_usuario_sesion))
+
+        # 3. PROCESAR TABLA `DatosUsuarios`
+        if registro_previo:
+            query_datos = """
+                UPDATE DatosUsuarios 
+                SET direccion = %s, departamento = %s, municipio = %s, telefono = %s, 
+                    telefono_emergencia = %s, tipo_documento = %s, Estrato = %s, Sexo = %s, eps = %s
+                WHERE id_usuario = %s
+            """
+            valores_datos = (
+                data.get('direccion'), data.get('departamento'), data.get('municipio'),
+                data.get('telefono'), data.get('telefono_emergencia'), data.get('tipo_documento'),
+                data.get('estrato'), data.get('sexo'), data.get('eps'), id_usuario_sesion
+            )
+        else:
+            query_datos = """
+                INSERT INTO DatosUsuarios 
+                (estado, direccion, departamento, municipio, telefono, telefono_emergencia, 
+                 tipo_documento, numero_documento, Estrato, Sexo, eps, id_usuario)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            valores_datos = (
+                'Activo', data.get('direccion'), data.get('departamento'), data.get('municipio'),
+                data.get('telefono'), data.get('telefono_emergencia'), data.get('tipo_documento'),
+                data.get('numero_documento'), data.get('estrato'), data.get('sexo'),
+                data.get('eps'), id_usuario_sesion
+            )
+
+        cursor.execute(query_datos, valores_datos)
+        conexion.commit()
+        
+        return jsonify({"status": "success", "message": "Perfil actualizado correctamente."}), 200
+
+    except mysql.connector.Error as e:  # Cambiado a 'mysql.connector.Error' para evitar colisiones de nombres
+        conexion.rollback()
+        print(f"Error en la base de datos: {e}")
+        return jsonify({"status": "error", "message": f"Error interno en la base de datos: {e.msg}"}), 500
+        
+    finally:
+        cursor.close()
+        conexion.close()
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
