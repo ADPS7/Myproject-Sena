@@ -17,7 +17,7 @@ class AttendanceScreen extends StatelessWidget {
     if (userId == null) throw Exception('Usuario no encontrado');
 
     final response = await http.get(
-      Uri.parse('http://10.2.129.7:5000/asistencias/$userId'),
+      Uri.parse('http://10.2.128.218:5000/asistencias/$userId'),
       headers: {'Content-Type': 'application/json'},
     );
 
