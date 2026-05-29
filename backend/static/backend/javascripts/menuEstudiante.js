@@ -9,9 +9,7 @@ function mostrarvistaPerfilEstudiante() {
     document.getElementById("mostrarAsistenciaEstudiante").style.display = "none";
     document.getElementById("mostrarPerfilEstudiante").style.display = "block";
 
-    if (typeof cargarPerfilEstudiante === 'function') {
-        cargarPerfilEstudiante();
-    }
+    
 }
 
 function datosPersonales() {
