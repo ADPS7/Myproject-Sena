@@ -1,0 +1,81 @@
+/* =========================================
+   ASISTENCIA ESTUDIANTE
+========================================= */
+
+.asistencia-container{
+    padding: 20px;
+}
+
+.attendance-header{
+    margin-bottom: 30px;
+}
+
+.attendance-label{
+    color: #7C4DFF;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.attendance-title{
+    font-size: 2rem;
+    font-weight: 800;
+    color: #1A202C;
+    margin-top: 5px;
+}
+
+.attendance-subtitle{
+    color: #64748B;
+    margin-top: 8px;
+}
+
+.attendance-card{
+    border: none !important;
+    border-radius: 20px !important;
+    overflow: hidden;
+    margin-bottom: 18px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.attendance-button{
+    background: white !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 20px !important;
+}
+
+.attendance-icon{
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    background: rgba(124, 77, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7C4DFF;
+    font-size: 1.2rem;
+}
+
+.attendance-item{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid #F1F5F9;
+}
+
+.attendance-item:last-child{
+    border-bottom: none;
+}
+
+.attendance-status{
+    font-size: 1.3rem;
+}
+
+.attendance-status.success{
+    color: #10B981;
+}
+
+.attendance-status.fail{
+    color: #EF4444;
+}

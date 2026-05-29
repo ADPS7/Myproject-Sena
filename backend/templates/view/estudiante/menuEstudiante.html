@@ -99,13 +99,9 @@
                     {% include "view/estudiante/notasEstudiante.html" %}
                 </div>
                 <div id="mostrarAsistenciaEstudiante" class="estudiante-view" style="display:none;">
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="alert alert-info shadow-sm">
-                                La vista de asistencia del estudiante aún no está activada en esta página.
-                            </div>
-                        </div>
-                    </div>
+    
+                    {% include "view/estudiante/asistenciaEstudiante.html" %}
+
                 </div>
             </main>
         </div>
@@ -127,5 +123,6 @@
     <script src="{{ url_for('static', filename='backend/javascripts/menuEstudiante.js') }}"></script>
     <script src="{{ url_for('static', filename='backend/javascripts/modulosEstudiante.js') }}"></script>
     <script src="{{ url_for('static', filename='backend/javascripts/perfilEstudiante.js') }}"></script>
+    <script src="{{ url_for('static', filename='backend/javascripts/asistenciaEstudiante.js') }}"></script>
 </body>
 </html>

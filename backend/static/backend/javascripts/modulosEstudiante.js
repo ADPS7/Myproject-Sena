@@ -229,6 +229,9 @@ function mostrarvistaAsistenciaEstudiante() {
     ocultarVistasEstudiante();
     document.getElementById('mostrarAsistenciaEstudiante').style.display = 'block';
     activarMenuEstudiante('asistencia');
+    if (typeof cargarAsistenciasEstudiante === 'function') {
+        cargarAsistenciasEstudiante();
+    }
 }
 
 async function cargarModulosEstudiante() {

@@ -1,3 +1,4 @@
+
 // =========================================================================
 // FUNCIÓN PRINCIPAL: Verifica el estado del perfil campo por campo
 // =========================================================================
@@ -67,3 +68,22 @@ function datosPersonales() {
 
 // Inicialización automática del análisis tan pronto se renderiza el módulo en el cliente
 datosPersonales();
+
+function ocultarTodasLasVistas(){
+
+    document.querySelectorAll('.estudiante-view')
+    .forEach(vista => {
+        vista.style.display = 'none';
+    });
+
+}
+
+function mostrarvistaAsistenciaEstudiante(){
+
+    ocultarTodasLasVistas();
+
+    document.getElementById(
+        'mostrarAsistenciaEstudiante'
+    ).style.display = 'block';
+
+}
