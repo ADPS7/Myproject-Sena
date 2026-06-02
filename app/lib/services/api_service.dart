@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'aut_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.1.61:5000';
+  static const String baseUrl = 'http://10.2.131.65:5000';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,
@@ -114,12 +114,16 @@ class ApiService {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return {'success': true};
+        return {
+          'success': true,
+          'message': 'Asistencia guardada correctamente',
+        };
       } else {
         final errorBody = json.decode(response.body);
         return {
           'success': false,
-          'error': errorBody['detail'] ?? 'Error al guardar',
+          'error':
+              errorBody['error'] ?? 'Error desconocido al guardar asistencia',
         };
       }
     } catch (e) {
@@ -766,17 +770,12 @@ class ApiService {
   ) async {
     try {
       final response = await http.get(
-        Uri.parse(
-          '$baseUrl/api/asistencia/detallada/$idModulo',
-        ),
+        Uri.parse('$baseUrl/api/asistencia/detallada/$idModulo'),
       );
 
       return json.decode(response.body);
     } catch (e) {
-      return {
-        "success": false,
-        "error": e.toString(),
-      };
+      return {"success": false, "error": e.toString()};
     }
   }
 }
