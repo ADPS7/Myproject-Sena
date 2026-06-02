@@ -1,82 +1,84 @@
+// =========================================================================
+// 1. FUNCIÓN: CONSULTA DE ASISTENCIAS INDIVIDUALES POR MÓDULO (Estructura de Tabla)
+// =========================================================================
 async function verAsistencia(idModulo, nombreModulo){
-
-    document.getElementById("tituloModulo").innerHTML =
-        `Asistencias - ${nombreModulo}`;
-
+    const seccionTabla = document.getElementById("seccionTablaModulo");
+    const titulo = document.getElementById("tituloModulo");
     const tabla = document.getElementById("tablaAsistencia");
 
-    tabla.innerHTML = `
-        <tr>
-            <td colspan="3" class="text-center">
-                Cargando...
-            </td>
-        </tr>
-    `;
+    if (seccionTabla) seccionTabla.classList.remove('d-none');
+    if (titulo) titulo.innerHTML = `Asistencias - ${nombreModulo}`;
+
+    if (tabla) {
+        tabla.innerHTML = `
+            <tr>
+                <td colspan="3" class="text-center py-4 text-muted">
+                    <div class="spinner-border spinner-border-sm text-secondary me-2" role="status"></div>
+                    Consultando registros de módulo...
+                </td>
+            </tr>
+        `;
+    }
 
     try{
-
         const response = await fetch(`/asistencia/modulo/${idModulo}`);
-
         const data = await response.json();
 
-        if(data.length === 0){
+        if(!tabla) return;
 
+        if(data.length === 0){
             tabla.innerHTML = `
                 <tr>
-                    <td colspan="3" class="text-center text-muted">
-                        No hay asistencias registradas
+                    <td colspan="3" class="text-center text-muted py-4">
+                        No hay asistencias registradas para este módulo.
                     </td>
                 </tr>
             `;
-
             return;
         }
 
         tabla.innerHTML = "";
 
         data.forEach(asistencia => {
-
-            const estadoClase =
-                asistencia.estado === "FALTA"
-                ? "estado-falta"
-                : "estado-asistio";
+            // Mapeo estricto del campo ENUM('SI','NO') de tu base de datos SQL
+            const estadoAsistencia = String(asistencia.asistio).toUpperCase();
+            
+            const estadoClase = estadoAsistencia === "SI" ? "estado-asistio" : "estado-falta";
+            const textoEstado = estadoAsistencia === "SI" ? "ASISTIÓ" : "INASISTENCIA";
+            const fechaLimpia = asistencia.fecha ? asistencia.fecha.split('T')[0] : 'Fecha no disponible';
 
             tabla.innerHTML += `
                 <tr>
-
-                    <td>${asistencia.fecha}</td>
-
+                    <td class="fw-medium text-secondary py-3">${fechaLimpia}</td>
                     <td>
                         <span class="${estadoClase}">
-                            ${asistencia.estado}
+                            ${textoEstado}
                         </span>
                     </td>
-
-                    <td>
+                    <td class="text-muted fs-7">
                         ${asistencia.observacion || '-'}
                     </td>
-
                 </tr>
             `;
-
         });
 
     }catch(error){
-
-        tabla.innerHTML = `
-            <tr>
-                <td colspan="3" class="text-danger text-center">
-                    Error al cargar asistencias
-                </td>
-            </tr>
-        `;
-
-        console.error(error);
-
+        if (tabla) {
+            tabla.innerHTML = `
+                <tr>
+                    <td colspan="3" class="text-danger text-center py-4">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> Error al cargar las asistencias.
+                    </td>
+                </tr>
+            `;
+        }
+        console.error("Fallo en la consulta por módulo:", error);
     }
-
 }
 
+// =========================================================================
+// 2. FUNCIÓN: VISTA GENERAL POR MÓDULO DEL ESTUDIANTE (Estructura de Acordeón)
+// ===========================================
 async function cargarAsistenciasEstudiante() {
     const contenedor = document.getElementById('accordionAsistencia');
     const placeholder = document.getElementById('asistenciaCargandoPlaceholder');
@@ -128,15 +130,40 @@ async function cargarAsistenciasEstudiante() {
             const asistenciasSi = registros.filter(r => String(r.asistio).toUpperCase() === 'SI').length;
             const porcentaje = total ? Math.round((asistenciasSi / total) * 100) : 0;
             const collapseId = `modulo${index + 1}`;
+            
             const itemsHTML = registros.map(registro => {
                 const asistio = String(registro.asistio).toUpperCase();
                 const estadoClase = asistio === 'SI' ? 'success' : 'fail';
                 const icono = asistio === 'SI' ? 'bi-check-circle-fill' : 'bi-x-circle-fill';
-                const fecha = registro.fecha ? registro.fecha.split('T')[0] : 'Fecha no disponible';
+                
+                // === CONTROL Y FORMATEO SEGURO DE FECHAS ===
+                let fechaFormateada = 'Fecha no disponible';
+                if (registro.fecha) {
+                    try {
+                        // Si viene como formato de base de datos o estampa GMT, creamos un objeto Date
+                        const d = new Date(registro.fecha);
+                        // Validamos si la conversión fue exitosa para evitar el 'Invalid Date'
+                        if (!isNaN(d.getTime())) {
+                            const año = d.getFullYear();
+                            // El mes inicia en 0, por eso sumamos 1 y rellenamos con cero a la izquierda si es necesario
+                            const mes = String(d.getMonth() + 1).padStart(2, '0');
+                            const dia = String(d.getDate()).padStart(2, '0');
+                            fechaFormateada = `${año}-${mes}-${dia}`;
+                        } else {
+                            // Si falla la conversión del objeto Date, intentamos limpiar el String directo por espacios o la letra T
+                            fechaFormateada = registro.fecha.includes('T') 
+                                ? registro.fecha.split('T')[0] 
+                                : registro.fecha.split(' 00:')[0];
+                        }
+                    } catch (e) {
+                        fechaFormateada = 'Fecha no disponible';
+                    }
+                }
+
                 return `
-                    <div class="attendance-item">
+                    <div class="attendance-item d-flex justify-content-between align-items-center py-2 px-3 border-bottom">
                         <div>
-                            <strong>${fecha}</strong>
+                            <strong>${fechaFormateada}</strong>
                         </div>
                         <div class="attendance-status ${estadoClase}">
                             <i class="bi ${icono}"></i>
@@ -146,22 +173,22 @@ async function cargarAsistenciasEstudiante() {
             }).join('');
 
             return `
-                <div class="accordion-item attendance-card">
+                <div class="accordion-item attendance-card mb-3 border rounded-3 overflow-hidden bg-white shadow-sm">
                     <h2 class="accordion-header">
-                        <button class="accordion-button collapsed attendance-button" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}">
+                        <button class="accordion-button collapsed attendance-button bg-white text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}">
                             <div class="d-flex align-items-center w-100">
-                                <div class="attendance-icon">
+                                <div class="attendance-icon p-2 bg-light rounded border text-muted me-3">
                                     <i class="bi bi-calendar-check"></i>
                                 </div>
-                                <div class="ms-3">
-                                    <h5 class="mb-1 fw-bold">${nombre}</h5>
-                                    <small class="text-muted">${total} registros • ${porcentaje}%</small>
+                                <div class="ms-1">
+                                    <h5 class="mb-1 fw-bold fs-6">${nombre}</h5>
+                                    <small class="text-muted">${total} clases registradas • ${porcentaje}% de asistencia</small>
                                 </div>
                             </div>
                         </button>
                     </h2>
                     <div id="${collapseId}" class="accordion-collapse collapse" data-bs-parent="#accordionAsistencia">
-                        <div class="accordion-body">
+                        <div class="accordion-body p-0 bg-light">
                             ${itemsHTML}
                         </div>
                     </div>
@@ -180,3 +207,7 @@ async function cargarAsistenciasEstudiante() {
         console.error(error);
     }
 }
+// Inicialización automática al cargar el archivo de scripts
+document.addEventListener("DOMContentLoaded", () => {
+    cargarAsistenciasEstudiante();
+});

@@ -1,81 +1,91 @@
-/* =========================================
-   ASISTENCIA ESTUDIANTE
-========================================= */
-
-.asistencia-container{
-    padding: 20px;
-}
-
-.attendance-header{
-    margin-bottom: 30px;
-}
-
-.attendance-label{
-    color: #7C4DFF;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-
-.attendance-title{
-    font-size: 2rem;
-    font-weight: 800;
-    color: #1A202C;
-    margin-top: 5px;
-}
-
-.attendance-subtitle{
-    color: #64748B;
-    margin-top: 8px;
-}
-
-.attendance-card{
-    border: none !important;
-    border-radius: 20px !important;
+/* =========================================================================
+   ESTILOS PREMIUM PARA CONTENEDORES Y ACORDEONES
+   ========================================================================= */
+.attendance-card {
+    background-color: #ffffff !important;
+    border: 1px solid #e3e6f0 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 .125rem .25rem rgba(0,0,0,.04) !important;
     overflow: hidden;
-    margin-bottom: 18px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 
-.attendance-button{
-    background: white !important;
-    border: none !important;
+.attendance-card .accordion-button {
+    background-color: #ffffff !important;
+    color: #333333 !important;
     box-shadow: none !important;
-    padding: 20px !important;
+    border: none !important;
 }
 
-.attendance-icon{
-    width: 50px;
-    height: 50px;
-    border-radius: 14px;
-    background: rgba(124, 77, 255, 0.1);
+.attendance-card .accordion-button:not(.collapsed) {
+    border-bottom: 1px solid #edeef2 !important;
+}
+
+/* Caja del icono descriptivo del módulo */
+.attendance-icon {
+    width: 44px;
+    height: 44px;
+    background-color: #f8f9fa;
+    color: #6c757d;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #7C4DFF;
-    font-size: 1.2rem;
+    border: 1px solid #edeef2;
 }
 
-.attendance-item{
+/* Divisor interno de las filas del acordeón desplegado */
+.attendance-item:last-child {
+    border-bottom: none !important;
+}
+
+/* =========================================================================
+   SISTEMA DE COLORES REACITVO (VERDE PARA ASISTIÓ / ROJO PARA FALTA)
+   ========================================================================= */
+
+/* Elementos circulares del listado tipo Acordeón */
+.attendance-status.success {
+    color: #198754 !important; /* Verde Semáforo */
+    background-color: #e8f5e9 !important;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 14px 0;
-    border-bottom: 1px solid #F1F5F9;
+    justify-content: center;
+    font-size: 1.15rem;
 }
 
-.attendance-item:last-child{
-    border-bottom: none;
+.attendance-status.fail {
+    color: #dc3545 !important; /* Rojo Alerta */
+    background-color: #ffebee !important;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
 }
 
-.attendance-status{
-    font-size: 1.3rem;
+/* Badges planos con texto para el diseño en Tablas */
+.estado-asistio {
+    background-color: #d1e7dd !important;
+    color: #0f5132 !important;
+    padding: 0.35rem 0.8rem;
+    border-radius: 50rem;
+    font-weight: 600;
+    font-size: 0.8rem;
+    display: inline-block;
+    letter-spacing: 0.3px;
 }
 
-.attendance-status.success{
-    color: #10B981;
-}
-
-.attendance-status.fail{
-    color: #EF4444;
+.estado-falta {
+    background-color: #f8d7da !important;
+    color: #842029 !important;
+    padding: 0.35rem 0.8rem;
+    border-radius: 50rem;
+    font-weight: 600;
+    font-size: 0.8rem;
+    display: inline-block;
+    letter-spacing: 0.3px;
 }
