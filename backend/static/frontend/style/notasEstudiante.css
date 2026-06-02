@@ -1,0 +1,51 @@
+/* --- 1. RESTAURAR Y MEJORAR LA TARJETA PRINCIPAL (EL CONTENEDOR BLANCO) --- */
+#contenedorNotasEstudiante .card {
+    background-color: #ffffff !important;
+    border: none !important;
+    border-radius: 16px !important; /* Esquinas redondeadas modernas */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important; /* Sombra muy sutil para dar relieve */
+    padding: 1.5rem !important; /* Espacio interno para que no asfixie el contenido */
+    margin-bottom: 24px !important; /* Separación si hay tarjetas una debajo de otra */
+}
+
+/* --- 2. ELIMINAR BORDES RESIDUALES INTERNOS --- */
+/* Esto elimina las líneas feas grises del HTML antiguo sin romper la tarjeta blanca */
+#contenedorNotasEstudiante div[class*="border"]:not(.card),
+#contenedorNotasEstudiante .border:not(.card),
+#contenedorNotasEstudiante .border-top,
+#contenedorNotasEstudiante .border-bottom,
+#contenedorNotasEstudiante ul,
+#contenedorNotasEstudiante table {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+/* --- 3. DISEÑO MODERNO Y SEPARADO DE LAS ACTIVIDADES --- */
+#contenedorNotasEstudiante .d-flex.justify-content-between.align-items-center {
+    border-radius: 10px !important;
+    padding: 14px 18px !important;
+    margin-bottom: 12px !important; /* Separación entre cada actividad */
+    border: none !important;
+}
+
+/* Evita margen extra en la última actividad */
+#contenedorNotasEstudiante .d-flex.justify-content-between.align-items-center:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Colores alternados sutiles para las filas de actividades */
+#contenedorNotasEstudiante .d-flex.justify-content-between.align-items-center:nth-child(odd) {
+    background-color: #f8fafc !important; /* Gris/Azul rey muy clarito */
+}
+
+#contenedorNotasEstudiante .d-flex.justify-content-between.align-items-center:nth-child(even) {
+    background-color: #f4fbf7 !important; /* Verde menta muy clarito */
+}
+
+/* Texto de las actividades */
+#contenedorNotasEstudiante .text-secondary {
+    color: #475569 !important; /* Gris oscuro elegante */
+    font-weight: 500 !important;
+}
