@@ -263,3 +263,69 @@ document.addEventListener('focusin', (e) => {
 }, true);
 
 document.addEventListener('DOMContentLoaded', () => gestionarRoles());
+
+let cacheInactivos = [];
+
+function cargarUsuariosInactivos() {
+    fetch('/get_usuarios/inactivo')
+        .then(res => res.json())
+        .then(data => {
+            cacheInactivos = data || [];
+            pintarFilasInactivos(document.getElementById('tabla-inactivos-body'), cacheInactivos);
+        })
+        .catch(err => {
+            console.error(err);
+            showToast("Error al cargar usuarios inactivos", "error");
+        });
+}
+
+function pintarFilasInactivos(tbody, lista) {
+    tbody.innerHTML = lista.length === 0 
+        ? `<tr><td colspan="3" class="text-center py-4 text-muted">No hay usuarios inactivos</td></tr>`
+        : '';
+
+    lista.forEach(u => {
+        tbody.innerHTML += `
+            <tr>
+                <td class="ps-4 fw-medium">${u.nombre_completo}</td>
+                <td class="text-secondary small">${u.correo}</td>
+                <td class="text-end pe-4">
+                    <button onclick="activarUsuario(${u.id_usuario}, '${u.nombre_completo}')"
+                            class="btn btn-sm btn-success border shadow-sm px-3">
+                        <i class="bi bi-check-circle me-1"></i> Activar
+                    </button>
+                </td>
+            </tr>`;
+    });
+}
+
+window.activarUsuario = (idUsuario, nombre) => {
+    fetch(`/usuarios/${idUsuario}/rol`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rol: 'estudiante' })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`✅ Usuario ${nombre} activado correctamente`, 'success');
+            cargarUsuariosInactivos();
+        } else {
+            showToast(data.message || 'Error al activar el usuario', 'error');
+        }
+    })
+    .catch(() => {
+        showToast('Error de conexión con el servidor', 'error');
+    });
+};
+
+document.getElementById('modalInactivos').addEventListener('show.bs.modal', cargarUsuariosInactivos);
+
+document.getElementById('buscarInactivosModal').addEventListener('input', (e) => {
+    const term = e.target.value.toLowerCase().trim();
+    const filtrados = cacheInactivos.filter(u => 
+        u.nombre_completo.toLowerCase().includes(term) || 
+        u.correo.toLowerCase().includes(term)
+    );
+    pintarFilasInactivos(document.getElementById('tabla-inactivos-body'), filtrados);
+});
