@@ -10,12 +10,18 @@ function Datos_consultar() {
         document.getElementById('id_usuario_prof').value = idUsuario;
 
         // Petición al backend para obtener los datos estructurados en JSON
+        // Petición al backend para obtener los datos estructurados en JSON
         fetch(`/obtener_perfil_completo?id_usuario=${idUsuario}`)
             .then(response => response.json())
-            .then(data => {
-                if (!data.error) {
+            .then(responseJson => { // 1. Cambiamos el nombre aquí a responseJson
+                console.log(responseJson);
+                
+                // 2. Si la respuesta fue exitosa, extraemos el objeto interno 'data'
+                if (responseJson.status === "success" && responseJson.data) {
+                    const data = responseJson.data; // <--- ¡Aquí está la magia! 'data' ahora tiene los campos reales
+
                     // Pintar elementos de texto dinámicos en la tarjeta lateral
-                    document.getElementById('nombreCompletoProfesorVista').textContent = `${data.nombres} ${data.apellidos}`;
+                    document.getElementById('nombreCompletoProfesorVista').textContent = `${data.nombres || ''} ${data.apellidos || ''}`;
                     document.getElementById('rolProfesorVista').textContent = data.rol || 'Docente';
                     
                     if (data.nombres) {
@@ -51,6 +57,8 @@ function Datos_consultar() {
                     document.getElementById('telefono_emergencia_prof').value = data.telefono_emergencia || '';
                     document.getElementById('estrato_prof').value = data.Estrato || '';
                     document.getElementById('eps_prof').value = data.eps || '';
+                } else {
+                    console.error("El servidor no devolvió un estado de éxito o los datos están vacíos.");
                 }
             })
             .catch(error => console.error("Error al renderizar los datos del perfil:", error));
