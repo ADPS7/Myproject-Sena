@@ -1,73 +1,130 @@
 /* =========================================================================
-   ESTILOS PREMIUM PARA CONTENEDORES Y ACORDEONES
+   ESTRUCTURA GENERAL Y CONTENEDORES
+   ========================================================================= */
+.asistencia-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* Header de la sección */
+.attendance-header {
+    border-radius: 16px !important;
+    border: 1px solid #eef0f6 !important;
+    background-color: #ffffff;
+}
+
+/* =========================================================================
+   REDISEÑO DEL ACORDEÓN (ELIMINA EL AZUL REVENTADO DE BOOTSTRAP)
    ========================================================================= */
 .attendance-card {
     background-color: #ffffff !important;
-    border: 1px solid #e3e6f0 !important;
+    border: 1px solid #eef0f6 !important;
     border-radius: 12px !important;
-    box-shadow: 0 .125rem .25rem rgba(0,0,0,.04) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02) !important;
+    margin-bottom: 16px !important; /* Espacio real entre los módulos */
     overflow: hidden;
 }
 
-.attendance-card .accordion-button {
+/* Botón del encabezado del módulo */
+.attendance-button {
+    padding: 1.25rem 1.5rem !important;
+    font-weight: 700;
     background-color: #ffffff !important;
-    color: #333333 !important;
-    box-shadow: none !important;
+    color: #212529 !important;
     border: none !important;
+    box-shadow: none !important;
 }
 
-.attendance-card .accordion-button:not(.collapsed) {
-    border-bottom: 1px solid #edeef2 !important;
+/* Cuando el acordeón se abre, quitamos el fondo azul feo y el delineado por defecto */
+.attendance-button:not(.collapsed) {
+    background-color: #f8fafc !important;
+    color: #1e293b !important;
+    border-bottom: 1px solid #edf2f7 !important;
+    box-shadow: none !important;
 }
 
-/* Caja del icono descriptivo del módulo */
+/* Icono del libro/agenda en el botón principal */
 .attendance-icon {
-    width: 44px;
-    height: 44px;
-    background-color: #f8f9fa;
-    color: #6c757d;
+    width: 42px;
+    height: 42px;
+    background-color: #f1f5f9;
+    color: #475569;
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid #edeef2;
+    border: 1px solid #e2e8f0;
 }
 
-/* Divisor interno de las filas del acordeón desplegado */
+/* =========================================================================
+   FILAS INTERNAS DE FECHAS (DISTRIBUCIÓN SEPARADA CON FLEXBOX)
+   ========================================================================= */
+.attendance-item {
+    background-color: #ffffff;
+    padding: 1rem 1.5rem !important; /* Más aire para que deje de verse pegado */
+    border-bottom: 1px solid #f1f5f9;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important; /* Envía la fecha a la izquierda y el badge a la derecha */
+    align-items: center !important;
+    width: 100% !important;
+}
+
+.attendance-item:hover {
+    background-color: #f8fafc;
+}
+
 .attendance-item:last-child {
     border-bottom: none !important;
 }
 
+/* Contenedor alineado de la fecha junto a su icono decorativo */
+.attendance-date-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Separación horizontal interna perfecta */
+}
+
+.attendance-date-wrapper i {
+    color: #94a3b8;
+    font-size: 1.05rem;
+}
+
+.attendance-date-text {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #334155;
+}
+
 /* =========================================================================
-   SISTEMA DE COLORES REACITVO (VERDE PARA ASISTIÓ / ROJO PARA FALTA)
+   BADGES REDONDOS PARA CHULITO Y EQUIS (REACCIONAN CON COLOR)
    ========================================================================= */
-
-/* Elementos circulares del listado tipo Acordeón */
-.attendance-status.success {
-    color: #198754 !important; /* Verde Semáforo */
-    background-color: #e8f5e9 !important;
-    width: 36px;
-    height: 36px;
+.status-badge {
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.15rem;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.95rem;
+    font-weight: bold;
 }
 
-.attendance-status.fail {
-    color: #dc3545 !important; /* Rojo Alerta */
-    background-color: #ffebee !important;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.15rem;
+/* Asistió: Chulito verde con fondo suave */
+.status-badge.success {
+    color: #16a34a !important; 
+    background-color: #dcfce7 !important;
+    border: 1px solid #bbf7d0 !important;
 }
 
-/* Badges planos con texto para el diseño en Tablas */
+/* Inasistencia: Equis roja con fondo suave */
+.status-badge.fail {
+    color: #dc2626 !important; 
+    background-color: #fee2e2 !important;
+    border: 1px solid #fecaca !important;
+}
+
+/* Badges con texto completo (Soporte complementario para la vista en Tablas) */
 .estado-asistio {
     background-color: #d1e7dd !important;
     color: #0f5132 !important;
@@ -76,7 +133,7 @@
     font-weight: 600;
     font-size: 0.8rem;
     display: inline-block;
-    letter-spacing: 0.3px;
+    border: 1px solid #badbcc;
 }
 
 .estado-falta {
@@ -87,5 +144,21 @@
     font-weight: 600;
     font-size: 0.8rem;
     display: inline-block;
-    letter-spacing: 0.3px;
+    border: 1px solid #f5c2c7;
+}
+
+/* =========================================================================
+   RESPONSIVE MÓVIL
+   ========================================================================= */
+@media (max-width: 576px) {
+    .attendance-button {
+        padding: 1rem !important;
+    }
+    .attendance-item {
+        padding: 0.9rem 1rem !important;
+    }
+    .attendance-icon {
+        width: 36px;
+        height: 36px;
+    }
 }

@@ -1,5 +1,5 @@
 // =========================================================================
-// 1. FUNCIÓN: CONSULTA DE ASISTENCIAS INDIVIDUALES POR MÓDULO (Estructura de Tabla)
+// 1. FUNCIÓN: DETALLE INDIVIDUAL POR MÓDULO (Estructura de Tabla Estilizada)
 // =========================================================================
 async function verAsistencia(idModulo, nombreModulo){
     const seccionTabla = document.getElementById("seccionTablaModulo");
@@ -14,7 +14,7 @@ async function verAsistencia(idModulo, nombreModulo){
             <tr>
                 <td colspan="3" class="text-center py-4 text-muted">
                     <div class="spinner-border spinner-border-sm text-secondary me-2" role="status"></div>
-                    Consultando registros de módulo...
+                    Consultando registros del módulo...
                 </td>
             </tr>
         `;
@@ -29,7 +29,7 @@ async function verAsistencia(idModulo, nombreModulo){
         if(data.length === 0){
             tabla.innerHTML = `
                 <tr>
-                    <td colspan="3" class="text-center text-muted py-4">
+                    <td colspan="3" class="text-center text-muted py-4 fs-6">
                         No hay asistencias registradas para este módulo.
                     </td>
                 </tr>
@@ -40,22 +40,26 @@ async function verAsistencia(idModulo, nombreModulo){
         tabla.innerHTML = "";
 
         data.forEach(asistencia => {
-            // Mapeo estricto del campo ENUM('SI','NO') de tu base de datos SQL
             const estadoAsistencia = String(asistencia.asistio).toUpperCase();
-            
             const estadoClase = estadoAsistencia === "SI" ? "estado-asistio" : "estado-falta";
             const textoEstado = estadoAsistencia === "SI" ? "ASISTIÓ" : "INASISTENCIA";
-            const fechaLimpia = asistencia.fecha ? asistencia.fecha.split('T')[0] : 'Fecha no disponible';
+            
+            let fechaLimpia = 'Fecha no disponible';
+            if (asistencia.fecha) {
+                fechaLimpia = asistencia.fecha.includes('T') 
+                    ? asistencia.fecha.split('T')[0] 
+                    : asistencia.fecha.split(' 00:')[0];
+            }
 
             tabla.innerHTML += `
                 <tr>
-                    <td class="fw-medium text-secondary py-3">${fechaLimpia}</td>
+                    <td class="fw-bold text-dark py-3 ps-4" style="letter-spacing: 0.2px;">${fechaLimpia}</td>
                     <td>
                         <span class="${estadoClase}">
                             ${textoEstado}
                         </span>
                     </td>
-                    <td class="text-muted fs-7">
+                    <td class="text-muted pe-4 fs-7">
                         ${asistencia.observacion || '-'}
                     </td>
                 </tr>
@@ -66,7 +70,7 @@ async function verAsistencia(idModulo, nombreModulo){
         if (tabla) {
             tabla.innerHTML = `
                 <tr>
-                    <td colspan="3" class="text-danger text-center py-4">
+                    <td colspan="3" class="text-danger text-center py-4 fw-bold">
                         <i class="bi bi-exclamation-triangle-fill me-2"></i> Error al cargar las asistencias.
                     </td>
                 </tr>
@@ -77,8 +81,8 @@ async function verAsistencia(idModulo, nombreModulo){
 }
 
 // =========================================================================
-// 2. FUNCIÓN: VISTA GENERAL POR MÓDULO DEL ESTUDIANTE (Estructura de Acordeón)
-// ===========================================
+// 2. FUNCIÓN: VISTA GENERAL EN ACORDEÓN (Separado, Espaciado y Responsive)
+// =========================================================================
 async function cargarAsistenciasEstudiante() {
     const contenedor = document.getElementById('accordionAsistencia');
     const placeholder = document.getElementById('asistenciaCargandoPlaceholder');
@@ -97,7 +101,7 @@ async function cargarAsistenciasEstudiante() {
     try {
         const response = await fetch(`/asistencias/${window.USER_ID}`);
         if (!response.ok) {
-            throw new Error('Error al obtener las asistencias');
+            throw new Error('Error al obtener las asistencias.');
         }
 
         const data = await response.json();
@@ -109,13 +113,14 @@ async function cargarAsistenciasEstudiante() {
 
         if (!asistencias.length) {
             contenedor.innerHTML = `
-                <div class="alert alert-warning shadow-sm text-center w-100">
-                    No se encontraron registros de asistencia para tu usuario.
+                <div class="alert alert-warning shadow-sm border-0 rounded-3 text-center w-100 py-4 fs-6">
+                    <i class="bi bi-info-circle-fill me-2 fs-5"></i> No se encontraron registros de asistencia para tu usuario.
                 </div>
             `;
             return;
         }
 
+        // Agrupar filas del array SQL por nombre de módulo
         const modulos = asistencias.reduce((acc, item) => {
             const nombre = item.modulo_nombre || 'Sin módulo';
             if (!acc[nombre]) {
@@ -125,6 +130,7 @@ async function cargarAsistenciasEstudiante() {
             return acc;
         }, {});
 
+        // Armado del árbol de elementos HTML
         contenedor.innerHTML = Object.entries(modulos).map(([nombre, registros], index) => {
             const total = registros.length;
             const asistenciasSi = registros.filter(r => String(r.asistio).toUpperCase() === 'SI').length;
@@ -133,24 +139,22 @@ async function cargarAsistenciasEstudiante() {
             
             const itemsHTML = registros.map(registro => {
                 const asistio = String(registro.asistio).toUpperCase();
-                const estadoClase = asistio === 'SI' ? 'success' : 'fail';
-                const icono = asistio === 'SI' ? 'bi-check-circle-fill' : 'bi-x-circle-fill';
                 
-                // === CONTROL Y FORMATEO SEGURO DE FECHAS ===
+                // Mapeo exacto de los badges de colores solicitados (SI -> Verde, NO -> Rojo)
+                const estadoClase = asistio === 'SI' ? 'success' : 'fail';
+                const icono = asistio === 'SI' ? 'bi-check-lg' : 'bi-x-lg';
+                
+                // Conversor robusto de fechas para prevenir desbordamientos o cadenas GMT de MySQL
                 let fechaFormateada = 'Fecha no disponible';
                 if (registro.fecha) {
                     try {
-                        // Si viene como formato de base de datos o estampa GMT, creamos un objeto Date
                         const d = new Date(registro.fecha);
-                        // Validamos si la conversión fue exitosa para evitar el 'Invalid Date'
                         if (!isNaN(d.getTime())) {
                             const año = d.getFullYear();
-                            // El mes inicia en 0, por eso sumamos 1 y rellenamos con cero a la izquierda si es necesario
                             const mes = String(d.getMonth() + 1).padStart(2, '0');
                             const dia = String(d.getDate()).padStart(2, '0');
                             fechaFormateada = `${año}-${mes}-${dia}`;
                         } else {
-                            // Si falla la conversión del objeto Date, intentamos limpiar el String directo por espacios o la letra T
                             fechaFormateada = registro.fecha.includes('T') 
                                 ? registro.fecha.split('T')[0] 
                                 : registro.fecha.split(' 00:')[0];
@@ -160,12 +164,14 @@ async function cargarAsistenciasEstudiante() {
                     }
                 }
 
+                // Generación de estructura alineada simétricamente a través de Flexbox
                 return `
-                    <div class="attendance-item d-flex justify-content-between align-items-center py-2 px-3 border-bottom">
-                        <div>
-                            <strong>${fechaFormateada}</strong>
+                    <div class="attendance-item">
+                        <div class="attendance-date-wrapper">
+                            <i class="bi bi-calendar3"></i>
+                            <span class="attendance-date-text">${fechaFormateada}</span>
                         </div>
-                        <div class="attendance-status ${estadoClase}">
+                        <div class="status-badge ${estadoClase}">
                             <i class="bi ${icono}"></i>
                         </div>
                     </div>
@@ -173,16 +179,16 @@ async function cargarAsistenciasEstudiante() {
             }).join('');
 
             return `
-                <div class="accordion-item attendance-card mb-3 border rounded-3 overflow-hidden bg-white shadow-sm">
+                <div class="accordion-item attendance-card mb-3">
                     <h2 class="accordion-header">
-                        <button class="accordion-button collapsed attendance-button bg-white text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}">
+                        <button class="accordion-button collapsed attendance-button" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}">
                             <div class="d-flex align-items-center w-100">
-                                <div class="attendance-icon p-2 bg-light rounded border text-muted me-3">
-                                    <i class="bi bi-calendar-check"></i>
+                                <div class="attendance-icon me-3">
+                                    <i class="bi bi-journal-bookmark-fill fs-5"></i>
                                 </div>
-                                <div class="ms-1">
-                                    <h5 class="mb-1 fw-bold fs-6">${nombre}</h5>
-                                    <small class="text-muted">${total} clases registradas • ${porcentaje}% de asistencia</small>
+                                <div class="text-start">
+                                    <h5 class="mb-1 fw-bold text-dark fs-6 text-uppercase" style="letter-spacing: 0.3px;">${nombre}</h5>
+                                    <small class="text-muted d-block fw-normal">${total} clases registradas • <span class="fw-bold text-success">${porcentaje}% de asistencia</span></small>
                                 </div>
                             </div>
                         </button>
@@ -200,14 +206,15 @@ async function cargarAsistenciasEstudiante() {
             placeholder.style.display = 'none';
         }
         contenedor.innerHTML = `
-            <div class="alert alert-danger shadow-sm text-center w-100">
-                Error al cargar las asistencias. Intenta de nuevo.
+            <div class="alert alert-danger shadow-sm text-center w-100 py-4 rounded-3">
+                <i class="bi bi-exclamation-octagon-fill me-2 fs-5"></i> Error al cargar las asistencias. Intenta de nuevo.
             </div>
         `;
-        console.error(error);
+        console.error("Error en flujo general de renderizado:", error);
     }
 }
-// Inicialización automática al cargar el archivo de scripts
+
+// Lanzamiento inicial automático del script al terminar la carga del DOM
 document.addEventListener("DOMContentLoaded", () => {
     cargarAsistenciasEstudiante();
 });
