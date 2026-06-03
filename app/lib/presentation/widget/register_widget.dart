@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../services/api_service.dart';
 import 'login_widget.dart';
 
@@ -17,6 +18,16 @@ class _RegisterViewState extends State<RegisterView> {
   final TextEditingController passwordController = TextEditingController();
   bool isLoading = false;
   bool _obscureText = true;
+
+  @override
+  void dispose() {
+    nombresController.dispose();
+    apellidosController.dispose();
+    emailController.dispose();
+    fechaController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +66,7 @@ class _RegisterViewState extends State<RegisterView> {
           ),
           SafeArea(
             child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
               child: Column(
                 children: [
@@ -62,6 +74,11 @@ class _RegisterViewState extends State<RegisterView> {
                   Image.network(
                     "https://image2url.com/r2/default/images/1770490852326-698c5fd0-f5e1-48cc-8548-30eb28e1596b.png",
                     height: 90,
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.school_rounded,
+                      size: 90,
+                      color: Color(0xFF7C4DFF),
+                    ),
                   ),
                   const SizedBox(height: 30),
                   Container(
@@ -105,26 +122,33 @@ class _RegisterViewState extends State<RegisterView> {
                           hint: "Nombres",
                           controller: nombresController,
                           icon: Icons.person_outline,
+                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]'))],
                         ),
                         const SizedBox(height: 15),
                         _customInput(
                           hint: "Apellidos",
                           controller: apellidosController,
                           icon: Icons.badge_outlined,
+                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]'))],
                         ),
                         const SizedBox(height: 15),
                         _customInput(
                           hint: "Correo",
                           controller: emailController,
                           icon: Icons.email_outlined,
+                          keyboardType: TextInputType.emailAddress,
                         ),
                         const SizedBox(height: 15),
-                        _customInput(
-                          hint: "Fecha de Nacimiento",
-                          controller: fechaController,
-                          icon: Icons.calendar_today_outlined,
-                          readOnly: true,
+                        GestureDetector(
                           onTap: () => _selectDate(context),
+                          child: AbsorbPointer(
+                            child: _customInput(
+                              hint: "Fecha de Nacimiento",
+                              controller: fechaController,
+                              icon: Icons.calendar_today_outlined,
+                              readOnly: true,
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 15),
                         _customInput(
@@ -132,6 +156,7 @@ class _RegisterViewState extends State<RegisterView> {
                           controller: passwordController,
                           icon: Icons.lock_outline,
                           isPassword: true,
+                          helperText: "Mínimo 7 caracteres: incluye 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.",
                         ),
                         const SizedBox(height: 35),
                         _buildRegisterButton(),
@@ -154,16 +179,24 @@ class _RegisterViewState extends State<RegisterView> {
     bool isPassword = false,
     bool readOnly = false,
     VoidCallback? onTap,
+    TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
+    String? helperText,
   }) {
     return TextField(
       controller: controller,
       obscureText: isPassword ? _obscureText : false,
       readOnly: readOnly,
       onTap: onTap,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: hint,
         labelStyle: const TextStyle(color: Color(0xFF64748B)),
         prefixIcon: Icon(icon, color: const Color(0xFF7C4DFF)),
+        helperText: helperText,
+        helperMaxLines: 2,
+        helperStyle: const TextStyle(color: Color(0xFF7C4DFF), fontSize: 11.5, fontWeight: FontWeight.w500),
         suffixIcon: isPassword
             ? IconButton(
                 icon: Icon(
@@ -201,7 +234,11 @@ class _RegisterViewState extends State<RegisterView> {
           elevation: 0,
         ),
         child: isLoading
-            ? const CircularProgressIndicator(color: Colors.white)
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+              )
             : const Text(
                 "Registrarse",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -227,37 +264,87 @@ class _RegisterViewState extends State<RegisterView> {
   }
 
   Future<void> _registerUser() async {
-    // Validaciones locales
-    if (nombresController.text.trim().isEmpty ||
-        apellidosController.text.trim().isEmpty ||
-        emailController.text.trim().isEmpty ||
-        fechaController.text.isEmpty ||
-        passwordController.text.trim().isEmpty) {
+    final String nombres = nombresController.text.trim();
+    final String apellidos = apellidosController.text.trim();
+    final String email = emailController.text.trim();
+    final String fecha = fechaController.text.trim();
+    final String password = passwordController.text;
+
+    // 1. Validación de campos completamente vacíos
+    if (nombres.isEmpty || apellidos.isEmpty || email.isEmpty || fecha.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Por favor completa todos los campos"),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text("❌ Por favor completa todos los campos"), backgroundColor: Colors.red),
       );
       return;
     }
 
-    if (!emailController.text.contains('@')) {
+    // 2. Validación estricta del Correo Electrónico (Regex)
+    final regexCorreo = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$');
+    if (!regexCorreo.hasMatch(email)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Ingresa un correo válido"),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text("❌ Ingresa un correo electrónico válido"), backgroundColor: Colors.red),
       );
       return;
     }
 
-    if (passwordController.text.length <= 6) {
+    // 3. Validación de edad mínima (Mayor o igual a 16 años)
+    try {
+      final fechaNac = DateTime.parse(fecha);
+      final fechaActual = DateTime.now();
+      int edad = fechaActual.year - fechaNac.year;
+      if (fechaActual.month < fechaNac.month || (fechaActual.month == fechaNac.month && fechaActual.day < fechaNac.day)) {
+        edad--;
+      }
+      if (edad < 16) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("❌ Debes tener al menos 16 años para registrarte"), backgroundColor: Colors.orange),
+        );
+        return;
+      }
+    } catch (_) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("La contraseña debe tener más de 6 caracteres"),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text("❌ Formato de fecha de nacimiento incorrecto"), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    // 4. Validación de Contraseña Completa (Mínimo 7 caracteres, Mayúscula, Minúscula, Número y Símbolo)
+    if (password.length < 7) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("❌ La contraseña debe tener como mínimo 7 caracteres"), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    final tieneMayuscula = RegExp(r'[A-Z]');
+    final tieneMinuscula = RegExp(r'[a-z]');
+    final tieneNumero = RegExp(r'[0-9]');
+    final tieneSimbolo = RegExp(r'[!@#$%^&*(),.?":{}|<>_+\-\[\]\\\/`~;]');
+
+    if (!tieneMayuscula.hasMatch(password)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("❌ La contraseña debe incluir al menos una letra mayúscula"), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    if (!tieneMinuscula.hasMatch(password)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("❌ La contraseña debe incluir al menos una letra minúscula"), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    if (!tieneNumero.hasMatch(password)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("❌ La contraseña debe incluir al menos un número"), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    if (!tieneSimbolo.hasMatch(password)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("❌ La contraseña debe incluir al menos un símbolo especial (@, =, #, &, !, %, etc.)"), backgroundColor: Colors.red),
       );
       return;
     }
@@ -266,11 +353,11 @@ class _RegisterViewState extends State<RegisterView> {
 
     try {
       final result = await ApiService().createUser(
-        nombres: nombresController.text.trim(),
-        apellidos: apellidosController.text.trim(),
-        correo: emailController.text.trim(),
-        fechaNacimiento: fechaController.text,
-        clave: passwordController.text,
+        nombres: nombres,
+        apellidos: apellidos,
+        correo: email,
+        fechaNacimiento: fecha,
+        clave: password,
       );
 
       if (result['message']?.toString().contains("exitosamente") == true) {
@@ -289,10 +376,8 @@ class _RegisterViewState extends State<RegisterView> {
           );
         }
       } else {
-        String errorMsg =
-            result['error']?.toString() ?? "Error al registrar usuario";
+        String errorMsg = result['error']?.toString() ?? "Error al registrar usuario";
 
-        // Mensaje específico para correo duplicado
         if (errorMsg.toLowerCase().contains("correo") ||
             errorMsg.toLowerCase().contains("duplicate") ||
             errorMsg.toLowerCase().contains("ya existe")) {
