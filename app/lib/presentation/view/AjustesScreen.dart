@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Necesario para los filtros de entrada en tiempo real
+import 'package:flutter/services.dart';
 
 import '../../services/api_service.dart';
 
@@ -25,23 +25,47 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
   // Controladores de la tabla DatosUsuarios
   late TextEditingController direccionController;
-  late TextEditingController departamentoController;
-  late TextEditingController municipioController;
   late TextEditingController telefonoController;
   late TextEditingController telefonoEmergenciaController;
   late TextEditingController numeroDocumentoController;
-  late TextEditingController epsController;
 
   // Variables para Dropdowns de DatosUsuarios
   String? selectedTipoDocumento;
   String? selectedEstrato;
   String? selectedSexo;
+  String? selectedDepartamento;
+  String? selectedMunicipio;
+  String? selectedEps;
 
   bool isLoading = false;       // Controla el estado del botón Guardar
   bool isFetching = true;       // Controla la pantalla de carga inicial al traer los datos
   bool isEditing = false;       // Controla si los campos están habilitados para edición
   bool _showPassword = false;
   bool _showConfirmPassword = false;
+
+  // Listado oficial de EPS de Colombia
+  final List<String> listadoEpsColombia = [
+    "ANAS WAYUU EPSI", "ALIANSALUD EPS", "ASMET SALUD EPS", "CAPRESOCA EPS", 
+    "COMPENSAR EPS", "COOSALUD EPS", "EMSSANAR EPS", "EPS SANITAS", "EPS SURA", 
+    "FAMISANAR EPS", "MALLAMAS EPSI", "MUTUAL SER EPS", "NUEVA EPS", 
+    "PIJAOS SALUD EPSI", "SALUD MIA EPS", "SALUD TOTAL EPS", "SAVIA SALUD EPS"
+  ];
+
+  // Base de datos geográfica local de Colombia
+  final Map<String, List<String>> datosColombiaGlobal = {
+    "AMAZONAS": ["Leticia", "Puerto Nariño"],
+    "ANTIOQUIA": ["Medellín", "Apartadó", "Bello", "Envigado", "Itagüí", "Rionegro"],
+    "ATLANTICO": ["Barranquilla", "Malambo", "Puerto Colombia", "Sabanalarga", "Soledad"],
+    "BOLIVAR": ["Cartagena de Indias", "El Carmen de Bolívar", "Magangué", "Turbaco"],
+    "BOYACA": ["Tunja", "Chiquinquirá", "Duitama", "Sogamoso"],
+    "CALDAS": ["Manizales", "Chinchiná", "La Dorada", "Riosucio"],
+    "CUNDINAMARCA": ["Bogotá D.C.", "Chía", "Facatativá", "Soacha", "Zipaquirá"],
+    "HUILA": ["Neiva", "Garzón", "Pitalito"],
+    "MAGDALENA": ["Santa Marta", "Ciénaga", "Fundación"],
+    "NORTE DE SANTANDER": ["Cúcuta", "Ocaña", "Pamplona", "Villa del Rosario"],
+    "SANTANDER": ["Bucaramanga", "Barrancabermeja", "Floridablanca", "Girón", "Piedecuesta"],
+    "VALLE DEL CAUCA": ["Cali", "Buenaventura", "Buga", "Palmira", "Tuluá", "Yumbo"]
+  };
 
   @override
   void initState() {
@@ -68,12 +92,9 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
     // 2. Inicializar controladores de la tabla DatosUsuarios temporalmente vacíos
     direccionController = TextEditingController();
-    departamentoController = TextEditingController();
-    municipioController = TextEditingController();
     telefonoController = TextEditingController();
     telefonoEmergenciaController = TextEditingController();
     numeroDocumentoController = TextEditingController();
-    epsController = TextEditingController();
 
     // 3. Llamar automáticamente al servidor de Python para traer y mostrar los datos adicionales
     _cargarDatosDesdeServidor();
@@ -89,12 +110,27 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
         setState(() {
           direccionController.text = (datosBD['direccion'] ?? '').toString();
-          departamentoController.text = (datosBD['departamento'] ?? '').toString();
-          municipioController.text = (datosBD['municipio'] ?? '').toString();
           telefonoController.text = (datosBD['telefono'] ?? '').toString();
           telefonoEmergenciaController.text = (datosBD['telefono_emergencia'] ?? '').toString();
           numeroDocumentoController.text = (datosBD['numero_documento'] ?? '').toString();
-          epsController.text = (datosBD['eps'] ?? '').toString();
+
+          // Validar y asignar Departamento
+          String? deptoBD = datosBD['departamento']?.toString().toUpperCase();
+          if (datosColombiaGlobal.containsKey(deptoBD)) {
+            selectedDepartamento = deptoBD;
+            
+            // Validar y asignar Municipio si pertenece al departamento
+            String? muniBD = datosBD['municipio']?.toString();
+            if (datosColombiaGlobal[deptoBD]!.contains(muniBD)) {
+              selectedMunicipio = muniBD;
+            }
+          }
+
+          // Validar y asignar EPS
+          String? epsBD = datosBD['eps']?.toString();
+          if (listadoEpsColombia.contains(epsBD)) {
+            selectedEps = epsBD;
+          }
 
           // Validaciones de enums para los DropdownFields
           List<String> tiposDoc = ['DNI', 'Pasaporte', 'Cedula de Extranjería', 'Cedula', 'Tarjeta de Identidad'];
@@ -135,12 +171,9 @@ class _AjustesScreenState extends State<AjustesScreen> {
     passwordController.dispose();
     confirmPasswordController.dispose();
     direccionController.dispose();
-    departamentoController.dispose();
-    municipioController.dispose();
     telefonoController.dispose();
     telefonoEmergenciaController.dispose();
     numeroDocumentoController.dispose();
-    epsController.dispose();
     super.dispose();
   }
 
@@ -167,22 +200,18 @@ class _AjustesScreenState extends State<AjustesScreen> {
   }
 
   Future<void> _saveChanges() async {
-    // =========================================================================
-    // INICIO DE VALIDACIONES ESTRICTAS (MISMAS DE LA WEB)
-    // =========================================================================
-
     // REGLA 1: Todos los campos del formulario son estrictamente obligatorios
     if (nombresController.text.trim().isEmpty ||
         apellidosController.text.trim().isEmpty ||
         emailController.text.trim().isEmpty ||
         fechaController.text.trim().isEmpty ||
         direccionController.text.trim().isEmpty ||
-        departamentoController.text.trim().isEmpty ||
-        municipioController.text.trim().isEmpty ||
+        selectedDepartamento == null ||
+        selectedMunicipio == null ||
         telefonoController.text.trim().isEmpty ||
         telefonoEmergenciaController.text.trim().isEmpty ||
         numeroDocumentoController.text.trim().isEmpty ||
-        epsController.text.trim().isEmpty ||
+        selectedEps == null ||
         selectedSexo == null ||
         selectedTipoDocumento == null ||
         selectedEstrato == null) {
@@ -263,14 +292,9 @@ class _AjustesScreenState extends State<AjustesScreen> {
       }
     }
 
-    // =========================================================================
-    // FIN DE VALIDACIONES - ENVIAR AL SERVIDOR ORIGINAL
-    // =========================================================================
-
     setState(() => isLoading = true);
 
     try {
-      // Mantenemos intacta tu llamada original al ApiService
       final result = await _apiService.actualizarPerfilCompleto(
         idUsuario: widget.user['id_usuario'],
         nombres: nombresController.text.trim(),
@@ -278,15 +302,15 @@ class _AjustesScreenState extends State<AjustesScreen> {
         correo: emailController.text.trim(),
         fechaNacimiento: fechaController.text,
         direccion: direccionController.text.trim(),
-        departamento: departamentoController.text.trim(),
-        municipio: municipioController.text.trim(),
+        departamento: selectedDepartamento!,
+        municipio: selectedMunicipio!,
         telefono: telefonoMovil,
         telefonoEmergencia: telefonoEmergencia,
         tipoDocumento: selectedTipoDocumento!,
         numeroDocumento: numeroDocumentoController.text.trim(),
         estrato: selectedEstrato!,
         sexo: selectedSexo!,
-        eps: epsController.text.trim(),
+        eps: selectedEps!,
         password: passwordController.text.isNotEmpty ? passwordController.text : null,
       );
 
@@ -316,6 +340,17 @@ class _AjustesScreenState extends State<AjustesScreen> {
     final Color primaryPurple = const Color(0xFF7C4DFF);
     final Color bgGrey = const Color(0xFFF8FAFC);
 
+    // BLINDAJE 1: Obtener y ordenar departamentos de forma segura
+    List<String> listaDepartamentos = datosColombiaGlobal.keys.toList();
+    listaDepartamentos.sort();
+
+    // BLINDAJE 2: Obtener municipios basados en el departamento seleccionado de forma segura
+    List<String> listaMunicipiosActiva = [];
+    if (selectedDepartamento != null && datosColombiaGlobal.containsKey(selectedDepartamento)) {
+      listaMunicipiosActiva = List<String>.from(datosColombiaGlobal[selectedDepartamento]!);
+      listaMunicipiosActiva.sort();
+    }
+
     return Scaffold(
       backgroundColor: bgGrey,
       appBar: AppBar(
@@ -326,7 +361,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
         elevation: 0,
         shape: const Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1)),
       ),
-      // Condicional de Carga: Muestra un círculo mientras consulta a Python. Al terminar pinta todo el formulario.
       body: isFetching
           ? Center(child: CircularProgressIndicator(color: primaryPurple))
           : SingleChildScrollView(
@@ -359,7 +393,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
                           nombresController, 
                           isEditing, 
                           Icons.person_outline_rounded,
-                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]'))] // Solo letras y espacios en tiempo real
+                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]'))]
                         ),
                         const SizedBox(height: 18),
                         _buildTextField(
@@ -367,7 +401,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
                           apellidosController, 
                           isEditing, 
                           Icons.person_outline_rounded,
-                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]'))] // Solo letras y espacios en tiempo real
+                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]'))]
                         ),
                         const SizedBox(height: 18),
                         _buildTextField("Correo Electrónico", emailController, isEditing, Icons.mail_outline_rounded, keyboardType: TextInputType.emailAddress),
@@ -375,7 +409,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
                         GestureDetector(
                           onTap: isEditing ? () => _seleccionarFecha(context) : null,
                           child: AbsorbPointer(
-                            absorbing: true, // Bloqueado siempre para obligar a usar el DatePicker sin abrir teclado nativo
                             child: _buildTextField("Fecha de Nacimiento", fechaController, isEditing, Icons.calendar_month_rounded, readOnly: true),
                           ),
                         ),
@@ -393,19 +426,38 @@ class _AjustesScreenState extends State<AjustesScreen> {
                           isEditing, 
                           Icons.pin_outlined,
                           keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly] // Bloquea letras en tiempo real
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly]
                         ),
                         const SizedBox(height: 18),
-                        _buildTextField("EPS", epsController, isEditing, Icons.health_and_safety_outlined),
+                        _buildDropdownField("EPS", selectedEps, listadoEpsColombia, (val) => setState(() => selectedEps = val), isEditing, Icons.health_and_safety_outlined),
 
                         const SizedBox(height: 28),
 
                         _buildSectionHeader("Ubicación y Contacto", Icons.home_work_outlined, primaryPurple),
                         _buildTextField("Dirección residencial", direccionController, isEditing, Icons.location_on_outlined),
                         const SizedBox(height: 18),
-                        _buildTextField("Departamento", departamentoController, isEditing, Icons.map_outlined),
+                        // MODIFICADO: Uso seguro de la lista de departamentos
+                        _buildDropdownField(
+                          "Departamento", 
+                          selectedDepartamento, 
+                          listaDepartamentos, 
+                          (val) => setState(() {
+                            selectedDepartamento = val;
+                            selectedMunicipio = null; 
+                          }), 
+                          isEditing, 
+                          Icons.map_outlined
+                        ),
                         const SizedBox(height: 18),
-                        _buildTextField("Municipio / Ciudad", municipioController, isEditing, Icons.location_city_outlined),
+                        // MODIFICADO: Uso seguro de la lista activa de municipios
+                        _buildDropdownField(
+                          "Municipio / Ciudad", 
+                          selectedMunicipio, 
+                          listaMunicipiosActiva, 
+                          (val) => setState(() => selectedMunicipio = val), 
+                          isEditing && selectedDepartamento != null, 
+                          Icons.location_city_outlined
+                        ),
                         const SizedBox(height: 18),
                         _buildTextField(
                           "Teléfono Móvil", 
@@ -413,7 +465,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
                           isEditing, 
                           Icons.phone_android_rounded, 
                           keyboardType: TextInputType.phone,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)] // Bloquea letras y limita a 10 dígitos
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)]
                         ),
                         const SizedBox(height: 18),
                         _buildTextField(
@@ -422,7 +474,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
                           isEditing, 
                           Icons.contact_phone_outlined, 
                           keyboardType: TextInputType.phone,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)] // Bloquea letras y limita a 10 dígitos
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)]
                         ),
                         const SizedBox(height: 18),
                         _buildDropdownField("Estrato Socioeconómico", selectedEstrato, ['1', '2', '3', '4', '5', '6'], (val) => setState(() => selectedEstrato = val), isEditing, Icons.layers_outlined),
@@ -444,7 +496,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
                         child: ElevatedButton(
                           onPressed: () => setState(() {
                             isEditing = !isEditing;
-                            if (!isEditing) _cargarDatosDesdeServidor(); // Si cancela, vuelve a descargar los datos limpios de la base de datos
+                            if (!isEditing) _cargarDatosDesdeServidor();
                           }),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: isEditing ? const Color(0xFF64748B) : primaryPurple,
@@ -503,7 +555,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
     IconData icon, {
     bool readOnly = false, 
     TextInputType keyboardType = TextInputType.text,
-    List<TextInputFormatter>? inputFormatters, // Argumento añadido para los filtros de texto en tiempo real
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextField(
       controller: controller,
