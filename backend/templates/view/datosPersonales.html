@@ -30,7 +30,7 @@
                 </div>
 
                 <div class="col-lg-9">
-                    <form id="formPerfilProfesor">
+                    <form id="formPerfilProfesor" class="needs-validation" novalidate>
                         <input type="hidden" id="id_usuario_prof" readonly>
                         <input type="hidden" id="id_datos_usuario_prof" readonly>
 
@@ -91,11 +91,15 @@
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
                                 <label class="form-label fw-medium text-secondary">Departamento</label>
-                                <input type="text" class="form-control rounded-3" id="departamento_prof" required>
+                                <select class="form-select rounded-3" id="departamento_prof" required>
+                                    <option value="" disabled selected>Seleccione Departamento...</option>
+                                </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-medium text-secondary">Municipio / Ciudad</label>
-                                <input type="text" class="form-control rounded-3" id="municipio_prof" required>
+                                <select class="form-select rounded-3" id="municipio_prof" required>
+                                    <option value="" disabled selected>Seleccione Municipio...</option>
+                                </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-medium text-secondary">Dirección de Residencia</label>
@@ -104,10 +108,12 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-medium text-secondary">Teléfono Personal</label>
                                 <input type="number" class="form-control rounded-3" id="telefono_prof" required>
+                                <div class="invalid-feedback" id="error_telefono_prof">El número de teléfono celular en Colombia debe tener exactamente 10 dígitos y comenzar con el número 3.</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-medium text-secondary">Teléfono de Emergencia</label>
                                 <input type="number" class="form-control rounded-3" id="telefono_emergencia_prof" required>
+                                <div class="invalid-feedback" id="error_telefono_emergencia_prof">El número de emergencia debe tener exactamente 10 dígitos y comenzar con el número 3.</div>
                             </div>
                         </div>
 
@@ -128,7 +134,9 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-medium text-secondary">Entidad de Salud (EPS)</label>
-                                <input type="text" class="form-control rounded-3" id="eps_prof" placeholder="Ej: Sura, Sanitas..." required>
+                                <select class="form-select rounded-3" id="eps_prof" required>
+                                    <option value="" disabled selected>Seleccione su EPS...</option>
+                                </select>
                             </div>
                         </div>
 
