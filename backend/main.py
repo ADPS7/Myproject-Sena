@@ -1626,7 +1626,9 @@ def actualizar_rol(id_usuario):
         roles = {
             'admin': 1,
             'estudiante': 2,
-            'profesor': 3
+            'profesor': 3,
+            'coordinacion': 4,
+            'inactivo': 5
         }
 
         if rol not in roles:
