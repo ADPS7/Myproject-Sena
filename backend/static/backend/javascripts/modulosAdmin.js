@@ -216,7 +216,16 @@ document.getElementById('btnConfirmarEliminarModulo')?.addEventListener('click',
             mostrarToast("Módulo eliminado correctamente", "success");
             cargarModulos();
         } else {
-            mostrarToast(data.error || "No se pudo eliminar el módulo", "warning");
+            let mensaje = data.error || "No se pudo eliminar el módulo";
+
+            if (typeof mensaje === 'string') {
+                const mLow = mensaje.toLowerCase();
+                if (mensaje.indexOf('1451') !== -1 || mLow.includes('cannot delete or update a parent row') || mLow.includes('foreign key')) {
+                    mensaje = "Este módulo no se puede eliminar porque tiene valores asignados";
+                }
+            }
+
+            mostrarToast(mensaje, "warning");
         }
     })
     .catch(err => {
