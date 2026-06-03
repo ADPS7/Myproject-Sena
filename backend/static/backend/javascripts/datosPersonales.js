@@ -150,7 +150,6 @@ function guardarPerfilProfesor() {
 
     if (elementosConError.length > 0) {
         elementosConError[0].focus();
-        mostrarToast('Datos Incompletos', 'Todos los campos en pantalla son obligatorios para poder continuar.', 'advertencia');
         return;
     }
 
@@ -208,7 +207,6 @@ function guardarPerfilProfesor() {
         camposMapeados.telefono.classList.add('is-invalid');
         camposMapeados.telefono_emergencia.classList.add('is-invalid');
         elementosConError.push(camposMapeados.telefono);
-        mostrarToast('Conflicto de Datos', 'El teléfono de emergencia no puede ser igual al personal.', 'advertencia');
     }
 
     if (elementosConError.length > 0) {
@@ -383,25 +381,24 @@ function aplicarRestriccionesDeEntrada() {
 }
 
 // =========================================================================
-// 6. BLINDAJE TOTAL DE LA INTERFAZ: ANTI-ESCAPES (SISTEMA DE BLOQUEO CORREGIDO)
+// 6. BLINDAJE TOTAL DE LA INTERFAZ: CERRAR SESIÓN AL REGRESAR (CORREGIDO)
 // =========================================================================
 function blindarPantallaObligatoria() {
-    // Agregamos un estado inicial a la pila de navegación
+    // Registramos un estado inicial en el historial para poder interceptar el evento "Atrás"
     window.history.pushState(null, "", window.location.href);
     
-    // Captura profunda: Cada vez que el usuario pulse "Atrás",
-    // el navegador lo regresará instantáneamente a la URL actual de forma infinita
+    // Si el usuario presiona el botón de regresar del navegador o celular, lo mandamos directo al /logout de Flask
     window.addEventListener('popstate', function () {
-        window.history.pushState(null, "", window.location.href);
+        window.location.href = '/logout';
     });
 
-    // Alerta interceptora si intentan recargar la página o cerrar la pestaña del navegador
+    // Alerta interceptora si intentan recargar la página o cerrar la pestaña del navegador manualmente
     window.addEventListener('beforeunload', function (e) {
         e.preventDefault();
         e.returnValue = 'Atención: Tienes datos obligatorios pendientes por guardar.';
     });
 
-    // Desaparecer barras de navegación superiores, laterales o botones de retorno
+    // Ocultar dinámicamente barras de navegación o elementos con links para que no se escape cliqueando cosas
     const navbar = document.querySelector('.navbar, .navbar-custom');
     const sidebar = document.querySelector('.sidebar') || document.getElementById('sidebar');
     const botonesVolver = document.querySelectorAll('.btn-volver, .btn-regresar, [href="/dashboard"]');
@@ -413,5 +410,5 @@ function blindarPantallaObligatoria() {
 
 // Inicialización de componentes e inyección del blindaje al cargar el script
 inicializarComponentesGeograficosYEps();
-    aplicarRestriccionesDeEntrada();
+aplicarRestriccionesDeEntrada();
 blindarPantallaObligatoria();

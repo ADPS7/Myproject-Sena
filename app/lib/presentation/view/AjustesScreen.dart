@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Necesario para los filtros de entrada en tiempo real
 
 import '../../services/api_service.dart';
 
@@ -166,24 +167,83 @@ class _AjustesScreenState extends State<AjustesScreen> {
   }
 
   Future<void> _saveChanges() async {
-    if (nombresController.text.trim().isEmpty || apellidosController.text.trim().isEmpty || emailController.text.trim().isEmpty) {
+    // =========================================================================
+    // INICIO DE VALIDACIONES ESTRICTAS (MISMAS DE LA WEB)
+    // =========================================================================
+
+    // REGLA 1: Todos los campos del formulario son estrictamente obligatorios
+    if (nombresController.text.trim().isEmpty ||
+        apellidosController.text.trim().isEmpty ||
+        emailController.text.trim().isEmpty ||
+        fechaController.text.trim().isEmpty ||
+        direccionController.text.trim().isEmpty ||
+        departamentoController.text.trim().isEmpty ||
+        municipioController.text.trim().isEmpty ||
+        telefonoController.text.trim().isEmpty ||
+        telefonoEmergenciaController.text.trim().isEmpty ||
+        numeroDocumentoController.text.trim().isEmpty ||
+        epsController.text.trim().isEmpty ||
+        selectedSexo == null ||
+        selectedTipoDocumento == null ||
+        selectedEstrato == null) {
+      
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Nombres, apellidos y correo son obligatorios"), backgroundColor: Colors.red),
+        const SnackBar(content: Text("❌ Todos los campos son estrictamente obligatorios para poder guardar."), backgroundColor: Colors.red),
       );
       return;
     }
 
-    if (selectedSexo == null || selectedTipoDocumento == null || selectedEstrato == null) {
+    // REGLA 2: Formato del correo electrónico mediante expresión regular (Regex)
+    final regexCorreo = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$');
+    if (!regexCorreo.hasMatch(emailController.text.trim())) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Por favor, completa los campos de Sexo, Tipo de Documento y Estrato"), backgroundColor: Colors.red),
+        const SnackBar(content: Text("❌ Por favor, ingresa un correo electrónico válido."), backgroundColor: Colors.red),
       );
       return;
     }
 
+    // REGLA 3: Validación de edad mínima (Mayor de 16 años)
+    try {
+      final fechaNac = DateTime.parse(fechaController.text.trim());
+      final fechaActual = DateTime.now();
+      int edad = fechaActual.year - fechaNac.year;
+      if (fechaActual.month < fechaNac.month || (fechaActual.month == fechaNac.month && fechaActual.day < fechaNac.day)) {
+        edad--;
+      }
+      
+      if (edad < 16) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("❌ Restricción de edad: Debes tener al menos 16 años para registrarte."), backgroundColor: Colors.orange),
+        );
+        return;
+      }
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("❌ Formato de fecha de nacimiento incorrecto."), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    // REGLA 4: Formato estricto de Teléfonos Colombianos
     String telefonoMovil = telefonoController.text.trim();
     String telefonoEmergencia = telefonoEmergenciaController.text.trim();
 
-    if (telefonoMovil.isNotEmpty && telefonoEmergencia.isNotEmpty && telefonoMovil == telefonoEmergencia) {
+    if (telefonoMovil.length != 10 || !telefonoMovil.startsWith('3')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("❌ El Teléfono Móvil debe tener 10 dígitos y comenzar con 3."), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    if (telefonoEmergencia.length != 10 || !telefonoEmergencia.startsWith('3')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("❌ El Teléfono de Emergencia debe tener 10 dígitos y comenzar con 3."), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    // REGLA 5: Números telefónicos no idénticos
+    if (telefonoMovil == telefonoEmergencia) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("⚠️ El número de teléfono móvil no puede ser el mismo que el de emergencia"), 
@@ -193,9 +253,24 @@ class _AjustesScreenState extends State<AjustesScreen> {
       return;
     }
 
+    // REGLA 6: Coincidencia de contraseñas si decide cambiarla
+    if (passwordController.text.isNotEmpty) {
+      if (passwordController.text != confirmPasswordController.text) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("❌ Las contraseñas ingresadas no coinciden."), backgroundColor: Colors.red),
+        );
+        return;
+      }
+    }
+
+    // =========================================================================
+    // FIN DE VALIDACIONES - ENVIAR AL SERVIDOR ORIGINAL
+    // =========================================================================
+
     setState(() => isLoading = true);
 
     try {
+      // Mantenemos intacta tu llamada original al ApiService
       final result = await _apiService.actualizarPerfilCompleto(
         idUsuario: widget.user['id_usuario'],
         nombres: nombresController.text.trim(),
@@ -279,16 +354,28 @@ class _AjustesScreenState extends State<AjustesScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildSectionHeader("Datos Personales", Icons.badge_rounded, primaryPurple),
-                        _buildTextField("Nombres", nombresController, isEditing, Icons.person_outline_rounded),
+                        _buildTextField(
+                          "Nombres", 
+                          nombresController, 
+                          isEditing, 
+                          Icons.person_outline_rounded,
+                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]'))] // Solo letras y espacios en tiempo real
+                        ),
                         const SizedBox(height: 18),
-                        _buildTextField("Apellidos", apellidosController, isEditing, Icons.person_outline_rounded),
+                        _buildTextField(
+                          "Apellidos", 
+                          apellidosController, 
+                          isEditing, 
+                          Icons.person_outline_rounded,
+                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]'))] // Solo letras y espacios en tiempo real
+                        ),
                         const SizedBox(height: 18),
-                        _buildTextField("Correo Electrónico", emailController, isEditing, Icons.mail_outline_rounded),
+                        _buildTextField("Correo Electrónico", emailController, isEditing, Icons.mail_outline_rounded, keyboardType: TextInputType.emailAddress),
                         const SizedBox(height: 18),
                         GestureDetector(
                           onTap: isEditing ? () => _seleccionarFecha(context) : null,
                           child: AbsorbPointer(
-                            absorbing: isEditing,
+                            absorbing: true, // Bloqueado siempre para obligar a usar el DatePicker sin abrir teclado nativo
                             child: _buildTextField("Fecha de Nacimiento", fechaController, isEditing, Icons.calendar_month_rounded, readOnly: true),
                           ),
                         ),
@@ -300,7 +387,14 @@ class _AjustesScreenState extends State<AjustesScreen> {
                         _buildSectionHeader("Documentación y Salud", Icons.assignment_ind_outlined, primaryPurple),
                         _buildDropdownField("Tipo de Documento", selectedTipoDocumento, ['DNI', 'Pasaporte', 'Cedula de Extranjería', 'Cedula', 'Tarjeta de Identidad'], (val) => setState(() => selectedTipoDocumento = val), isEditing, Icons.subtitles_rounded),
                         const SizedBox(height: 18),
-                        _buildTextField("Número de Documento", numeroDocumentoController, isEditing, Icons.pin_outlined),
+                        _buildTextField(
+                          "Número de Documento", 
+                          numeroDocumentoController, 
+                          isEditing, 
+                          Icons.pin_outlined,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly] // Bloquea letras en tiempo real
+                        ),
                         const SizedBox(height: 18),
                         _buildTextField("EPS", epsController, isEditing, Icons.health_and_safety_outlined),
 
@@ -313,9 +407,23 @@ class _AjustesScreenState extends State<AjustesScreen> {
                         const SizedBox(height: 18),
                         _buildTextField("Municipio / Ciudad", municipioController, isEditing, Icons.location_city_outlined),
                         const SizedBox(height: 18),
-                        _buildTextField("Teléfono Móvil", telefonoController, isEditing, Icons.phone_android_rounded, keyboardType: TextInputType.phone),
+                        _buildTextField(
+                          "Teléfono Móvil", 
+                          telefonoController, 
+                          isEditing, 
+                          Icons.phone_android_rounded, 
+                          keyboardType: TextInputType.phone,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)] // Bloquea letras y limita a 10 dígitos
+                        ),
                         const SizedBox(height: 18),
-                        _buildTextField("Teléfono de Emergencia", telefonoEmergenciaController, isEditing, Icons.contact_phone_outlined, keyboardType: TextInputType.phone),
+                        _buildTextField(
+                          "Teléfono de Emergencia", 
+                          telefonoEmergenciaController, 
+                          isEditing, 
+                          Icons.contact_phone_outlined, 
+                          keyboardType: TextInputType.phone,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)] // Bloquea letras y limita a 10 dígitos
+                        ),
                         const SizedBox(height: 18),
                         _buildDropdownField("Estrato Socioeconómico", selectedEstrato, ['1', '2', '3', '4', '5', '6'], (val) => setState(() => selectedEstrato = val), isEditing, Icons.layers_outlined),
 
@@ -388,12 +496,21 @@ class _AjustesScreenState extends State<AjustesScreen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, bool enabled, IconData icon, {bool readOnly = false, TextInputType keyboardType = TextInputType.text}) {
+  Widget _buildTextField(
+    String label, 
+    TextEditingController controller, 
+    bool enabled, 
+    IconData icon, {
+    bool readOnly = false, 
+    TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters, // Argumento añadido para los filtros de texto en tiempo real
+  }) {
     return TextField(
       controller: controller,
       enabled: enabled,
       readOnly: readOnly,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, size: 20, color: const Color(0xFF94A3B8)),
