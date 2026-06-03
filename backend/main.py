@@ -441,15 +441,15 @@ def registrar_asistencia():
         fecha = data.get('fecha')
 
         if not id_modulo or (ids_estudiantes_presentes is None and asistencias is None):
-            return jsonify({"error": "Faltan datos requeridos"}), 400
+            return jsonify({"error": "Faltan datos requeridos"}), 401
 
         if not fecha:
-            return jsonify({"error": "Falta la fecha para registrar la asistencia."}), 400
+            return jsonify({"error": "Falta la fecha para registrar la asistencia."}), 402
 
         try:
             fecha_obj = datetime.strptime(fecha, "%Y-%m-%d").date()
         except ValueError:
-            return jsonify({"error": "Formato de fecha inválido. Use YYYY-MM-DD."}), 400
+            return jsonify({"error": "Formato de fecha inválido. Use YYYY-MM-DD."}), 403
 
         # Normalizamos la fecha a cadena YYYY-MM-DD para almacenar sin hora
         fecha_iso = fecha_obj.isoformat()
@@ -474,7 +474,7 @@ def registrar_asistencia():
             conn.close()
             return jsonify({
                 "success": False,
-                "error": f"La fecha debe estar entre {fecha_inicio.isoformat()} y {fecha_fin.isoformat()}."
+                "error": f"No se puede registrar porque el modulo ya paso -- La fecha debe estar entre {fecha_inicio.isoformat()} y {fecha_fin.isoformat()}."
             }), 400
 
         # Evitamos que la asistencia se registre más de una vez por módulo y fecha.
