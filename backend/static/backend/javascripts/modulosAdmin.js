@@ -287,3 +287,55 @@ document.addEventListener('DOMContentLoaded', () => {
     llenarSelectCursos();
     cargarModulos();
 });
+
+// ==========================================
+// 8. RESTRICCIONES DE ENTRADA (SOLO LETRAS)
+// ==========================================
+function configurarRestriccionSoloLetras() {
+    const campos = document.querySelectorAll('.solo-letras');
+    // Regex: permite letras (incluyendo tildes y ñ) y espacios
+    const regex = /[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g;
+
+    campos.forEach(campo => {
+        campo.addEventListener('input', function() {
+            // Reemplaza cualquier carácter que no sea letra o espacio por vacío
+            if (this.value.match(regex)) {
+                this.value = this.value.replace(regex, '');
+            }
+        });
+    });
+}
+
+// ==========================================
+// 9. VALIDACIÓN ADICIONAL ANTES DE ENVIAR
+// ==========================================
+function esNombreValido(nombre) {
+    // Verifica que solo contenga letras y espacios después de trim
+    const regex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/;
+    return regex.test(nombre.trim());
+}
+function configurarFechaMinima() {
+    const hoy = new Date().toISOString().split('T')[0];
+    
+    const inputsFecha = [
+        document.getElementById('fecha_inicio'),
+        document.getElementById('fecha_fin'),
+        document.getElementById('edit_fecha_inicio'),
+        document.getElementById('edit_fecha_fin')
+    ];
+
+    inputsFecha.forEach(input => {
+        if (input) {
+            input.setAttribute('min', hoy);
+        }
+    });
+}
+
+// ==========================================
+// ACTUALIZACIÓN EN EL EVENTO DOMContentLoaded
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+
+    configurarRestriccionSoloLetras(); 
+    configurarFechaMinima()
+});
