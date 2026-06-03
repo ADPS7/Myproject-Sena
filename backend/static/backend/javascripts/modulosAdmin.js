@@ -33,6 +33,7 @@ function limpiarModalesALaFuerza() {
 // ==========================================
 // 3. CARGA DE DATOS Y RENDERIZADO
 // ==========================================
+// Cambia tu función actual por esta versión mejorada
 function llenarSelectCursos() {
     const selectAgregar = document.getElementById('id_curso_modulo');
     const selectEditar = document.getElementById('edit_id_curso_modulo');
@@ -44,9 +45,12 @@ function llenarSelectCursos() {
             cursos.forEach(curso => {
                 opciones += `<option value="${curso.id_curso}">${curso.nombre}</option>`;
             });
+            
+            // Actualizamos ambos selects
             if (selectAgregar) selectAgregar.innerHTML = opciones;
             if (selectEditar) selectEditar.innerHTML = opciones;
-        });
+        })
+        .catch(err => console.error("Error al cargar cursos:", err));
 }
 
 function cargarModulos() {
@@ -258,8 +262,12 @@ document.getElementById('inputBusqueda')?.addEventListener('input', function(e) 
 // EVENTO DE CARGA Y DELEGACIÓN DE EVENTOS
 document.addEventListener('DOMContentLoaded', () => {
     // Inicializar instancias iniciales si los elementos existen
-    const elAgregar = document.getElementById('modalAgregarModulo');
-    const elEditar = document.getElementById('modalEditarModulo');
+    const elAgregar = document.getElementById('modalAgregarModulo').addEventListener('show.bs.modal', function () {
+        llenarSelectCursos();
+    });
+    const elEditar = document.getElementById('modalEditarModulo').addEventListener('show.bs.modal', function () {
+        llenarSelectCursos();
+    });
     const elEliminar = document.getElementById('modalConfirmarEliminarModulo');
 
     if (elAgregar) modalAgregar = new bootstrap.Modal(elAgregar);
