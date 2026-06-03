@@ -5,9 +5,6 @@ let cursoSeleccionado = null;
 let estudiantesDisponiblesCache = [];
 let profesoresDisponiblesCache = [];
 
-cargarCursos();
-
-
 function cargarCursos() {
     fetch('/cursos')
         .then(res => res.json())
@@ -291,6 +288,8 @@ function filtrarProfesoresDisponibles() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    cargarCursos();
+
     const buscadorEstudiantes = document.getElementById('buscarEstudianteDisponible');
     if (buscadorEstudiantes) {
         buscadorEstudiantes.addEventListener('input', filtrarEstudiantesDisponibles);
@@ -299,6 +298,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const buscadorProfesores = document.getElementById('buscarProfesorDisponible');
     if (buscadorProfesores) {
         buscadorProfesores.addEventListener('input', filtrarProfesoresDisponibles);
+    }
+
+    const botonConfirmarEliminar = document.getElementById('btnConfirmarEliminarDoc');
+    if (botonConfirmarEliminar) {
+        botonConfirmarEliminar.addEventListener('click', () => {
+            if (!cursoAEliminar) return;
+
+            const { id, nombre } = cursoAEliminar;
+
+            fetch(`/cursos/eliminar/${id}`, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(data => {
+                    const modalEl = document.getElementById('modalConfirmarEliminarCurso');
+                    const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                    if (modalInstance) modalInstance.hide();
+
+                    if (data.success) {
+                        cargarCursos();
+                        mostrarToast(`El curso "${nombre}" ha sido eliminado`, "danger");
+                    } else {
+                        mostrarToast(data.error || "No se pudo eliminar", "danger");
+                    }
+                })
+                .catch(() => {
+                    mostrarToast("Error de conexión", "danger");
+                });
+        });
     }
 });
 
@@ -339,14 +365,14 @@ function guardarCurso() {
             bootstrap.Modal.getInstance(document.getElementById('modalCurso')).hide();
             cargarCursos();
             mostrarToast(
-    id ? "Curso actualizado correctamente" : "Curso creado exitosamente",
-    "success"
-);
+                id ? "Curso actualizado correctamente" : "Curso creado exitosamente",
+                "success"
+            );
         } else {
-            alert(data.error || "Error al guardar");
+            mostrarToast(data.error || "Error al guardar el curso", "danger");
         }
     })
-    .catch(() => alert("Error de conexión"));
+    .catch(() => mostrarToast("Error de conexión", "danger"));
 }
 
 // Variable global temporal para guardar qué curso queremos borrar
@@ -361,32 +387,6 @@ function eliminarCurso(id, nombre) {
     modalConfirm.show();
 }
 
-// 3. Escuchamos el clic del botón "Eliminar" dentro del modal
-document.getElementById('btnConfirmarEliminarDoc').addEventListener('click', () => {
-    if (!cursoAEliminar) return;
-
-    const { id, nombre } = cursoAEliminar;
-
-    fetch(`/cursos/eliminar/${id}`, { method: 'DELETE' })
-        .then(res => res.json())
-        .then(data => {
-            // Cerramos el modal
-            const modalEl = document.getElementById('modalConfirmarEliminarCurso');
-            const modalInstance = bootstrap.Modal.getInstance(modalEl);
-            modalInstance.hide();
-
-            if (data.success) {
-                cargarCursos();
-                mostrarToast(`El curso "${nombre}" ha sido eliminado`, "success");
-            } else {
-                mostrarToast(data.error || "No se pudo eliminar", "danger");
-            }
-        })
-        .catch(() => {
-            mostrarToast("Error de conexión", "danger");
-        });
-});
-
 function filtrarCursos() {
     const texto = document.getElementById('buscarCurso').value.toLowerCase();
     const filtrados = cursosData.filter(c => c.nombre.toLowerCase().includes(texto));
@@ -394,6 +394,7 @@ function filtrarCursos() {
 }
 
 function mostrarToast(mensaje, tipo = "primary") {
+    console.log(`[${tipo.toUpperCase()}] ${mensaje}`);
     let toastContainer = document.getElementById("toastContainer");
 
     // Si no existe, lo creamos
@@ -416,7 +417,8 @@ function mostrarToast(mensaje, tipo = "primary") {
 
     toastContainer.appendChild(toastEl);
 
-    const toast = new bootstrap.Toast(toastEl);
+    const toast = bootstrap.Toast.getOrCreateInstance(toastEl, { autohide: true, delay: 3000 });
+    toastEl.classList.add('show');
     toast.show();
 
     // Eliminar después de ocultarse

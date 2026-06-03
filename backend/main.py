@@ -973,6 +973,22 @@ def eliminar_curso(id_curso):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
+
+        cursor.execute("SELECT COUNT(*) as total FROM Modulos WHERE id_curso = %s", (id_curso,))
+        modulos = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) as total FROM Profesor WHERE id_curso = %s", (id_curso,))
+        profesores = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) as total FROM Alumnos WHERE id_curso = %s", (id_curso,))
+        alumnos = cursor.fetchone()[0]
+
+        if modulos > 0 or profesores > 0 or alumnos > 0:
+            cursor.close()
+            conn.close()
+            return jsonify({
+                "success": False,
+                "error": "No se pudo eliminar el curso porque tiene módulos, profesores o estudiantes asignados."
+            }), 400
+
         cursor.execute("DELETE FROM Cursos WHERE id_curso = %s", (id_curso,))
         conn.commit()
         cursor.close()
