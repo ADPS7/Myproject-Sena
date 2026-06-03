@@ -288,6 +288,13 @@ function filtrarProfesoresDisponibles() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    const inputNombre = document.getElementById('nombreCurso');
+    if (inputNombre) {
+        inputNombre.addEventListener('input', function() {
+            // Filtra cualquier carácter que NO sea letra o espacio
+            this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '');
+        });
+    }
     cargarCursos();
 
     const buscadorEstudiantes = document.getElementById('buscarEstudianteDisponible');
@@ -345,11 +352,19 @@ function editarCurso(id, nombre) {
 function guardarCurso() {
     const id = document.getElementById('idCurso').value;
     const nombre = document.getElementById('nombreCurso').value.trim();
+    
+    // Nueva validación de seguridad
+    const regexSoloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/;
 
     if (!nombre) {
-    mostrarToast("El nombre del curso es obligatorio", "warning");
-    return;
-}
+        mostrarToast("El nombre del curso es obligatorio", "warning");
+        return;
+    }
+
+    if (!regexSoloLetras.test(nombre)) {
+        mostrarToast("El nombre solo debe contener letras", "danger");
+        return;
+    }
 
     const url = id ? `/cursos/editar/${id}` : '/cursos/crear';
     const method = id ? 'PUT' : 'POST';
