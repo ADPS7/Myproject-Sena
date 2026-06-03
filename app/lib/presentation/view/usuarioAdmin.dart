@@ -14,39 +14,49 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
   List usuarios = [];
   bool loading = true;
 
+  // Buscadores por sección
+  final Map<String, TextEditingController> _searchControllers = {};
+  final Map<String, String> _searchTerms = {};
+
   @override
   void initState() {
     super.initState();
+    // Inicializar controladores para cada sección
+    const secciones = ['coordinador', 'profesor', 'inactivo', 'estudiante'];
+    for (var seccion in secciones) {
+      _searchControllers[seccion] = TextEditingController();
+      _searchTerms[seccion] = '';
+    }
     cargarUsuarios();
   }
 
+  @override
+  void dispose() {
+    for (var controller in _searchControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
   Future<void> cargarUsuarios() async {
-    setState(() {
-      loading = true;
-    });
+    setState(() => loading = true);
 
     final response = await _apiService.obtenerUsuarios();
-
     if (response['success']) {
       usuarios = response['usuarios'];
     }
 
-    setState(() {
-      loading = false;
-    });
+    setState(() => loading = false);
   }
 
   Future<void> cambiarRol(int userId, String nuevoRol) async {
-    // Si desde el Dropdown seleccionan 'coordinador', al backend le mandamos 'coordinacion'
     String rolParaBackend = nuevoRol;
-    if (nuevoRol == 'coordinador') {
-      rolParaBackend = 'coordinacion';
-    }
+    if (nuevoRol == 'coordinador') rolParaBackend = 'coordinacion';
 
     if (rolParaBackend == 'admin') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Acción denegada: No puedes asignar el rol de Administrador"),
+          content: Text("No puedes asignar rol de Administrador"),
           backgroundColor: Colors.orange,
         ),
       );
@@ -56,17 +66,17 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
     final response = await _apiService.actualizarRol(userId, rolParaBackend);
 
     if (response['success']) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Rol actualizado correctamente"),
-          backgroundColor: Colors.green,
-        ),
-      );
+      String mensaje = nuevoRol == 'inactivo'
+          ? "Usuario inactivado correctamente"
+          : "Rol actualizado correctamente";
 
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(mensaje), backgroundColor: Colors.green),
+      );
       cargarUsuarios();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text("Error al actualizar rol"),
           backgroundColor: Colors.red,
         ),
@@ -74,19 +84,34 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
     }
   }
 
-  // --- EL TRUCO ESTÁ AQUÍ ---
   List obtenerPorRol(String rol) {
+    final searchTerm = _searchTerms[rol]?.toLowerCase().trim() ?? '';
+
     return usuarios.where((u) {
-      final rolUsuario = u['rol'];
-      
-      // Si la interfaz pide 'coordinador', filtramos por 'coordinacion'
-      if (rol == 'coordinador') {
-        return rolUsuario == 'coordinacion';
-      }
-      
-      // Para profesores y estudiantes, se mantiene igual
-      return rolUsuario == rol;
+      final rolUsuario = u['rol']?.toString().toLowerCase() ?? '';
+      bool coincideRol = false;
+
+      if (rol == 'coordinador')
+        coincideRol = rolUsuario == 'coordinacion';
+      else
+        coincideRol = rolUsuario == rol.toLowerCase();
+
+      if (!coincideRol) return false;
+
+      if (searchTerm.isEmpty) return true;
+
+      final nombreCompleto = "${u['nombres']} ${u['apellidos'] ?? ''}"
+          .toLowerCase();
+      final correo = u['correo']?.toLowerCase() ?? '';
+
+      return nombreCompleto.contains(searchTerm) || correo.contains(searchTerm);
     }).toList();
+  }
+
+  void _onSearchChanged(String rol, String value) {
+    setState(() {
+      _searchTerms[rol] = value;
+    });
   }
 
   @override
@@ -107,6 +132,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                 children: [
                   buildCategoria("Coordinadores", "coordinador"),
                   buildCategoria("Profesores", "profesor"),
+                  buildCategoria("Usuarios Inactivos", "inactivo"),
                   buildCategoria("Estudiantes", "estudiante"),
                 ],
               ),
@@ -116,18 +142,46 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
 
   Widget buildCategoria(String titulo, String rol) {
     final lista = obtenerPorRol(rol);
+    final bool esInactivo = rol == 'inactivo';
+    final controller = _searchControllers[rol]!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          titulo,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                titulo,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            // Buscador pequeño
+            SizedBox(
+              width: 180,
+              child: TextField(
+                controller: controller,
+                onChanged: (value) => _onSearchChanged(rol, value),
+                decoration: InputDecoration(
+                  hintText: "Buscar...",
+                  prefixIcon: const Icon(Icons.search, size: 20),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  isDense: true,
+                ),
+                style: const TextStyle(fontSize: 14),
+              ),
+            ),
+          ],
         ),
-
         const SizedBox(height: 12),
 
         if (lista.isEmpty)
@@ -138,15 +192,17 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Text("No hay usuarios en esta categoría"),
+            child: Text(
+              esInactivo
+                  ? "No hay usuarios inactivos"
+                  : "No se encontraron resultados",
+              style: TextStyle(color: Colors.grey[600]),
+            ),
           ),
 
         ...lista.map((usuario) {
-          // Mapeamos el valor actual para el Dropdown de la interfaz
-          String rolInterfaz = usuario['rol'];
-          if (rolInterfaz == 'coordinacion') {
-            rolInterfaz = 'coordinador';
-          }
+          String rolActual = usuario['rol'] ?? '';
+          if (rolActual == 'coordinacion') rolActual = 'coordinador';
 
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
@@ -158,22 +214,23 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
             ),
             child: Row(
               children: [
-                const CircleAvatar(
-                  backgroundColor: Color(0xFF7C4DFF),
-                  child: Icon(Icons.person, color: Colors.white),
+                CircleAvatar(
+                  backgroundColor: esInactivo
+                      ? Colors.grey
+                      : const Color(0xFF7C4DFF),
+                  child: Icon(
+                    esInactivo ? Icons.person_off : Icons.person,
+                    color: Colors.white,
+                  ),
                 ),
-
                 const SizedBox(width: 16),
-
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        usuario['nombres'],
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        "${usuario['nombres']} ${usuario['apellidos'] ?? ''}",
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       Text(
                         usuario['correo'],
@@ -184,19 +241,26 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                 ),
 
                 DropdownButton<String>(
-                  value: rolInterfaz, // Usa el rol adaptado ('coordinador')
-                  items: const [
-                    DropdownMenuItem(
+                  value: rolActual,
+                  items: [
+                    const DropdownMenuItem(
                       value: 'coordinador',
                       child: Text("Coordinador"),
                     ),
-                    DropdownMenuItem(
+                    const DropdownMenuItem(
                       value: 'profesor',
                       child: Text("Profesor"),
                     ),
-                    DropdownMenuItem(
+                    const DropdownMenuItem(
                       value: 'estudiante',
                       child: Text("Estudiante"),
+                    ),
+                    const DropdownMenuItem(
+                      value: 'inactivo',
+                      child: Text(
+                        "Inactivar",
+                        style: TextStyle(color: Colors.red),
+                      ),
                     ),
                   ],
                   onChanged: (value) {
@@ -209,7 +273,6 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
             ),
           );
         }),
-        
         const SizedBox(height: 24),
       ],
     );
