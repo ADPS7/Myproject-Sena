@@ -307,27 +307,9 @@ function mostrarvistaAsistenciaEstudiante() {
     }
 }
 
-// Refrescar datos académicos del estudiante cada 5 segundos para mantenerlos actualizados en tiempo real
-const estaVisible = (element) => {
-    if (!element) return false;
-    return window.getComputedStyle(element).display !== 'none';
-};
-
 if (window.USER_ID) {
-    setInterval(() => {
-        if (estaVisible(document.getElementById('mostrarInicioEstudiante'))) {
-            cargarResumenInicioEstudiante();
-        }
-        if (estaVisible(document.getElementById('mostrarNotasEstudiante'))) {
-            cargarNotasEstudiante();
-        }
-        if (estaVisible(document.getElementById('mostrarAsistenciaEstudiante')) && typeof cargarAsistenciasEstudiante === 'function') {
-            cargarAsistenciasEstudiante();
-        }
-    }, 5000);
-
     const cargarInicioSiEstaVisible = () => {
-        if (estaVisible(document.getElementById('mostrarInicioEstudiante'))) {
+        if (document.getElementById('mostrarInicioEstudiante')?.style.display !== 'none') {
             cargarResumenInicioEstudiante();
         }
     };
