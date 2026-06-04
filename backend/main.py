@@ -66,7 +66,7 @@ def create_user():
         
         cursor.execute(
             "INSERT INTO usuarios (nombres, apellidos, correo, fecha_nacimiento, clave, id_rol) VALUES (%s, %s, %s, %s, %s, %s)",
-            (nombres, apellidos, correo, fecha_nacimiento, hashed_password, 2)
+            (nombres, apellidos, correo, fecha_nacimiento, hashed_password, 5)
         )
         conn.commit()
         cursor.close()
@@ -105,7 +105,7 @@ def login():
         query = """
                 SELECT u.id_usuario, u.nombres, u.apellidos, u.correo, u.fecha_nacimiento, u.id_rol, r.nombre as rol 
                 FROM usuarios u 
-                JOIN roles r ON u.id_rol = r.id_rol 
+                LEFT JOIN roles r ON u.id_rol = r.id_rol 
                 WHERE u.correo = %s AND u.clave = %s
             """
         cursor.execute(query, (correo, hashed_password))
@@ -114,8 +114,8 @@ def login():
         conn.close()
 
         if user:
-            # Usuario inactivo
-            if user.get('id_rol') == 5:
+            # Usuario inactivo o sin rol asignado
+            if user.get('id_rol') is None or user.get('id_rol') == 5 or user.get('rol') is None:
                 return jsonify({
                     "error": "Tu cuenta está inactiva. Por favor contacta al administrador."
                 }), 403
@@ -1400,13 +1400,21 @@ def get_usuarios(rol_nombre):
     try:
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
-        query = """
-            SELECT u.id_usuario, u.nombres, u.apellidos, u.correo, u.fecha_nacimiento, u.id_rol 
-            FROM Usuarios u
-            JOIN Roles r ON u.id_rol = r.id_rol
-            WHERE r.nombre = %s
-        """
-        cursor.execute(query, (rol_nombre,))
+        if rol_nombre.lower() == 'inactivo':
+            query = """
+                SELECT u.id_usuario, u.nombres, u.apellidos, u.correo, u.fecha_nacimiento, u.id_rol
+                FROM Usuarios u
+                WHERE u.id_rol = 5 OR u.id_rol IS NULL
+            """
+            cursor.execute(query)
+        else:
+            query = """
+                SELECT u.id_usuario, u.nombres, u.apellidos, u.correo, u.fecha_nacimiento, u.id_rol 
+                FROM Usuarios u
+                JOIN Roles r ON u.id_rol = r.id_rol
+                WHERE r.nombre = %s
+            """
+            cursor.execute(query, (rol_nombre,))
         usuarios = cursor.fetchall()
         
         resultado = []
@@ -1680,7 +1688,63 @@ def actualizar_rol(id_usuario):
             "success": False,
             "error": str(e)
         }), 500
-    
+
+@app.route('/usuarios/roles', methods=['PUT'])
+def actualizar_roles():
+    try:
+        data = request.get_json()
+        ids = data.get('ids')
+        rol = data.get('rol')
+
+        roles = {
+            'admin': 1,
+            'estudiante': 2,
+            'profesor': 3,
+            'coordinacion': 4,
+            'inactivo': 5
+        }
+
+        if not isinstance(ids, list) or len(ids) == 0:
+            return jsonify({
+                "success": False,
+                "error": "Debe seleccionar al menos un usuario"
+            }), 400
+
+        if rol not in roles:
+            return jsonify({
+                "success": False,
+                "error": "Rol inválido"
+            }), 400
+
+        id_rol = roles[rol]
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        placeholders = ','.join(['%s'] * len(ids))
+        query = f"""
+            UPDATE Usuarios
+            SET id_rol = %s
+            WHERE id_usuario IN ({placeholders})
+        """
+
+        cursor.execute(query, tuple([id_rol] + ids))
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            "success": True,
+            "message": "Roles actualizados correctamente"
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
 @app.route('/verificar_datos_vacios')
 def verificar_datos_vacios():
     id_usuario = request.args.get('id_usuario')
