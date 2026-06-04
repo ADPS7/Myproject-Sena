@@ -5,8 +5,38 @@ document.addEventListener('DOMContentLoaded', function() {
     const passwordInput = document.getElementById('password');
     const submitBtn = document.getElementById('submitBtn');
 
+
+    const nombreInput = document.querySelector('input[name="nombre"]');
+    const apellidoInput = document.querySelector('input[name="apellido"]');
+
+    function soloLetras(event) {
+    event.target.value = event.target.value.replace(
+        /[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g,
+        ''
+    );
+    }
+
+    nombreInput.addEventListener('input', soloLetras);
+    apellidoInput.addEventListener('input', soloLetras);
+  
+
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
+
+        const regexNombre = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/;
+
+if (!regexNombre.test(nombreInput.value.trim())) {
+    showMessage("❌ El nombre solo puede contener letras", "danger");
+    nombreInput.focus();
+    return;
+}
+
+if (!regexNombre.test(apellidoInput.value.trim())) {
+    showMessage("❌ El apellido solo puede contener letras", "danger");
+    apellidoInput.focus();
+    return;
+}
+
 
         // 1. Validación de Correo (Estricta: Solo letras después del @)
         // [a-zA-Z0-9._%+-]+ : Usuario
