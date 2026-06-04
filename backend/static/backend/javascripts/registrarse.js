@@ -1,23 +1,53 @@
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('registerForm');
+    const emailInput = document.getElementById('email');
+    const fechaInput = document.getElementById('fecha_nacimiento');
     const passwordInput = document.getElementById('password');
     const submitBtn = document.getElementById('submitBtn');
 
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        if (passwordInput.value.length <= 6) {
-            showMessage("La contraseña debe tener más de 6 caracteres", "danger");
-            passwordInput.focus();
+        // 1. Validación de Correo (Estricta: Solo letras después del @)
+        // [a-zA-Z0-9._%+-]+ : Usuario
+        // @[a-zA-Z]+        : Dominio (SOLO LETRAS, sin números ni guiones)
+        // \.[a-zA-Z]{2,6}$  : Extensión (SOLO LETRAS)
+        const regexCorreo = /^[a-zA-Z0-9._%+-]+@[a-zA-Z]+\.[a-zA-Z]{2,6}$/;
+        
+        if (!regexCorreo.test(emailInput.value.trim())) {
+            showMessage("❌ El dominio del correo debe contener únicamente letras (ej: gmail.com)", "danger");
+            emailInput.focus();
             return;
         }
 
+        // 2. Validación de Edad (Mayor o igual a 16 años)
+        const fechaNac = new Date(fechaInput.value);
+        const hoy = new Date();
+        let edad = hoy.getFullYear() - fechaNac.getFullYear();
+        const m = hoy.getMonth() - fechaNac.getMonth();
+        if (m < 0 || (m === 0 && hoy.getDate() < fechaNac.getDate())) edad--;
+
+        if (isNaN(edad) || edad < 16) {
+            showMessage("❌ Debes tener al menos 16 años para registrarte", "danger");
+            return;
+        }
+
+        // 3. Validación de Contraseña
+        const pass = passwordInput.value;
+        const tieneMayuscula = /[A-Z]/;
+        const tieneMinuscula = /[a-z]/;
+        const tieneNumero = /[0-9]/;
+        const tieneSimbolo = /[!@#$%^&*(),.?":{}|<>_+\-\[\]\\\/`~;]/;
+
+        if (pass.length < 7 || !tieneMayuscula.test(pass) || !tieneMinuscula.test(pass) || !tieneNumero.test(pass) || !tieneSimbolo.test(pass)) {
+            showMessage("❌ La contraseña debe tener mín. 7 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo", "danger");
+            return;
+        }
+
+        // Envío al servidor
         const originalText = submitBtn.innerHTML;
         submitBtn.disabled = true;
-        submitBtn.innerHTML = `
-            <span class="spinner-border spinner-border-sm" role="status"></span>
-            Registrando...
-        `;
+        submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Procesando...`;
 
         const formData = new FormData(form);
 
@@ -27,24 +57,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: formData
             });
 
-            let result;
-            try {
-                result = await response.json();
-            } catch {
-                result = { error: "Error del servidor" };
-            }
+            const result = await response.json().catch(() => ({ error: "Error del servidor" }));
 
             if (response.ok) {
-                showMessage("¡Registro exitoso! Redirigiendo...", "success");
-                setTimeout(() => {
-                    window.location.href = '/login';
-                }, 1500);
+                showMessage("✅ ¡Registro exitoso!", "success");
+                setTimeout(() => window.location.href = '/login', 1500);
             } else {
-                let msg = result.error || "Error al registrar usuario";
-                showMessage(msg, "danger");
+                showMessage(result.error || "Error al registrar", "danger");
             }
         } catch (err) {
-            showMessage("Error de conexión con el servidor", "danger");
+            showMessage("❌ Error de conexión", "danger");
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
@@ -52,33 +74,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-function showMessage(message, type = "success") {
-    // Eliminar alertas anteriores
+function showMessage(message, type) {
     document.querySelectorAll('.custom-alert').forEach(el => el.remove());
-
     const alertDiv = document.createElement('div');
-    alertDiv.className = `custom-alert alert alert-${type} alert-dismissible fade show`;
-    alertDiv.style.position = 'fixed';
-    alertDiv.style.top = '20px';
-    alertDiv.style.left = '50%';
-    alertDiv.style.transform = 'translateX(-50%)';
-    alertDiv.style.zIndex = '9999';
-    alertDiv.style.minWidth = '340px';
-    alertDiv.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
-
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" aria-label="Close"></button>
-    `;
-
+    alertDiv.className = `custom-alert alert alert-${type} shadow`;
+    alertDiv.style.cssText = 'position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:9999; min-width:300px; text-align:center;';
+    alertDiv.innerHTML = message;
     document.body.appendChild(alertDiv);
-
-    const closeBtn = alertDiv.querySelector('.btn-close');
-    closeBtn.addEventListener('click', () => {
-        alertDiv.remove();
-    });
-
-    setTimeout(() => {
-        if (alertDiv.parentNode) alertDiv.remove();
-    }, 5000);
+    setTimeout(() => alertDiv.remove(), 4000);
 }

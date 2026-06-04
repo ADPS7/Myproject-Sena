@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../services/api_service.dart';
 
 class CursosScreen extends StatefulWidget {
@@ -12,7 +13,6 @@ class _CursosScreenState extends State<CursosScreen> {
   final ApiService _apiService = ApiService();
   final TextEditingController _nombreController = TextEditingController();
 
-  // Paleta de colores equilibrada
   final Color primaryPurple = const Color(0xFF7C4DFF);
   final Color softBg = const Color(0xFFF8FAFC);
   final Color darkBlue = const Color(0xFF334155);
@@ -26,7 +26,6 @@ class _CursosScreenState extends State<CursosScreen> {
     _listaCursosFuture = _apiService.getCursos();
   }
 
-  // Liberar el controlador para optimizar memoria (importante para tu hardware)
   @override
   void dispose() {
     _nombreController.dispose();
@@ -39,7 +38,6 @@ class _CursosScreenState extends State<CursosScreen> {
     });
   }
 
-  // Estilo de los campos de texto
   InputDecoration _inputStyle(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
@@ -59,7 +57,6 @@ class _CursosScreenState extends State<CursosScreen> {
     );
   }
 
-  // Widget para los botones de acción
   Widget _actionIcon(IconData icon, Color? color, VoidCallback onTap) {
     final Color finalColor = color ?? Colors.grey;
     return GestureDetector(
@@ -74,7 +71,6 @@ class _CursosScreenState extends State<CursosScreen> {
     );
   }
 
-  // --- FORMULARIO DE REGISTRO/EDICIÓN DE CURSO CON FEEDBACK ---
   Future<void> _mostrarDialogoCurso({Map<String, dynamic>? cursoEditar}) async {
     if (cursoEditar != null) {
       _nombreController.text = cursoEditar['nombre'];
@@ -99,8 +95,13 @@ class _CursosScreenState extends State<CursosScreen> {
             children: [
               const SizedBox(height: 5),
               TextField(
-                  controller: _nombreController,
-                  decoration: _inputStyle("Nombre del Curso", Icons.school_outlined)),
+                controller: _nombreController,
+                // RESTRICCIÓN: Solo letras, espacios y acentos
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]')),
+                ],
+                decoration: _inputStyle("Nombre del Curso", Icons.school_outlined),
+              ),
             ],
           ),
         ),
@@ -115,64 +116,47 @@ class _CursosScreenState extends State<CursosScreen> {
             ),
             onPressed: () async {
               final nombre = _nombreController.text.trim();
-              if (nombre.isNotEmpty) {
-                Map<String, dynamic> response;
+              
+              // Validación extra de seguridad
+              if (nombre.isEmpty) return;
+              
+              Map<String, dynamic> response;
+              if (cursoEditar == null) {
+                response = await _apiService.crearCurso(nombre);
+              } else {
+                response = await _apiService.editarCurso(cursoEditar['id_curso'], nombre);
+              }
 
-                if (cursoEditar == null) {
-                  response = await _apiService.crearCurso(nombre);
+              if (mounted) {
+                Navigator.pop(context);
+                if (response['success'] == true) {
+                  _recargarLista();
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text("¡Guardado correctamente!"),
+                    backgroundColor: Colors.green,
+                  ));
                 } else {
-                  response = await _apiService.editarCurso(cursoEditar['id_curso'], nombre);
-                }
-
-                if (mounted) {
-                  Navigator.pop(context); // Cierra el diálogo
-
-                  if (response['success'] == true) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Row(
-                          children: [
-                            const Icon(Icons.check_circle, color: Colors.white),
-                            const SizedBox(width: 12),
-                            Text(cursoEditar == null 
-                              ? "¡Curso creado correctamente!" 
-                              : "¡Curso actualizado con éxito!"),
-                          ],
-                        ),
-                        backgroundColor: cursoEditar == null ? Colors.green.shade600 : primaryPurple,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        margin: const EdgeInsets.all(20),
-                      ),
-                    );
-                    _recargarLista();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text("Error: ${response['error'] ?? 'No se pudo guardar'}"),
-                        backgroundColor: Colors.redAccent,
-                      ),
-                    );
-                  }
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text("Error: ${response['error']}"),
+                    backgroundColor: Colors.redAccent,
+                  ));
                 }
               }
             },
-            child: const Text("Guardar",
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: const Text("Guardar", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
   }
 
-  // --- CONFIRMAR ELIMINACIÓN CON FEEDBACK ROJO ---
   void _confirmarEliminacion(int id) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         title: const Text("¿Eliminar curso?"),
-        content: const Text("Se eliminarán todos los datos relacionados. Esta acción no se puede deshacer."),
+        content: const Text("Esta acción no se puede deshacer."),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("No")),
           ElevatedButton(
@@ -182,24 +166,7 @@ class _CursosScreenState extends State<CursosScreen> {
               if (mounted) {
                 Navigator.pop(context);
                 if (response['success'] == true) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text("Curso eliminado con éxito",
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      backgroundColor: Colors.redAccent,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
                   _recargarLista();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Error: no se puede eliminar el curso porque tiene datos relacionados"),
-                      backgroundColor: Colors.orange,
-                    ),
-                  );
                 }
               }
             },
@@ -215,28 +182,13 @@ class _CursosScreenState extends State<CursosScreen> {
     return Scaffold(
       backgroundColor: softBg,
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: darkBlue, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text("Cursos",
-            style: TextStyle(color: darkBlue, fontWeight: FontWeight.w800, fontSize: 24)),
+        title: Text("Cursos", style: TextStyle(color: darkBlue, fontWeight: FontWeight.w800)),
       ),
       body: FutureBuilder<List<dynamic>>(
         future: _listaCursosFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator(color: primaryPurple));
-          }
+          if (snapshot.connectionState == ConnectionState.waiting) return Center(child: CircularProgressIndicator(color: primaryPurple));
           final cursos = snapshot.data ?? [];
-
-          if (cursos.isEmpty) {
-            return Center(
-                child: Text("No hay cursos registrados", style: TextStyle(color: slateGrey)));
-          }
-
           return ListView.builder(
             padding: const EdgeInsets.all(20),
             itemCount: cursos.length,
@@ -244,35 +196,15 @@ class _CursosScreenState extends State<CursosScreen> {
               final item = cursos[index];
               return Container(
                 margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withOpacity(0.02),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4))
-                  ],
-                ),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
                 child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  leading: CircleAvatar(
-                    backgroundColor: primaryPurple.withOpacity(0.1),
-                    child: Icon(Icons.class_, color: primaryPurple, size: 20),
-                  ),
-                  title: Text(item['nombre'] ?? 'Curso',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: darkBlue)),
-                  subtitle: Text("ID: ${item['id_curso'] ?? '---'}",
-                      style: TextStyle(color: slateGrey, fontSize: 13)),
+                  title: Text(item['nombre'] ?? 'Curso', style: TextStyle(fontWeight: FontWeight.bold)),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _actionIcon(Icons.edit_outlined, Colors.blue.shade300, () {
-                        _mostrarDialogoCurso(cursoEditar: item);
-                      }),
+                      _actionIcon(Icons.edit_outlined, Colors.blue, () => _mostrarDialogoCurso(cursoEditar: item)),
                       const SizedBox(width: 8),
-                      _actionIcon(Icons.delete_outline, Colors.red.shade300,
-                          () => _confirmarEliminacion(item['id_curso'])),
+                      _actionIcon(Icons.delete_outline, Colors.red, () => _confirmarEliminacion(item['id_curso'])),
                     ],
                   ),
                 ),
@@ -284,9 +216,7 @@ class _CursosScreenState extends State<CursosScreen> {
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: darkBlue,
         onPressed: () => _mostrarDialogoCurso(),
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text("Nuevo Curso",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        label: const Text("Nuevo Curso", style: TextStyle(color: Colors.white)),
       ),
     );
   }

@@ -33,6 +33,7 @@ function limpiarModalesALaFuerza() {
 // ==========================================
 // 3. CARGA DE DATOS Y RENDERIZADO
 // ==========================================
+// Cambia tu función actual por esta versión mejorada
 function llenarSelectCursos() {
     const selectAgregar = document.getElementById('id_curso_modulo');
     const selectEditar = document.getElementById('edit_id_curso_modulo');
@@ -44,9 +45,12 @@ function llenarSelectCursos() {
             cursos.forEach(curso => {
                 opciones += `<option value="${curso.id_curso}">${curso.nombre}</option>`;
             });
+            
+            // Actualizamos ambos selects
             if (selectAgregar) selectAgregar.innerHTML = opciones;
             if (selectEditar) selectEditar.innerHTML = opciones;
-        });
+        })
+        .catch(err => console.error("Error al cargar cursos:", err));
 }
 
 function cargarModulos() {
@@ -258,8 +262,12 @@ document.getElementById('inputBusqueda')?.addEventListener('input', function(e) 
 // EVENTO DE CARGA Y DELEGACIÓN DE EVENTOS
 document.addEventListener('DOMContentLoaded', () => {
     // Inicializar instancias iniciales si los elementos existen
-    const elAgregar = document.getElementById('modalAgregarModulo');
-    const elEditar = document.getElementById('modalEditarModulo');
+    const elAgregar = document.getElementById('modalAgregarModulo').addEventListener('show.bs.modal', function () {
+        llenarSelectCursos();
+    });
+    const elEditar = document.getElementById('modalEditarModulo').addEventListener('show.bs.modal', function () {
+        llenarSelectCursos();
+    });
     const elEliminar = document.getElementById('modalConfirmarEliminarModulo');
 
     if (elAgregar) modalAgregar = new bootstrap.Modal(elAgregar);
@@ -286,4 +294,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
     llenarSelectCursos();
     cargarModulos();
+});
+
+// ==========================================
+// 8. RESTRICCIONES DE ENTRADA (SOLO LETRAS)
+// ==========================================
+function configurarRestriccionSoloLetras() {
+    const campos = document.querySelectorAll('.solo-letras');
+    // Regex: permite letras (incluyendo tildes y ñ) y espacios
+    const regex = /[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g;
+
+    campos.forEach(campo => {
+        campo.addEventListener('input', function() {
+            // Reemplaza cualquier carácter que no sea letra o espacio por vacío
+            if (this.value.match(regex)) {
+                this.value = this.value.replace(regex, '');
+            }
+        });
+    });
+}
+
+// ==========================================
+// 9. VALIDACIÓN ADICIONAL ANTES DE ENVIAR
+// ==========================================
+function esNombreValido(nombre) {
+    // Verifica que solo contenga letras y espacios después de trim
+    const regex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/;
+    return regex.test(nombre.trim());
+}
+function configurarFechaMinima() {
+    const hoy = new Date().toISOString().split('T')[0];
+    
+    const inputsFecha = [
+        document.getElementById('fecha_inicio'),
+        document.getElementById('fecha_fin'),
+        document.getElementById('edit_fecha_inicio'),
+        document.getElementById('edit_fecha_fin')
+    ];
+
+    inputsFecha.forEach(input => {
+        if (input) {
+            input.setAttribute('min', hoy);
+        }
+    });
+}
+
+// ==========================================
+// ACTUALIZACIÓN EN EL EVENTO DOMContentLoaded
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+
+    configurarRestriccionSoloLetras(); 
+    configurarFechaMinima()
 });
