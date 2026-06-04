@@ -12,6 +12,9 @@ function mostrarvistaInicioEstudiante() {
     ocultarVistasEstudiante();
     document.getElementById('mostrarInicioEstudiante').style.display = 'block';
     activarMenuEstudiante('inicio');
+    if (typeof cargarResumenInicioEstudiante === 'function') {
+        cargarResumenInicioEstudiante();
+    }
 }
 
 function mostrarvistaCursosEstudiante() {
@@ -225,12 +228,114 @@ function renderizarNotasEstudiante(data) {
     contenedor.innerHTML = `${tarjetas}`;
 }
 
+async function cargarResumenInicioEstudiante() {
+    const cursoLabel = document.getElementById('inicioCursoActual');
+    const modulosInscritos = document.getElementById('inicioModulosInscritos');
+    const modulosPendientes = document.getElementById('inicioModulosPendientes');
+    const promedioActual = document.getElementById('inicioPromedioActual');
+    const promedioTexto = document.getElementById('inicioPromedioTexto');
+    const asistenciaLabel = document.getElementById('inicioAsistencia');
+    const asistenciaTexto = document.getElementById('inicioAsistenciaTexto');
+
+    if (!cursoLabel || !modulosInscritos || !modulosPendientes || !promedioActual || !promedioTexto || !asistenciaLabel || !asistenciaTexto) {
+        return;
+    }
+
+    try {
+        const [cursoResp, notasResp, asistResp] = await Promise.all([
+            fetch(`/curso/estudiante/${window.USER_ID}`),
+            fetch(`/notas-alumno/${window.USER_ID}`),
+            fetch(`/asistencias/${window.USER_ID}`)
+        ]);
+
+        const cursoData = cursoResp.ok ? await cursoResp.json() : null;
+        const notasData = notasResp.ok ? await notasResp.json() : null;
+        const asistData = asistResp.ok ? await asistResp.json() : null;
+
+        const cursoNombre = cursoData && cursoData.curso_nombre ? cursoData.curso_nombre : (cursoData && cursoData.curso ? cursoData.curso : 'Sin curso asignado');
+        cursoLabel.textContent = `Curso: ${cursoNombre}`;
+
+        const totalModulos = cursoData && cursoData.curso && cursoData.curso.total_modulos !== undefined ? cursoData.curso.total_modulos : (cursoData && cursoData.total_modulos !== undefined ? cursoData.total_modulos : 0);
+        const completados = cursoData && cursoData.curso && cursoData.curso.modulos_hechos !== undefined ? cursoData.curso.modulos_hechos : 0;
+
+        modulosInscritos.textContent = totalModulos;
+        modulosPendientes.textContent = `Módulos completados: ${completados} • pendientes: ${Math.max(0, totalModulos - completados)}`;
+
+        let promedioGlobal = null;
+        if (notasData && Array.isArray(notasData.modulos)) {
+            const notasPlanas = notasData.modulos.flatMap(mod => Array.isArray(mod.notas) ? mod.notas.map(n => Number(n.nota || 0)) : []);
+            if (notasPlanas.length) {
+                const total = notasPlanas.reduce((sum, value) => sum + value, 0);
+                promedioGlobal = (total / notasPlanas.length).toFixed(2);
+            }
+        }
+
+        if (promedioGlobal !== null) {
+            promedioActual.textContent = promedioGlobal;
+            promedioTexto.textContent = `Promedio basado en ${notasData.modulos.length} módulo(s)`;
+        } else {
+            promedioActual.textContent = 'Sin nota';
+            promedioTexto.textContent = 'Aún no hay calificaciones registradas.';
+        }
+
+        if (asistData && Array.isArray(asistData.asistencias)) {
+            const registros = asistData.asistencias;
+            const totales = registros.length;
+            const asistidos = registros.filter(item => String(item.asistio).toUpperCase() === 'SI').length;
+            const porcentaje = totales ? Math.round((asistidos / totales) * 100) : 0;
+            asistenciaLabel.textContent = `${porcentaje}%`;
+            asistenciaTexto.textContent = totales ? `${asistidos} de ${totales} clases asistidas` : 'Aún no hay registros de asistencia';
+        } else {
+            asistenciaLabel.textContent = '0%';
+            asistenciaTexto.textContent = 'Aún no hay registros de asistencia';
+        }
+    } catch (error) {
+        console.error('Error cargando el resumen del estudiante:', error);
+        cursoLabel.textContent = 'Curso: error al cargar';
+        modulosPendientes.textContent = 'No se pudieron obtener datos completos.';
+        promedioTexto.textContent = 'Intenta recargar la página.';
+        asistenciaTexto.textContent = 'Intenta recargar la página.';
+    }
+}
+
 function mostrarvistaAsistenciaEstudiante() {
     ocultarVistasEstudiante();
     document.getElementById('mostrarAsistenciaEstudiante').style.display = 'block';
     activarMenuEstudiante('asistencia');
     if (typeof cargarAsistenciasEstudiante === 'function') {
         cargarAsistenciasEstudiante();
+    }
+}
+
+// Refrescar datos académicos del estudiante cada 5 segundos para mantenerlos actualizados en tiempo real
+const estaVisible = (element) => {
+    if (!element) return false;
+    return window.getComputedStyle(element).display !== 'none';
+};
+
+if (window.USER_ID) {
+    setInterval(() => {
+        if (estaVisible(document.getElementById('mostrarInicioEstudiante'))) {
+            cargarResumenInicioEstudiante();
+        }
+        if (estaVisible(document.getElementById('mostrarNotasEstudiante'))) {
+            cargarNotasEstudiante();
+        }
+        if (estaVisible(document.getElementById('mostrarAsistenciaEstudiante')) && typeof cargarAsistenciasEstudiante === 'function') {
+            cargarAsistenciasEstudiante();
+        }
+    }, 5000);
+
+    const cargarInicioSiEstaVisible = () => {
+        if (estaVisible(document.getElementById('mostrarInicioEstudiante'))) {
+            cargarResumenInicioEstudiante();
+        }
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', cargarInicioSiEstaVisible);
+    } else {
+        cargarInicioSiEstaVisible();
     }
 }
 

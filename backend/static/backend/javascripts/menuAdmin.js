@@ -5,6 +5,7 @@ function mostrarvistaInicioAdmin() {
     asistencia = document.getElementById("mostrarAsistenciaAdmin").style = "display: none;"
     perfil = document.getElementById("mostrarPerfilAdmin").style = "display: none;"
     inicio = document.getElementById("mostrarInicioAdmin").style = "display: block;"
+    cargarInicioAdminData();
 }
 
 function mostrarvistaUsuarioAdmin() {
@@ -51,6 +52,62 @@ function mostrarvistaPerfilAdmin() {
     perfil = document.getElementById("mostrarPerfilAdmin").style = "display: block;"
 }
 
+async function cargarInicioAdminData() {
+    const usuariosCountEl = document.getElementById('adminUsuariosCount');
+    const cursosCountEl = document.getElementById('adminCursosCount');
+    const modulosCountEl = document.getElementById('adminModulosCount');
+    const asistenciaPercentEl = document.getElementById('adminAsistenciaPercent');
+    const asistenciaTextEl = document.getElementById('adminAsistenciaText');
+
+    if (!usuariosCountEl || !cursosCountEl || !modulosCountEl || !asistenciaPercentEl || !asistenciaTextEl) {
+        return;
+    }
+
+    try {
+        const [statsResp, modulosResp, asistenciaResp] = await Promise.all([
+            fetch('/admin/stats'),
+            fetch('/modulos'),
+            fetch('/admin/asistencias')
+        ]);
+
+        const statsData = statsResp.ok ? await statsResp.json() : null;
+        const modulosData = modulosResp.ok ? await modulosResp.json() : null;
+        const asistenciaData = asistenciaResp.ok ? await asistenciaResp.json() : null;
+
+        usuariosCountEl.textContent = statsData && statsData.totalUsuarios !== undefined ? statsData.totalUsuarios : '0';
+        cursosCountEl.textContent = statsData && statsData.totalCursos !== undefined ? statsData.totalCursos : '0';
+        modulosCountEl.textContent = Array.isArray(modulosData) ? modulosData.length : '0';
+
+        if (asistenciaData && asistenciaData.success && Array.isArray(asistenciaData.cursos)) {
+            let totalRegistros = 0;
+            let totalAsistencias = 0;
+
+            asistenciaData.cursos.forEach(curso => {
+                curso.modulos.forEach(modulo => {
+                    modulo.estudiantes.forEach(estudiante => {
+                        if (Array.isArray(estudiante.asistencias)) {
+                            totalRegistros += estudiante.asistencias.length;
+                            estudiante.asistencias.forEach(a => {
+                                if (String(a.asistio).toUpperCase() === 'SI') {
+                                    totalAsistencias += 1;
+                                }
+                            });
+                        }
+                    });
+                });
+            });
+
+            const porcentaje = totalRegistros > 0 ? Math.round((totalAsistencias / totalRegistros) * 100) : 0;
+            asistenciaPercentEl.textContent = `${porcentaje}%`;
+            asistenciaTextEl.textContent = totalRegistros > 0 ? `${totalAsistencias} / ${totalRegistros} registrados` : 'No hay registros';
+        } else {
+            asistenciaPercentEl.textContent = '0%';
+            asistenciaTextEl.textContent = 'No hay registros';
+        }
+    } catch (error) {
+        console.error('Error cargando datos de administración:', error);
+    }
+}
 
 // =========================================================================
 // FUNCIÓN PRINCIPAL: Verifica el estado del perfil campo por campo
@@ -103,3 +160,13 @@ function datosPersonales() {
 
 // Inicialización automática del análisis tan pronto se renderiza el módulo en el cliente
 datosPersonales();
+
+// Refrescar datos de inicio de admin cada 5 segundos mientras la vista Inicio esté visible
+document.addEventListener('DOMContentLoaded', () => {
+    cargarInicioAdminData();
+    setInterval(() => {
+        if (document.getElementById('mostrarInicioAdmin')?.style.display === 'block') {
+            cargarInicioAdminData();
+        }
+    }, 5000);
+});
