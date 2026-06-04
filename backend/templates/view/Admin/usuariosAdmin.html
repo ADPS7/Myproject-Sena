@@ -292,19 +292,19 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-muted">Nombres</label>
-                                <input type="text" id="edit_nombres" class="form-control rounded-3 shadow-sm" placeholder="Ingresa nombres" required>
+                                <input type="text" id="edit_nombres" class="form-control rounded-3 shadow-sm" placeholder="Ingresa nombres" required readonly>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-muted">Apellidos</label>
-                                <input type="text" id="edit_apellidos" class="form-control rounded-3 shadow-sm" placeholder="Ingresa apellidos" required>
+                                <input type="text" id="edit_apellidos" class="form-control rounded-3 shadow-sm" placeholder="Ingresa apellidos" required readonly>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-muted">Correo electrónico</label>
-                                <input type="email" id="edit_correo" class="form-control rounded-3 shadow-sm" placeholder="usuario@ejemplo.com" required>
+                                <input type="email" id="edit_correo" class="form-control rounded-3 shadow-sm" placeholder="usuario@ejemplo.com" required readonly>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-muted">Fecha de nacimiento</label>
-                                <input type="date" id="edit_fecha_nacimiento" class="form-control rounded-3 shadow-sm" required>
+                                <input type="date" id="edit_fecha_nacimiento" class="form-control rounded-3 shadow-sm" required readonly>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-muted">Rol</label>
@@ -318,7 +318,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-muted">Sexo</label>
-                                <select id="edit_sexo" class="form-select rounded-3 shadow-sm" required>
+                                <select id="edit_sexo" class="form-select rounded-3 shadow-sm" required disabled>
                                     <option value="" disabled selected>Seleccione sexo</option>
                                     <option value="M">Masculino</option>
                                     <option value="F">Femenino</option>
@@ -336,7 +336,7 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-muted">Tipo de documento</label>
-                                <select id="edit_tipo_documento" class="form-select rounded-3 shadow-sm" required>
+                                <select id="edit_tipo_documento" class="form-select rounded-3 shadow-sm" required disabled>
                                     <option value="" disabled selected>Seleccione tipo</option>
                                     <option value="DNI">DNI</option>
                                     <option value="Cedula">Cédula de Ciudadanía</option>
@@ -347,7 +347,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-muted">Número de documento</label>
-                                <input type="text" id="edit_numero_documento" class="form-control rounded-3 shadow-sm" placeholder="Ingresa número de documento" required>
+                                <input type="text" id="edit_numero_documento" class="form-control rounded-3 shadow-sm" placeholder="Ingresa número de documento" required readonly>
                                 <p class="form-help mb-0">El documento debe ser único en el sistema.</p>
                             </div>
                         </div>
@@ -361,23 +361,23 @@
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-muted">Departamento</label>
-                                <input type="text" id="edit_departamento" class="form-control rounded-3 shadow-sm" placeholder="Ej: Antioquia" required>
+                                <input type="text" id="edit_departamento" class="form-control rounded-3 shadow-sm" placeholder="Ej: Antioquia" required readonly>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-muted">Municipio / Ciudad</label>
-                                <input type="text" id="edit_municipio" class="form-control rounded-3 shadow-sm" placeholder="Ej: Medellín" required>
+                                <input type="text" id="edit_municipio" class="form-control rounded-3 shadow-sm" placeholder="Ej: Medellín" required readonly readonly>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-muted">Dirección</label>
-                                <input type="text" id="edit_direccion" class="form-control rounded-3 shadow-sm" placeholder="Calle 123 #45-67" required>
+                                <input type="text" id="edit_direccion" class="form-control rounded-3 shadow-sm" placeholder="Calle 123 #45-67" required readonly readonly>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-muted">Teléfono personal</label>
-                                <input type="tel" id="edit_telefono" class="form-control rounded-3 shadow-sm" placeholder="+57 300 123 4567" required>
+                                <input type="tel" id="edit_telefono" class="form-control rounded-3 shadow-sm" placeholder="+57 300 123 4567" required readonly readonly>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-muted">Teléfono de emergencia</label>
-                                <input type="tel" id="edit_telefono_emergencia" class="form-control rounded-3 shadow-sm" placeholder="+57 310 987 6543" required>
+                                <input type="tel" id="edit_telefono_emergencia" class="form-control rounded-3 shadow-sm" placeholder="+57 310 987 6543" required readonly readonly>
                             </div>
                         </div>
                     </div>
@@ -390,7 +390,7 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-muted">Estrato socioeconómico</label>
-                                <select id="edit_estrato" class="form-select rounded-3 shadow-sm" required>
+                                <select id="edit_estrato" class="form-select rounded-3 shadow-sm" required disabled>
                                     <option value="" disabled selected>Seleccione estrato</option>
                                     <option value="1">Estrato 1</option>
                                     <option value="2">Estrato 2</option>
@@ -402,7 +402,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-muted">Entidad de salud (EPS)</label>
-                                <input type="text" id="edit_eps" class="form-control rounded-3 shadow-sm" placeholder="Ej: Sura" required>
+                                <input type="text" id="edit_eps" class="form-control rounded-3 shadow-sm" placeholder="Ej: Sura" required readonly>
                                 <p class="form-help mb-0">Indica la EPS asociada al usuario.</p>
                             </div>
                         </div>
