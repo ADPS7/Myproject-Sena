@@ -262,7 +262,10 @@ document.addEventListener('focusin', (e) => {
     if (e.target.closest('.modal')) e.stopImmediatePropagation();
 }, true);
 
-document.addEventListener('DOMContentLoaded', () => gestionarRoles());
+document.addEventListener('DOMContentLoaded', () => {
+    gestionarRoles();
+    setupInactivosBulkActions();
+});
 
 let cacheInactivos = [];
 
@@ -281,16 +284,23 @@ function cargarUsuariosInactivos() {
 
 function pintarFilasInactivos(tbody, lista) {
     tbody.innerHTML = lista.length === 0 
-        ? `<tr><td colspan="3" class="text-center py-4 text-muted">No hay usuarios inactivos</td></tr>`
+        ? `<tr><td colspan="5" class="text-center py-4 text-muted">No hay usuarios inactivos</td></tr>`
         : '';
 
     lista.forEach(u => {
+        const rolTexto = u.id_rol === 5 || !u.id_rol ? 'Inactivo' : 'Sin rol';
         tbody.innerHTML += `
             <tr>
-                <td class="ps-4 fw-medium">${u.nombre_completo}</td>
+                <td class="ps-4">
+                    <div class="form-check">
+                        <input class="form-check-input checkbox-inactivo" type="checkbox" value="${u.id_usuario}" id="checkbox-inactivo-${u.id_usuario}">
+                    </div>
+                </td>
+                <td class="fw-medium">${u.nombre_completo}</td>
                 <td class="text-secondary small">${u.correo}</td>
+                <td>${rolTexto}</td>
                 <td class="text-end pe-4">
-                    <button onclick="activarUsuario(${u.id_usuario}, '${u.nombre_completo}')"
+                    <button onclick="activarUsuario(${u.id_usuario})"
                             class="btn btn-sm btn-success border shadow-sm px-3">
                         <i class="bi bi-check-circle me-1"></i> Activar
                     </button>
@@ -299,25 +309,160 @@ function pintarFilasInactivos(tbody, lista) {
     });
 }
 
-window.activarUsuario = (idUsuario, nombre) => {
+function getSelectedInactivos() {
+    return Array.from(document.querySelectorAll('.checkbox-inactivo:checked')).map(cb => Number(cb.value));
+}
+
+function getInactiveUserName(idUsuario) {
+    const user = cacheInactivos.find(u => Number(u.id_usuario) === Number(idUsuario));
+    return (user && user.nombre_completo) ? user.nombre_completo : 'usuario';
+}
+
+window.activarUsuario = (idUsuario) => {
+    const user = cacheInactivos.find(u => Number(u.id_usuario) === Number(idUsuario));
+    const nombre = user ? user.nombre_completo : 'usuario';
+    
+    // Si el usuario tiene rol anterior, activarlo automaticamente con ese rol
+    if (user && user.id_rol_anterior) {
+        const rolMap = {
+            2: 'estudiante',
+            3: 'profesor',
+            4: 'coordinacion'
+        };
+        
+        const rolSeleccionado = rolMap[user.id_rol_anterior];
+        if (!rolSeleccionado) {
+            showToast('Error: rol anterior no valido', 'error');
+            return;
+        }
+        
+        fetch(`/usuarios/${idUsuario}/rol`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rol: rolSeleccionado })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`Usuario ${nombre} activado con rol anterior (${rolSeleccionado})`, 'success');
+                cargarUsuariosInactivos();
+            } else {
+                showToast(data.message || 'Error al activar el usuario', 'error');
+            }
+        })
+        .catch(() => {
+            showToast('Error de conexion con el servidor', 'error');
+        });
+        return;
+    }
+    
+    // Si no tiene rol anterior, pedir que seleccione uno
+    const selectElement = document.getElementById('bulkRolInactivos');
+    const selectedValue = selectElement ? selectElement.value : '';
+
+    if (!selectedValue) {
+        showToast('Selecciona un rol antes de activar al usuario', 'error');
+        return;
+    }
+
+    const rolMap = {
+        '2': 'estudiante',
+        '3': 'profesor',
+        '4': 'coordinacion'
+    };
+
+    const rolSeleccionado = rolMap[selectedValue];
+    if (!rolSeleccionado) {
+        showToast('Rol inválido seleccionado', 'error');
+        return;
+    }
+
     fetch(`/usuarios/${idUsuario}/rol`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rol: 'estudiante' })
+        body: JSON.stringify({ rol: rolSeleccionado })
     })
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            showToast(`✅ Usuario ${nombre} activado correctamente`, 'success');
+            showToast(`Usuario ${nombre} activado correctamente`, 'success');
             cargarUsuariosInactivos();
         } else {
             showToast(data.message || 'Error al activar el usuario', 'error');
         }
     })
     .catch(() => {
+        showToast('Error de conexion con el servidor', 'error');
+    });
+};
+
+window.activarUsuariosSeleccionados = () => {
+    const ids = getSelectedInactivos();
+    if (ids.length === 0) {
+        showToast('Selecciona al menos un usuario.', 'error');
+        return;
+    }
+
+    const selectRole = document.getElementById('bulkRolInactivos');
+    const selectedValue = selectRole ? selectRole.value : '';
+    if (!selectedValue) {
+        showToast('Selecciona un rol antes de activar los usuarios.', 'error');
+        return;
+    }
+
+    const rolMap = {
+        '2': 'estudiante',
+        '3': 'profesor',
+        '4': 'coordinacion'
+    };
+
+    const rolSeleccionado = rolMap[selectedValue];
+    if (!rolSeleccionado) {
+        showToast('Rol inválido seleccionado', 'error');
+        return;
+    }
+
+    fetch('/usuarios/roles', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, rol: rolSeleccionado })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`✅ ${ids.length} usuario(s) activado(s) correctamente`, 'success');
+            cargarUsuariosInactivos();
+            const selectAll = document.getElementById('selectAllInactivos');
+            if (selectAll) selectAll.checked = false;
+        } else {
+            showToast(data.error || 'Error al activar los usuarios', 'error');
+        }
+    })
+    .catch(() => {
         showToast('Error de conexión con el servidor', 'error');
     });
 };
+
+function toggleSelectAllInactivos(checked) {
+    document.querySelectorAll('.checkbox-inactivo').forEach(cb => {
+        cb.checked = checked;
+    });
+}
+
+function setupInactivosBulkActions() {
+    const selectAll = document.getElementById('selectAllInactivos');
+    const btnActivar = document.getElementById('btnActivarSeleccionados');
+
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            toggleSelectAllInactivos(this.checked);
+        });
+    }
+
+    if (btnActivar) {
+        btnActivar.addEventListener('click', activarUsuariosSeleccionados);
+    }
+}
 
 document.getElementById('modalInactivos').addEventListener('show.bs.modal', cargarUsuariosInactivos);
 
