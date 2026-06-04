@@ -1,267 +1,259 @@
 document.addEventListener('DOMContentLoaded', () => {
-    cargarDatosPerfil();
+    cargarDatosColombiaDesdeAPI().then(() => {
+        cargarDatosPerfil();
+    });
 });
 
-/**
- * 1. OBTENER INFORMACIÓN DE LA API BASADO EN EL ID DE SESIÓN
- */
+let departamentosMap = {};
+
+// ==================== CARGAR DEPARTAMENTOS + EPS ====================
+async function cargarDatosColombiaDesdeAPI() {
+    try {
+        const depRes = await fetch('https://api-colombia.com/api/v1/Department');
+        const departamentos = await depRes.json();
+
+        const depSelect = document.getElementById('departamento_admin');
+        depSelect.innerHTML = '<option value="" disabled selected>Seleccione Departamento...</option>';
+
+        departamentos.sort((a, b) => a.name.localeCompare(b.name)).forEach(dep => {
+            departamentosMap[dep.name.toUpperCase()] = dep.id;
+            const opt = document.createElement('option');
+            opt.value = dep.name;
+            opt.textContent = dep.name;
+            depSelect.appendChild(opt);
+        });
+
+        // EPS
+        const epsList = [
+            "EPS SURA", "Salud Total", "Compensar", "Sanitas", "Famisanar", "Nueva EPS",
+            "Coomeva", "Medimás", "Aliansalud", "SOS", "Mutual Ser", "Capital Salud",
+            "Ecoopsos", "Ferrocor", "Savia Salud", "Coosalud", "Emssanar", "Ambuq"
+        ];
+        
+        const epsSelect = document.getElementById('eps_admin');
+        epsSelect.innerHTML = '<option value="" disabled selected>Seleccione EPS...</option>';
+        epsList.forEach(eps => {
+            const opt = document.createElement('option');
+            opt.value = eps;
+            opt.textContent = eps;
+            epsSelect.appendChild(opt);
+        });
+
+    } catch (error) {
+        console.error("Error API:", error);
+        crearNotificacionNativa('Error', 'No se pudieron cargar los departamentos.', 'error');
+    }
+}
+
+// ==================== CARGAR MUNICIPIOS ====================
+async function cargarMunicipios() {
+    const depNombre = document.getElementById('departamento_admin').value;
+    const munSelect = document.getElementById('municipio_admin');
+    munSelect.innerHTML = '<option value="" disabled selected>Seleccione Municipio...</option>';
+
+    if (!depNombre) return;
+
+    try {
+        const idDep = departamentosMap[depNombre.toUpperCase()];
+        if (!idDep) return;
+
+        const res = await fetch(`https://api-colombia.com/api/v1/Department/${idDep}/cities`);
+        const municipios = await res.json();
+
+        municipios.sort((a, b) => a.name.localeCompare(b.name)).forEach(mun => {
+            const opt = document.createElement('option');
+            opt.value = mun.name;
+            opt.textContent = mun.name;
+            munSelect.appendChild(opt);
+        });
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// ==================== CARGAR DATOS DEL PERFIL ====================
 function cargarDatosPerfil() {
-    // Verificamos que la variable global exista antes de hacer nada
     if (!window.usuarioAdmin || !window.usuarioAdmin.id_usuario) {
-        console.error("No se detectó la sesión global en window.usuarioAdmin");
-        crearNotificacionNativa('Error Crítico', 'No se pudo identificar la sesión del usuario.', 'error');
+        crearNotificacionNativa('Error Crítico', 'No se detectó la sesión del usuario.', 'error');
         return;
     }
 
-    const idUsuarioLogueado = window.usuarioAdmin.id_usuario;
-
-    // Pasamos el ID dinámicamente en la URL para que el backend sepa a quién buscar
-    fetch(`/api/perfil-datos?id_usuario=${idUsuarioLogueado}`)
+    fetch(`/api/perfil-datos?id_usuario=${window.usuarioAdmin.id_usuario}`)
         .then(response => response.json())
         .then(res => {
-            if (res.status === 'success') {
-                const user = res.data;
+            if (res.status !== 'success') return;
 
-                // Actualizar interfaz lateral
-                const inicial = user.nombres ? user.nombres[0].toUpperCase() : 'A';
-                document.getElementById('avatarLetra').textContent = inicial;
-                document.getElementById('nombreCompletoAdminVista').textContent = `${user.nombres} ${user.apellidos}`;
-                document.getElementById('rolAdminVista').textContent = user.nombre_rol ? user.nombre_rol.toUpperCase() : 'USUARIO';
-                
-                // Controlar Badge de Estado
-                const badgeEstado = document.getElementById('estadoAdminVista');
-                const estadoActual = user.estado || 'Pendiente';
-                badgeEstado.textContent = `Estado: ${estadoActual}`;
-                badgeEstado.className = "badge rounded-pill px-3 py-2 fs-6";
-                
-                if (estadoActual === 'Activo') badgeEstado.classList.add('bg-success');
-                else if (estadoActual === 'Inactivo') badgeEstado.classList.add('bg-danger');
-                else badgeEstado.classList.add('bg-secondary');
+            const user = res.data;
 
-                // Rellenar los inputs del formulario
-                document.getElementById('id_usuario_admin').value = user.id_usuario || '';
-                document.getElementById('id_datos_usuario_admin').value = user.id_datos_usuario || '';
-                document.getElementById('nombres_admin').value = user.nombres || '';
-                document.getElementById('apellidos_admin').value = user.apellidos || '';
-                document.getElementById('correo_admin').value = user.correo || '';
-                document.getElementById('fecha_nacimiento_admin').value = user.fecha_nacimiento || '';
-                document.getElementById('rol_admin').value = user.nombre_rol ? user.nombre_rol.toUpperCase() : '';
-                document.getElementById('sexo_admin').value = user.Sexo || '';
-                document.getElementById('departamento_admin').value = user.departamento || '';
-                document.getElementById('municipio_admin').value = user.municipio || '';
-                document.getElementById('direccion_admin').value = user.direccion || '';
-                document.getElementById('telefono_admin').value = user.telefono || '';
-                document.getElementById('telefono_emergencia_admin').value = user.telefono_emergencia || '';
-                document.getElementById('estrato_admin').value = user.Estrato || '';
-                document.getElementById('eps_admin').value = user.eps || '';
+            // === ROL (Corregido y reforzado) ===
+            const rolTexto = user.nombre_rol || user.rol || 'USUARIO';
+            document.getElementById('rolAdminVista').textContent = rolTexto.toUpperCase();
+            document.getElementById('rol_admin').value = rolTexto.toUpperCase();
 
-                // Bloqueo inteligente del documento si ya existe
-                const inputDoc = document.getElementById('numero_documento_admin');
-                const selectDoc = document.getElementById('tipo_documento_admin');
-                inputDoc.value = user.numero_documento || '';
-                selectDoc.value = user.tipo_documento || '';
+            // Cabecera y avatar
+            document.getElementById('avatarLetra').textContent = user.nombres ? user.nombres[0].toUpperCase() : 'A';
+            document.getElementById('nombreCompletoAdminVista').textContent = `${user.nombres || ''} ${user.apellidos || ''}`;
 
-                if (user.numero_documento) {
-                    inputDoc.readOnly = true;
-                    inputDoc.classList.add('bg-light');
-                    selectDoc.disabled = true;
-                    selectDoc.classList.add('bg-light');
+            // Estado
+            const badge = document.getElementById('estadoAdminVista');
+            badge.textContent = `Estado: ${user.estado || 'Pendiente'}`;
+            badge.className = `badge rounded-pill px-3 py-2 fs-6 ${user.estado === 'Activo' ? 'bg-success' : user.estado === 'Inactivo' ? 'bg-danger' : 'bg-secondary'}`;
+
+            // Rellenar demás campos
+            document.getElementById('id_usuario_admin').value = user.id_usuario || '';
+            document.getElementById('nombres_admin').value = user.nombres || '';
+            document.getElementById('apellidos_admin').value = user.apellidos || '';
+            document.getElementById('correo_admin').value = user.correo || '';
+            document.getElementById('fecha_nacimiento_admin').value = user.fecha_nacimiento || '';
+            document.getElementById('sexo_admin').value = user.Sexo || '';
+            document.getElementById('numero_documento_admin').value = user.numero_documento || '';
+            document.getElementById('tipo_documento_admin').value = user.tipo_documento || '';
+            document.getElementById('direccion_admin').value = user.direccion || '';
+            document.getElementById('telefono_admin').value = user.telefono || '';
+            document.getElementById('telefono_emergencia_admin').value = user.telefono_emergencia || '';
+            document.getElementById('estrato_admin').value = user.Estrato || '';
+
+            // Departamento, Municipio y EPS
+            if (user.departamento) {
+                const depSelect = document.getElementById('departamento_admin');
+                for (let opt of depSelect.options) {
+                    if (opt.value.toUpperCase() === user.departamento.toUpperCase()) {
+                        depSelect.value = opt.value;
+                        break;
+                    }
                 }
-            } else {
-                crearNotificacionNativa('Error de Carga', res.message, 'error');
+
+                setTimeout(() => {
+                    cargarMunicipios().then(() => {
+                        if (user.municipio) {
+                            const munSelect = document.getElementById('municipio_admin');
+                            for (let opt of munSelect.options) {
+                                if (opt.value.toUpperCase() === user.municipio.toUpperCase()) {
+                                    munSelect.value = opt.value;
+                                    break;
+                                }
+                            }
+                        }
+                    });
+                }, 400);
             }
+
+            if (user.eps) {
+                const epsSelect = document.getElementById('eps_admin');
+                for (let opt of epsSelect.options) {
+                    if (opt.value.toUpperCase() === user.eps.toUpperCase()) {
+                        epsSelect.value = opt.value;
+                        break;
+                    }
+                }
+            }
+
+            agregarValidaciones();
         })
-        .catch(error => {
-            console.error(error);
-            crearNotificacionNativa('Error Crítico', 'No se pudo conectar con el servidor.', 'error');
+        .catch(err => {
+            console.error(err);
+            crearNotificacionNativa('Error', 'No se pudo cargar el perfil.', 'error');
         });
 }
 
-/**
- * 2. ENVIAR ACTUALIZACIONES INYECTANDO EL ID Y ROL AUTOMÁTICAMENTE
- */
-function guardarPerfilweb() {
-    // 1. Capturar todos los elementos del formulario
-    const inputs = {
-        'Nombres': document.getElementById('nombres_admin'),
-        'Apellidos': document.getElementById('apellidos_admin'),
-        'Correo Electrónico': document.getElementById('correo_admin'),
-        'Fecha de Nacimiento': document.getElementById('fecha_nacimiento_admin'),
-        'Sexo': document.getElementById('sexo_admin'),
-        'Tipo de Documento': document.getElementById('tipo_documento_admin'),
-        'Número de Documento': document.getElementById('numero_documento_admin'),
-        'Departamento': document.getElementById('departamento_admin'),
-        'Municipio': document.getElementById('municipio_admin'),
-        'Dirección': document.getElementById('direccion_admin'),
-        'Teléfono Personal': document.getElementById('telefono_admin'),
-        'Contacto de Emergencia': document.getElementById('telefono_emergencia_admin'),
-        'Estrato Socioeconómico': document.getElementById('estrato_admin'),
-        'Entidad de Salud (EPS)': document.getElementById('eps_admin')
-    };
-
-    // 2. Recorrer campo por campo buscando valores vacíos
-    for (const [nombreCampo, elemento] of Object.entries(inputs)) {
-        if (!elemento) continue; 
-
-        const valor = elemento.value.trim(); 
-
-        if (valor === "" || valor === null || valor === undefined) {
-            crearNotificacionNativa('Campo Obligatorio', `Por favor, rellene el campo: <strong>${nombreCampo}</strong>`, 'warning');
-            elemento.focus();
-            elemento.classList.add('is-invalid'); 
-            
-            elemento.addEventListener('input', function quitarError() {
-                elemento.classList.remove('is-invalid');
-                elemento.removeEventListener('input', quitarError);
-            });
-
-            return; 
-        }
-    }
-
-    // 3. Capturar valores ya validados
-    const nombres = inputs['Nombres'].value.trim();
-    const apellidos = inputs['Apellidos'].value.trim();
-    const correo = inputs['Correo Electrónico'].value.trim();
-    const fecha_nacimiento = inputs['Fecha de Nacimiento'].value;
-    const sexo = inputs['Sexo'].value;
-    const tipo_documento = inputs['Tipo de Documento'].value;
-    const numero_documento = inputs['Número de Documento'].value.trim();
-    const departamento = inputs['Departamento'].value.trim();
-    const municipio = inputs['Municipio'].value.trim();
-    const direccion = inputs['Dirección'].value.trim();
-    const telefono = inputs['Teléfono Personal'].value.trim();
-    const telefono_emergencia = inputs['Contacto de Emergencia'].value.trim();
-    const estrato = inputs['Estrato Socioeconómico'].value;
-    const eps = inputs['Entidad de Salud (EPS)'].value.trim();
-    
-    // Capturar contraseña
-    const inputClave = document.getElementById('nueva_clave_admin');
-    const nueva_clave = inputClave.value; 
-
-    // 4. Control de longitud de la contraseña
-    if (nueva_clave.length > 0 && nueva_clave.length <= 6) {
-        crearNotificacionNativa(
-            'Seguridad de Cuenta', 
-            'La nueva contraseña debe tener <strong>más de 6 caracteres</strong>.', 
-            'warning'
-        );
-        inputClave.focus();
-        inputClave.classList.add('is-invalid');
-
-        inputClave.addEventListener('input', function quitarErrorClave() {
-            inputClave.classList.remove('is-invalid');
-            inputClave.removeEventListener('input', quitarErrorClave);
+// ==================== VALIDACIONES ====================
+function agregarValidaciones() {
+    ['nombres_admin', 'apellidos_admin'].forEach(id => {
+        const input = document.getElementById(id);
+        input.addEventListener('input', () => {
+            input.value = input.value.replace(/[^a-zA-ZáéíóúñÁÉÍÓÚÑ\s]/g, '');
         });
-        return;
-    }
+    });
 
-    // 5. Validación: Teléfonos idénticos
-    if (telefono === telefono_emergencia) {
-        crearNotificacionNativa('Validación', 'El teléfono de emergencia no puede ser el mismo que el personal.', 'warning');
-        inputs['Contacto de Emergencia'].focus();
-        return;
-    }
+    ['telefono_admin', 'telefono_emergencia_admin'].forEach(id => {
+        const input = document.getElementById(id);
+        input.addEventListener('input', () => {
+            input.value = input.value.replace(/[^0-9]/g, '');
+            if (input.value.length > 0 && !input.value.startsWith('3')) {
+                input.value = '3' + input.value.slice(1);
+            }
+            if (input.value.length > 10) input.value = input.value.slice(0, 10);
+        });
+    });
+}
 
-    // 🚨 6. AVERIGUAR ID Y ROL DESDE EL OBJETO GLOBAL PARA EL PAYLOAD
-    const id_usuario = window.usuarioAdmin.id_usuario;
-    const rol_usuario = window.usuarioAdmin.rol; // Guarda si es Admin, Profesor, etc.
+// ==================== GUARDAR ====================
+function guardarPerfilweb() {
+    const get = id => document.getElementById(id).value.trim();
+
+    if (!/^[a-zA-ZáéíóúñÁÉÍÓÚÑ\s]+$/.test(get('nombres_admin'))) return crearNotificacionNativa('Error', 'Nombres solo letras', 'warning');
+    if (!/^[a-zA-ZáéíóúñÁÉÍÓÚÑ\s]+$/.test(get('apellidos_admin'))) return crearNotificacionNativa('Error', 'Apellidos solo letras', 'warning');
+
+    const edad = new Date().getFullYear() - new Date(get('fecha_nacimiento_admin')).getFullYear();
+    if (edad < 16) return crearNotificacionNativa('Error', 'Mínimo 16 años', 'warning');
+
+    const tel = get('telefono_admin');
+    const telEmer = get('telefono_emergencia_admin');
+    if (!/^3\d{9}$/.test(tel) || !/^3\d{9}$/.test(telEmer)) return crearNotificacionNativa('Error', 'Teléfonos inválidos', 'warning');
+    if (tel === telEmer) return crearNotificacionNativa('Error', 'Teléfonos no pueden ser iguales', 'warning');
+
+    const nuevaClave = document.getElementById('nueva_clave_admin').value;
+    if (nuevaClave.length > 0 && nuevaClave.length < 7) return crearNotificacionNativa('Error', 'Contraseña mínimo 7 caracteres', 'warning');
 
     const payload = {
-        id_usuario, // Mandamos el ID detectado
-        rol_usuario, // Mandamos el Rol detectado
-        nombres, apellidos, correo, fecha_nacimiento, sexo, tipo_documento,
-        numero_documento, departamento, municipio, direccion, telefono,
-        telefono_emergencia, estrato, eps, nueva_clave
+        id_usuario: window.usuarioAdmin.id_usuario,
+        rol_usuario: window.usuarioAdmin.rol,
+        nombres: get('nombres_admin'),
+        apellidos: get('apellidos_admin'),
+        correo: get('correo_admin'),
+        fecha_nacimiento: get('fecha_nacimiento_admin'),
+        sexo: get('sexo_admin'),
+        tipo_documento: get('tipo_documento_admin'),
+        numero_documento: get('numero_documento_admin'),
+        departamento: get('departamento_admin'),
+        municipio: get('municipio_admin'),
+        direccion: get('direccion_admin'),
+        telefono: tel,
+        telefono_emergencia: telEmer,
+        estrato: get('estrato_admin'),
+        eps: get('eps_admin'),
+        nueva_clave: nuevaClave
     };
 
-    // 7. Realizar la petición Fetch apuntando a una ruta global unificada
     fetch('/api/perfil-guardar-web', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     })
-    .then(response => response.json())
+    .then(r => r.json())
     .then(res => {
         if (res.status === 'success') {
-            crearNotificacionNativa('¡Hecho!', 'Tu perfil ha sido actualizado con éxito.', 'success');
-            inputClave.value = ''; 
+            crearNotificacionNativa('¡Éxito!', 'Perfil actualizado correctamente.', 'success');
+            document.getElementById('nueva_clave_admin').value = '';
             cargarDatosPerfil();
         } else {
-            crearNotificacionNativa('Ocurrió un problema', res.message, 'error');
+            crearNotificacionNativa('Error', res.message || 'No se pudo guardar', 'error');
         }
     })
-    .catch(error => {
-        console.error(error);
-        crearNotificacionNativa('Error de Red', 'No se pudo procesar la solicitud de guardado.', 'error');
-    });
+    .catch(() => crearNotificacionNativa('Error', 'Error de conexión', 'error'));
 }
 
-/**
- * 3. CONSTRUCTOR DE NOTIFICACIÓN NATIVA
- */
+// ==================== NOTIFICACIONES ====================
 function crearNotificacionNativa(titulo, mensaje, tipo = 'success') {
-    let contenedorMaestro = document.getElementById('contenedor-notificaciones-nativas');
-    if (!contenedorMaestro) {
-        contenedorMaestro = document.createElement('div');
-        contenedorMaestro.id = 'contenedor-notificaciones-nativas';
-        contenedorMaestro.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; max-width: 350px; width: 100%;';
-        document.body.appendChild(contenedorMaestro);
+    let cont = document.getElementById('contenedor-notificaciones-nativas');
+    if (!cont) {
+        cont = document.createElement('div');
+        cont.id = 'contenedor-notificaciones-nativas';
+        cont.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:10px;max-width:350px;';
+        document.body.appendChild(cont);
     }
 
-    let colorFondo = '#198754'; 
-    let colorTexto = '#ffffff';
-    let icono = '✓';
+    let bg = '#198754', color = '#fff', icon = '✓';
+    if (tipo === 'error') { bg = '#dc3545'; icon = '✕'; }
+    if (tipo === 'warning') { bg = '#ffc107'; color = '#212529'; icon = '⚠'; }
 
-    if (tipo === 'error') {
-        colorFondo = '#dc3545'; 
-        icono = '✕';
-    } else if (tipo === 'warning') {
-        colorFondo = '#ffc107'; 
-        colorTexto = '#212529';
-        icono = '⚠';
-    }
-
-    const tarjetaAlerta = document.createElement('div');
-    tarjetaAlerta.style.cssText = `
-        background-color: ${colorFondo};
-        color: ${colorTexto};
-        padding: 16px;
-        border-radius: 12px;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        font-family: system-ui, -apple-system, sans-serif;
-        transition: all 0.4s ease;
-        opacity: 0;
-        transform: translateY(20px);
+    const div = document.createElement('div');
+    div.style.cssText = `background:${bg};color:${color};padding:16px;border-radius:12px;box-shadow:0 10px 15px -3px rgba(0,0,0,0.1);display:flex;gap:12px;`;
+    div.innerHTML = `
+        <div style="font-size:1.3rem;font-weight:bold;">${icon}</div>
+        <div style="flex:1"><h5 style="margin:0 0 4px">${titulo}</h5><p style="margin:0;font-size:0.85rem">${mensaje}</p></div>
+        <button style="background:none;border:none;color:${color};cursor:pointer" onclick="this.parentElement.remove()">✕</button>
     `;
-
-    tarjetaAlerta.innerHTML = `
-        <div style="font-size: 1.25rem; font-weight: bold; line-height: 1;">${icono}</div>
-        <div style="flex-grow: 1;">
-            <h5 style="margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 700;">${titulo}</h5>
-            <p style="margin: 0; font-size: 0.85rem; opacity: 0.9; line-height: 1.4;">${mensaje}</p>
-        </div>
-        <button style="background: none; border: none; color: ${colorTexto}; cursor: pointer; font-size: 1rem; font-weight: bold; opacity: 0.7; padding: 0 4px;" onclick="this.parentElement.remove()">✕</button>
-    `;
-
-    contenedorMaestro.appendChild(tarjetaAlerta);
-
-    setTimeout(() => {
-        tarjetaAlerta.style.opacity = '1';
-        tarjetaAlerta.style.transform = 'translateY(0)';
-    }, 50);
-
-    setTimeout(() => {
-        tarjetaAlerta.style.opacity = '0';
-        tarjetaAlerta.style.transform = 'scale(0.9)';
-        setTimeout(() => {
-            tarjetaAlerta.remove();
-            if (contenedorMaestro.childElementCount === 0) {
-                contenedorMaestro.remove();
-            }
-        }, 400);
-    }, 4000);
+    cont.appendChild(div);
+    setTimeout(() => div.remove(), 4500);
 }
