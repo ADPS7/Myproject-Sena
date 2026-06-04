@@ -148,7 +148,7 @@ async function verModulos(idCurso, nombreCurso) {
 }
 
 // ======================================
-// RENDER MODULOS
+// RENDER MODULOS (MEJORADO)
 // ======================================
 function renderizarModulos(idCurso, nombreCurso, modulos) {
 
@@ -157,49 +157,38 @@ function renderizarModulos(idCurso, nombreCurso, modulos) {
     contenedor.innerHTML = `
 
         <div class="col-12 mb-5">
-
             <button class="btn btn-outline-secondary rounded-pill px-4 mb-4"
                     onclick="renderizarCursos()">
-
-                <i class="bi bi-arrow-left"></i>
-                Volver
-
+                <i class="bi bi-arrow-left"></i> Volver a Mis Cursos
             </button>
 
-            <h2 class="fw-bold">
-                ${nombreCurso}
-            </h2>
-
-            <p class="text-muted">
-                Módulos disponibles
-            </p>
-
+            <h2 class="fw-bold">${nombreCurso}</h2>
+            <p class="text-muted">Módulos disponibles</p>
         </div>
 
         ${modulos.length ? modulos.map(modulo => {
 
-            const fechaInicio = modulo.fecha_inicio ? String(modulo.fecha_inicio).split('T')[0] : 'Sin fecha';
-            const fechaFin = modulo.fecha_fin ? String(modulo.fecha_fin).split('T')[0] : 'Sin fecha';
+            const fechaInicio = formatoFechaBonita(modulo.fecha_inicio);
+            const fechaFin = formatoFechaBonita(modulo.fecha_fin);
 
             return `
 
                 <div class="col-md-6 mb-4">
+                    <div class="card border-0 shadow modulo-card h-100" 
+                         onclick='verEstudiantes(${idCurso}, ${modulo.id_modulo}, ${JSON.stringify(modulo.nombre)})'>
 
-                    <div class="card border-0 shadow modulo-card h-100" onclick='verEstudiantes(${idCurso}, ${modulo.id_modulo}, ${JSON.stringify(modulo.nombre)})'>
                         <div class="card-body p-4">
+
                             <div class="d-flex justify-content-between align-items-start mb-4">
                                 <div>
-                                    <small class="text-primary fw-semibold">
-                                        MÓDULO
-                                    </small>
-                                    <h4 class="fw-bold mt-2">
-                                        ${modulo.nombre}
-                                    </h4>
+                                    <small class="text-primary fw-semibold">MÓDULO</small>
+                                    <h4 class="fw-bold mt-2">${modulo.nombre}</h4>
                                 </div>
                                 <div class="bg-light rounded-circle p-3">
                                     <i class="bi bi-journal-bookmark-fill text-primary fs-4"></i>
                                 </div>
                             </div>
+
                             <div class="bg-light rounded-4 p-3">
                                 <div class="d-flex justify-content-between mb-2">
                                     <small class="text-muted">Inicio</small>
@@ -210,14 +199,14 @@ function renderizarModulos(idCurso, nombreCurso, modulos) {
                                     <span class="fw-semibold">${fechaFin}</span>
                                 </div>
                             </div>
+
                             <div class="mt-4 d-flex justify-content-end">
                                 <span class="text-primary fw-semibold">Ver estudiantes →</span>
                             </div>
+
                         </div>
                     </div>
-
                 </div>
-
             `;
 
         }).join('') : `
@@ -228,6 +217,27 @@ function renderizarModulos(idCurso, nombreCurso, modulos) {
             </div>
         `}
     `;
+}
+// Función DEFINITIVA - Evita problema de zona horaria
+function formatoFechaBonita(fechaStr) {
+    if (!fechaStr) return 'Sin fecha';
+
+    // Convertimos "2026-05-27" directamente sin pasar por new Date() UTC
+    const partes = fechaStr.toString().split('-');
+    if (partes.length !== 3) return fechaStr;
+
+    const año = partes[0];
+    const mesNum = parseInt(partes[1]);
+    const dia = parseInt(partes[2]);
+
+    const meses = [
+        'Ene', 'Feb', 'Mar', 'Abr', 'Mayo', 'Jun',
+        'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
+    ];
+
+    const mesCorto = meses[mesNum - 1];
+
+    return `${dia} ${mesCorto} ${año}`;
 }
 
 // ======================================

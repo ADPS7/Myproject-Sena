@@ -266,7 +266,15 @@ def get_modulos_curso(id_curso):
         cursor = conn.cursor(dictionary=True)
         
         # Consultamos los módulos asociados al curso seleccionado
-        query = "SELECT id_modulo, nombre, fecha_inicio, fecha_fin FROM Modulos WHERE id_curso = %s"
+        query = """
+                SELECT 
+                    id_modulo,
+                    nombre,
+                    DATE_FORMAT(fecha_inicio, '%Y-%m-%d') AS fecha_inicio,
+                    DATE_FORMAT(fecha_fin, '%Y-%m-%d') AS fecha_fin
+                FROM Modulos
+                WHERE id_curso = %s
+            """
         cursor.execute(query, (id_curso,))
         modulos = cursor.fetchall()
         
