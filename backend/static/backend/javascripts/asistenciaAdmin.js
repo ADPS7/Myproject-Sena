@@ -88,14 +88,17 @@ function renderizarModulos(idCurso) {
 /**
  * VISTA 3: Reporte de Asistencia (Tabla)
  */
+/**
+ * VISTA 3: Reporte de Asistencia (Tabla Mejorada)
+ */
 function renderizarReporteFinal(idCurso, idModulo) {
     const curso = datosAsistencia.find(c => c.id_curso === idCurso);
     const modulo = curso.modulos.find(m => m.id_modulo === idModulo);
     const contenedor = document.getElementById('contenedor-principal');
     const navContainer = document.getElementById('back-button-container');
 
-    document.getElementById('view-title').innerText = "Reporte: " + modulo.nombre;
-    document.getElementById('view-subtitle').innerText = "Seguimiento detallado de inasistencias.";
+    document.getElementById('view-title').innerText = "Asistencias - " + modulo.nombre;
+    document.getElementById('view-subtitle').innerText = "Registro detallado de asistencias e inasistencias";
 
     navContainer.innerHTML = `
         <button class="btn btn-outline-secondary rounded-pill btn-sm" onclick="renderizarModulos(${idCurso})">
@@ -110,42 +113,52 @@ function renderizarReporteFinal(idCurso, idModulo) {
                         <thead class="bg-light">
                             <tr>
                                 <th class="ps-4">Estudiante</th>
-                                <th class="text-center">Total Faltas</th>
-                                <th class="text-center">Estado</th>
+                                <th class="text-center">Total Clases</th>
+                                <th class="text-center">Asistencias</th>
+                                <th class="text-center">Inasistencias</th>
+                                <th class="text-center">% Asistencia</th>
                                 <th class="ps-4">Últimos Registros</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${modulo.estudiantes.map(est => `
-                                <tr class="${est.alerta ? 'table-danger' : ''}">
-                                    <td class="ps-4">
-                                        <div class="fw-bold">${est.nombre}</div>
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="fw-bold ${est.inasistencias > 0 ? 'text-danger' : 'text-muted'}">
-                                            ${est.inasistencias}
-                                        </span>
-                                    </td>
-                                    <td class="text-center">
-                                        ${est.alerta ? 
-                                            '<span class="badge bg-danger">Alerta de Deserción</span>' : 
-                                            '<span class="badge bg-success">Al día</span>'}
-                                    </td>
-                                    <td class="ps-4">
-                                        <div class="d-flex gap-1">
-                                            ${est.asistencias.length > 0 ? 
-                                                est.asistencias.slice(-5).map(a => `
-                                                    <span class="badge-date ${a.asistio === 'SI' ? 'bg-success text-white' : 'bg-danger text-white'}" 
-                                                          title="${a.fecha}">
-                                                        ${a.fecha.split('-')[2]}/${a.fecha.split('-')[1]}
-                                                    </span>
-                                                `).join('') : 
-                                                '<small class="text-muted">Sin registros</small>'
-                                            }
-                                        </div>
-                                    </td>
-                                </tr>
-                            `).join('')}
+                            ${modulo.estudiantes.map(est => {
+                                const totalClases = est.asistencias.length;
+                                const asistencias = est.asistencias.filter(a => a.asistio === 'SI').length;
+                                const inasistencias = totalClases - asistencias;
+                                const porcentaje = totalClases > 0 ? Math.round((asistencias / totalClases) * 100) : 0;
+
+                                return `
+                                    <tr>
+                                        <td class="ps-4">
+                                            <div class="fw-bold">${est.nombre}</div>
+                                        </td>
+                                        <td class="text-center fw-medium">${totalClases}</td>
+                                        <td class="text-center">
+                                            <span class="badge bg-success">${asistencias}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-danger">${inasistencias}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="fw-bold ${porcentaje >= 70 ? 'text-success' : porcentaje >= 50 ? 'text-warning' : 'text-danger'}">
+                                                ${porcentaje}%
+                                            </span>
+                                        </td>
+                                        <td class="ps-4">
+                                            <div class="d-flex gap-1 flex-wrap">
+                                                ${est.asistencias.length > 0 ? 
+                                                    est.asistencias.slice(-6).map(a => `
+                                                        <span class="badge px-2 py-1 ${a.asistio === 'SI' ? 'bg-success text-white' : 'bg-danger text-white'}" 
+                                                              title="${a.fecha}">
+                                                            ${a.fecha.split('-')[2]}/${a.fecha.split('-')[1]}
+                                                        </span>
+                                                    `).join('') : 
+                                                    '<small class="text-muted">Sin registros</small>'
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>`;
+                            }).join('')}
                         </tbody>
                     </table>
                 </div>
