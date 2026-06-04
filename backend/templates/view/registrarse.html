@@ -26,7 +26,12 @@
                         <div class="input-group-custom">
                             <label>Nombre</label>
                             <div class="input-field">
-                                <input type="text" name="nombre" class="form-control" placeholder="Juan" required>
+                                <input type="text"
+                                    name="nombre"
+                                    class="form-control"
+                                    pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
+                                    placeholder="Juan"
+                                    required>
                                 <i class="bi bi-person"></i>
                             </div>
                         </div>
@@ -35,7 +40,12 @@
                         <div class="input-group-custom">
                             <label>Apellido</label>
                             <div class="input-field">
-                                <input type="text" name="apellido" class="form-control" placeholder="Pérez" required>
+                                <input type="text"
+                                    name="apellido"
+                                    class="form-control"
+                                    pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
+                                    placeholder="Pérez"
+                                    required>
                                 <i class="bi bi-person"></i>
                             </div>
                         </div>

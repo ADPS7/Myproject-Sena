@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const passwordInput = document.getElementById('password');
     const submitBtn = document.getElementById('submitBtn');
 
-    //---------------------
+
     const nombreInput = document.querySelector('input[name="nombre"]');
     const apellidoInput = document.querySelector('input[name="apellido"]');
 
@@ -18,11 +18,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     nombreInput.addEventListener('input', soloLetras);
     apellidoInput.addEventListener('input', soloLetras);
-    //---------------------
+  
 
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
-//------------------------------------------------------
+
         const regexNombre = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/;
 
 if (!regexNombre.test(nombreInput.value.trim())) {
@@ -36,7 +36,7 @@ if (!regexNombre.test(apellidoInput.value.trim())) {
     apellidoInput.focus();
     return;
 }
-//------------------------------------------------------
+
 
         // 1. Validación de Correo (Estricta: Solo letras después del @)
         // [a-zA-Z0-9._%+-]+ : Usuario
