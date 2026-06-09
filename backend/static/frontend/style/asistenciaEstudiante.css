@@ -1,16 +1,73 @@
+:root {
+    --primary: #2563eb;
+    --primary-soft: #eff6ff;
+    --bg-body: #f1f5f9;
+}
+
 /* =========================================================================
    ESTRUCTURA GENERAL Y CONTENEDORES
    ========================================================================= */
+body {
+    background-color: var(--bg-body);
+    font-family: 'Inter', sans-serif;
+    color: #1e293b;
+}
+
 .asistencia-container {
-    max-width: 1000px;
+    max-width: 1200px;
     margin: 0 auto;
 }
 
 /* Header de la sección */
 .attendance-header {
-    border-radius: 16px !important;
-    border: 1px solid #eef0f6 !important;
-    background-color: #ffffff;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 0 0.75rem 0 !important;
+}
+
+.attendance-header h4 {
+    font-size: 2rem;
+    line-height: 1.1;
+}
+
+.summary-card {
+    border-radius: 18px;
+    border: 1px solid #edf2f7;
+    background: #fff;
+    padding: 1rem 1.1rem;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    min-height: 110px;
+}
+
+.summary-card-primary { background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%); }
+.summary-card-success { background: linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%); }
+.summary-card-danger { background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%); }
+.summary-card-accent { background: linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%); }
+
+.summary-label {
+    display: block;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.summary-value {
+    display: block;
+    font-size: 1.7rem;
+    line-height: 1.1;
+    color: #0f172a;
+    margin-top: 0.35rem;
+}
+
+.summary-foot {
+    display: block;
+    color: #475569;
+    font-size: 0.85rem;
+    margin-top: 0.35rem;
 }
 
 /* =========================================================================
@@ -18,24 +75,29 @@
    ========================================================================= */
 .attendance-card {
     background-color: #ffffff !important;
-    border: 1px solid #eef0f6 !important;
-    border-radius: 12px !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02) !important;
-    margin-bottom: 16px !important; /* Espacio real entre los módulos */
+    border: 1px solid rgba(148, 163, 184, 0.18) !important;
+    border-radius: 22px !important;
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08) !important;
+    margin-bottom: 18px !important;
     overflow: hidden;
 }
 
 /* Botón del encabezado del módulo */
 .attendance-button {
-    padding: 1.25rem 1.5rem !important;
+    padding: 1.15rem 1.15rem !important;
     font-weight: 700;
     background-color: #ffffff !important;
-    color: #212529 !important;
-    border: none !important;
-    box-shadow: none !important;
+    color: #1e293b !important;
+    border: 1px solid rgba(148, 163, 184, 0.18) !important;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06) !important;
+    border-radius: 18px !important;
 }
 
-/* Cuando el acordeón se abre, quitamos el fondo azul feo y el delineado por defecto */
+.attendance-button:hover {
+    background-color: #f8fbff !important;
+    transform: translateY(-2px);
+}
+
 .attendance-button:not(.collapsed) {
     background-color: #f8fafc !important;
     color: #1e293b !important;
@@ -43,12 +105,11 @@
     box-shadow: none !important;
 }
 
-/* Icono del libro/agenda en el botón principal */
 .attendance-icon {
     width: 42px;
     height: 42px;
-    background-color: #f1f5f9;
-    color: #475569;
+    background-color: #eff6ff;
+    color: #2563eb;
     border-radius: 10px;
     display: flex;
     align-items: center;
@@ -96,9 +157,6 @@
     color: #334155;
 }
 
-/* =========================================================================
-   BADGES REDONDOS PARA CHULITO Y EQUIS (REACCIONAN CON COLOR)
-   ========================================================================= */
 .status-badge {
     width: 32px;
     height: 32px;
@@ -110,21 +168,21 @@
     font-weight: bold;
 }
 
-/* Asistió: Chulito verde con fondo suave */
 .status-badge.success {
-    color: #16a34a !important; 
-    background-color: #dcfce7 !important;
-    border: 1px solid #bbf7d0 !important;
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    border: 1px solid #22c55e !important;
+    box-shadow: 0 8px 18px rgba(34, 197, 94, 0.25);
 }
 
-/* Inasistencia: Equis roja con fondo suave */
+
 .status-badge.fail {
-    color: #dc2626 !important; 
-    background-color: #fee2e2 !important;
-    border: 1px solid #fecaca !important;
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #fb7185, #dc2626) !important;
+    border: 1px solid #fb7185 !important;
+    box-shadow: 0 8px 18px rgba(220, 38, 38, 0.25);
 }
 
-/* Badges con texto completo (Soporte complementario para la vista en Tablas) */
 .estado-asistio {
     background-color: #d1e7dd !important;
     color: #0f5132 !important;
@@ -150,6 +208,25 @@
 /* =========================================================================
    RESPONSIVE MÓVIL
    ========================================================================= */
+.attendance-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 999px;
+    padding: 0.35rem 0.65rem;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #dbeafe;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.attendance-pill-success {
+    background: #ecfdf5;
+    color: #047857;
+    border-color: #a7f3d0;
+}
+
 @media (max-width: 576px) {
     .attendance-button {
         padding: 1rem !important;

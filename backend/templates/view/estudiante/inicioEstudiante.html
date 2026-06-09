@@ -1,43 +1,55 @@
 <!-- view/estudiante/inicioEstudianteContent.html -->
 
-<header class="d-flex justify-content-between align-items-center mb-4">
+<header class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3 mb-4">
     <div>
-        <h2 class="fw-bold h4">Panel del Estudiante</h2>
-        <p class="text-muted small mb-0" id="inicioCursoActual">Curso: Cargando...</p>
+        <p class="text-uppercase fw-semibold mb-2" style="letter-spacing: 1px;">Panel del estudiante</p>
+        <h2 class="fw-bold h3 mb-2">Hola, {{ user.nombres }} </h2>
+        <p class="text-muted mb-2">Aquí tienes un resumen claro de tu progreso, tus módulos y tu asistencia para que sigas tu ruta de aprendizaje con mayor contexto.</p>
+        <p class="text-primary fw-semibold mb-0" id="inicioCursoActual">Curso actual: Cargando...</p>
     </div>
-    <span class="badge rounded-pill bg-primary-soft text-primary px-3 py-2">Estudiante</span>
 </header>
 
-<!-- Tarjetas de Resumen -->
 <div class="row g-3 mb-5">
     <div class="col-6 col-lg-4">
-        <div class="card-stat">
-            <div class="icon-box bg-primary text-white">
-                <i class="bi bi-journal-text"></i>
+        <button type="button" class="card-stat text-start w-100 border-0" style="cursor: pointer;" onclick="mostrarvistaModulosEstudiante(); activarMenuEstudiante('modulos');">
+            <div class="card-stat-inner">
+                <div class="icon-box bg-primary text-white">
+                    <i class="bi bi-journal-text"></i>
+                </div>
+                <div class="card-stat-copy">
+                    <h5 class="fw-semibold">Módulos Inscritos</h5>
+                    <h2 class="fw-bold mb-1" id="inicioModulosInscritos">0</h2>
+                    <p class="text-muted small mb-0" id="inicioModulosPendientes">Cargando...</p>
+                </div>
             </div>
-            <h5 class="fw-semibold">Módulos Inscritos</h5>
-            <h2 class="fw-bold mb-1" id="inicioModulosInscritos">0</h2>
-            <p class="text-muted small" id="inicioModulosPendientes">Cargando...</p>
-        </div>
+        </button>
     </div>
     <div class="col-6 col-lg-4">
-        <div class="card-stat">
-            <div class="icon-box bg-success text-white">
-                <i class="bi bi-check2-circle"></i>
+        <button type="button" class="card-stat text-start w-100 border-0" style="cursor: pointer;" onclick="mostrarvistaNotasEstudiante(); activarMenuEstudiante('notas');">
+            <div class="card-stat-inner">
+                <div class="icon-box bg-success text-white">
+                    <i class="bi bi-check2-circle"></i>
+                </div>
+                <div class="card-stat-copy">
+                    <h5 class="fw-semibold">Promedio Actual</h5>
+                    <h2 class="fw-bold mb-1" id="inicioPromedioActual">0.00</h2>
+                    <p class="text-muted small mb-0" id="inicioPromedioTexto">Cargando tus notas...</p>
+                </div>
             </div>
-            <h5 class="fw-semibold">Promedio Actual</h5>
-            <h2 class="fw-bold mb-1" id="inicioPromedioActual">0.00</h2>
-            <p class="text-muted small" id="inicioPromedioTexto">Cargando tus notas...</p>
-        </div>
+        </button>
     </div>
     <div class="col-6 col-lg-4">
-        <div class="card-stat">
-            <div class="icon-box bg-warning text-dark">
-                <i class="bi bi-clock"></i>
+        <button type="button" class="card-stat text-start w-100 border-0" style="cursor: pointer;" onclick="mostrarvistaAsistenciaEstudiante(); activarMenuEstudiante('asistencia');">
+            <div class="card-stat-inner">
+                <div class="icon-box bg-warning text-dark">
+                    <i class="bi bi-clock"></i>
+                </div>
+                <div class="card-stat-copy">
+                    <h5 class="fw-semibold">Asistencia</h5>
+                    <h2 class="fw-bold mb-1" id="inicioAsistencia">0%</h2>
+                    <p class="text-muted small mb-0" id="inicioAsistenciaTexto">Cargando tus asistencias...</p>
+                </div>
             </div>
-            <h5 class="fw-semibold">Asistencia</h5>
-            <h2 class="fw-bold mb-1" id="inicioAsistencia">0%</h2>
-            <p class="text-muted small" id="inicioAsistenciaTexto">Cargando tus asistencias...</p>
-        </div>
+        </button>
     </div>
 </div>

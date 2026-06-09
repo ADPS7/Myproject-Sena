@@ -28,6 +28,7 @@ function mostrarvistaModulosEstudiante() {
     ocultarVistasEstudiante();
     document.getElementById('mostrarModulosEstudiante').style.display = 'block';
     activarMenuEstudiante('modulos');
+    cargarProfesorAsignadoModulo();
     cargarModulosEstudiante();
 }
 
@@ -46,7 +47,7 @@ async function cargarCursoEstudiante() {
                 <small class="text-uppercase text-primary fw-bold" style="letter-spacing: 1px;">Programa de formación</small>
                 <h2 class="fw-bold mt-3 mb-2" id="cursoEstudianteNombre">Cargando...</h2>
                 <p class="text-muted mb-2" id="cursoEstudianteDescripcion">Descripción general del curso.</p>
-                <p class="text-muted small mb-0" id="cursoEstudianteProfesores">Profesor: Cargando...</p>
+                <p class="text-muted small mb-0" id="cursoEstudianteProfesores">Profesor asignado: Cargando...</p>
             </div>
             <div class="row g-3 mb-3">
                 <div class="col-6">
@@ -100,7 +101,7 @@ async function cargarCursoEstudiante() {
         document.getElementById('cursoEstudianteDescripcion').textContent = curso.curso_nombre
             ? `Curso diseñado para desarrollar tus competencias en ${curso.curso_nombre} y avanzar con ejercicios y módulos prácticos.`
             : 'Descripción general del curso.';
-        document.getElementById('cursoEstudianteProfesores').textContent = curso.profesores ? `Profesor: ${curso.profesores}` : 'Profesor no asignado';
+        document.getElementById('cursoEstudianteProfesores').textContent = curso.profesores ? `Profesor asignado: ${curso.profesores}` : 'Profesor asignado: Sin profesor asignado';
         document.getElementById('cursoEstudiantePeriodo').textContent = '2026';
         document.getElementById('cursoEstudianteEstado').textContent = 'Activo';
         document.getElementById('cursoEstudianteTotalModulos').textContent = curso.total_modulos || 0;
@@ -190,7 +191,7 @@ function renderizarNotasEstudiante(data) {
             ? modulo.notas.map((nota, index) => `
                 <li class="list-group-item d-flex justify-content-between align-items-center py-3 px-0 border-0 border-bottom">
                     <span>Actividad ${index + 1}</span>
-                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill py-2 px-3">${Number(nota.nota).toFixed(2)}</span>
+                    <span class="badge bg-${nota.nota >= 3 ? 'success' : 'danger'} bg-opacity-10 text-${nota.nota >= 3 ? 'success' : 'danger'} rounded-pill py-2 px-3">${Number(nota.nota).toFixed(2)}</span>
                 </li>
               `).join('')
             : `
@@ -198,6 +199,8 @@ function renderizarNotasEstudiante(data) {
                     No tienes notas registradas en este módulo.
                 </div>
               `;
+
+        const mostrarScroll = Array.isArray(modulo.notas) && modulo.notas.length > 5;
 
         return `
             <div class="col-12 col-md-6 col-xl-4 mb-4">
@@ -215,9 +218,12 @@ function renderizarNotasEstudiante(data) {
                             </div>
                         </div>
                         ${Array.isArray(modulo.notas) && modulo.notas.length ? `
-                            <ul class="list-group list-group-flush mb-0 notas-list">
-                                ${notasHTML}
-                            </ul>
+                            <div class="notas-scroll ${mostrarScroll ? 'has-scroll' : ''}">
+                                <ul class="list-group list-group-flush mb-0 notas-list">
+                                    ${notasHTML}
+                                </ul>
+                            </div>
+                            ${mostrarScroll ? '<p class="text-muted small mt-2 mb-0">Desplázate para ver más notas.</p>' : ''}
                         ` : notasHTML}
                     </div>
                 </div>
@@ -225,11 +231,13 @@ function renderizarNotasEstudiante(data) {
         `;
     }).join('');
 
-    contenedor.innerHTML = `${tarjetas}`;
+    contenedor.innerHTML = tarjetas;
 }
 
 async function cargarResumenInicioEstudiante() {
     const cursoLabel = document.getElementById('inicioCursoActual');
+    const cursoTitulo = document.getElementById('inicioTituloCurso');
+    const cursoDescripcion = document.getElementById('inicioDescripcionCurso');
     const modulosInscritos = document.getElementById('inicioModulosInscritos');
     const modulosPendientes = document.getElementById('inicioModulosPendientes');
     const promedioActual = document.getElementById('inicioPromedioActual');
@@ -252,11 +260,23 @@ async function cargarResumenInicioEstudiante() {
         const notasData = notasResp.ok ? await notasResp.json() : null;
         const asistData = asistResp.ok ? await asistResp.json() : null;
 
-        const cursoNombre = cursoData && cursoData.curso_nombre ? cursoData.curso_nombre : (cursoData && cursoData.curso ? cursoData.curso : 'Sin curso asignado');
-        cursoLabel.textContent = `Curso: ${cursoNombre}`;
+        const cursoInfo = cursoData && cursoData.curso ? cursoData.curso : cursoData;
+        const cursoNombre = cursoInfo?.curso_nombre || cursoInfo?.nombre || 'Sin curso asignado';
 
-        const totalModulos = cursoData && cursoData.curso && cursoData.curso.total_modulos !== undefined ? cursoData.curso.total_modulos : (cursoData && cursoData.total_modulos !== undefined ? cursoData.total_modulos : 0);
-        const completados = cursoData && cursoData.curso && cursoData.curso.modulos_hechos !== undefined ? cursoData.curso.modulos_hechos : 0;
+        cursoLabel.textContent = `Curso actual: ${cursoNombre}`;
+
+        if (cursoTitulo) {
+            cursoTitulo.textContent = cursoNombre || 'Tu curso actual';
+        }
+
+        if (cursoDescripcion) {
+            cursoDescripcion.textContent = cursoNombre
+                ? `Estás cursando ${cursoNombre}. Revisa módulos, notas y asistencia desde esta vista.`
+                : 'Aún no tienes un curso asignado en la plataforma.';
+        }
+
+        const totalModulos = Number(cursoInfo?.total_modulos || 0);
+        const completados = Number(cursoInfo?.modulos_hechos || 0);
 
         modulosInscritos.textContent = totalModulos;
         modulosPendientes.textContent = `Módulos completados: ${completados} • pendientes: ${Math.max(0, totalModulos - completados)}`;
@@ -284,14 +304,16 @@ async function cargarResumenInicioEstudiante() {
             const asistidos = registros.filter(item => String(item.asistio).toUpperCase() === 'SI').length;
             const porcentaje = totales ? Math.round((asistidos / totales) * 100) : 0;
             asistenciaLabel.textContent = `${porcentaje}%`;
-            asistenciaTexto.textContent = totales ? `${asistidos} de ${totales} clases asistidas` : 'Aún no hay registros de asistencia';
+            asistenciaTexto.textContent = totales ? `Asistencias: ${asistidos} de ${totales} clases asistidas` : 'Aún no hay registros de asistencia';
         } else {
             asistenciaLabel.textContent = '0%';
             asistenciaTexto.textContent = 'Aún no hay registros de asistencia';
         }
     } catch (error) {
         console.error('Error cargando el resumen del estudiante:', error);
-        cursoLabel.textContent = 'Curso: error al cargar';
+        if (cursoLabel) cursoLabel.textContent = 'Curso actual: error al cargar';
+        if (cursoTitulo) cursoTitulo.textContent = 'Tu curso actual';
+        if (cursoDescripcion) cursoDescripcion.textContent = 'No se pudo cargar la descripción del curso en este momento.';
         modulosPendientes.textContent = 'No se pudieron obtener datos completos.';
         promedioTexto.textContent = 'Intenta recargar la página.';
         asistenciaTexto.textContent = 'Intenta recargar la página.';
@@ -318,6 +340,32 @@ if (window.USER_ID) {
         document.addEventListener('DOMContentLoaded', cargarInicioSiEstaVisible);
     } else {
         cargarInicioSiEstaVisible();
+    }
+}
+
+async function cargarProfesorAsignadoModulo() {
+    const profesorLabel = document.getElementById('profesorAsignadoModulo');
+
+    if (!profesorLabel) return;
+
+    try {
+        const response = await fetch(`/curso/estudiante/${window.USER_ID}`);
+        if (!response.ok) {
+            throw new Error('No se pudo cargar el profesor asignado');
+        }
+
+        const data = await response.json();
+
+        if (!data.success || !data.curso) {
+            throw new Error(data.message || 'No hay información del curso');
+        }
+
+        profesorLabel.textContent = data.curso.profesores
+            ? `Profesor asignado: ${data.curso.profesores}`
+            : 'Profesor asignado: Sin profesor asignado';
+    } catch (error) {
+        console.error(error);
+        profesorLabel.textContent = 'Profesor asignado: No disponible';
     }
 }
 
@@ -395,9 +443,19 @@ function renderizarModulosEstudiante(modulos) {
     }
 
     lista.innerHTML = modulos.map(modulo => {
+        const notas = Array.isArray(modulo.notas) ? modulo.notas : [];
+        const promedio = notas.length
+            ? (notas.reduce((sum, nota) => sum + Number(nota.nota || 0), 0) / notas.length).toFixed(1)
+            : null;
+        const porcentaje = promedio ? Math.min(100, Math.round((Number(promedio) / 5) * 100)) : 0;
+        const estadoTexto = promedio
+            ? `Promedio ${promedio} / 5.0`
+            : 'Sin notas registradas';
+        const estadoClase = promedio ? 'text-success' : 'text-muted';
+
         return `
             <div class="col-12 col-sm-6 col-xl-4">
-                <div class="card border-0 shadow-lg modulo-card overflow-hidden h-100">
+                <div class="card border-0 shadow-lg modulo-card overflow-hidden h-100" style="cursor: default;">
                     <div class="bg-primary p-4 text-white">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -410,7 +468,7 @@ function renderizarModulosEstudiante(modulos) {
                         </div>
                     </div>
                     <div class="card-body p-4">
-                        <div class="bg-light rounded-4 p-3 mb-4">
+                        <div class="bg-light rounded-4 p-3 mb-3">
                             <div class="d-flex justify-content-between mb-2">
                                 <small class="text-muted">Inicio</small>
                                 <span class="fw-semibold">${formatDate(modulo.fecha_inicio)}</span>
@@ -419,9 +477,6 @@ function renderizarModulosEstudiante(modulos) {
                                 <small class="text-muted">Finaliza</small>
                                 <span class="fw-semibold">${formatDate(modulo.fecha_fin)}</span>
                             </div>
-                        </div>
-                        <div class="d-flex justify-content-end align-items-center">
-                            <span class="text-primary fw-semibold">Ver detalles →</span>
                         </div>
                     </div>
                 </div>

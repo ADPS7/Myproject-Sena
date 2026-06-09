@@ -106,6 +106,65 @@ async function cargarAsistenciasEstudiante() {
 
         const data = await response.json();
         const asistencias = Array.isArray(data.asistencias) ? data.asistencias : [];
+        const resumen = document.getElementById('resumenAsistenciaEstudiante');
+
+        if (resumen) {
+            const total = asistencias.length;
+            const presentes = asistencias.filter(r => String(r.asistio).toUpperCase() === 'SI').length;
+            const faltas = total - presentes;
+            const porcentaje = total ? Math.round((presentes / total) * 100) : 0;
+
+            resumen.innerHTML = `
+                <div class="col-12 col-md-6 col-xl-6">
+                    <article class="card-stat h-100">
+                        <div class="card-stat-inner">
+                            <div class="icon-box bg-primary bg-opacity-10 text-primary"><i class="bi bi-journal-text"></i></div>
+                            <div class="card-stat-copy">
+                                <small class="text-uppercase text-primary fw-bold">Clases registradas</small>
+                                <h2 class="mt-2 mb-1">${total}</h2>
+                                <p class="text-muted small mb-0">Total de registros en tu historial.</p>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+                <div class="col-12 col-md-6 col-xl-6">
+                    <article class="card-stat h-100">
+                        <div class="card-stat-inner">
+                            <div class="icon-box bg-success bg-opacity-10 text-success"><i class="bi bi-check-circle-fill"></i></div>
+                            <div class="card-stat-copy">
+                                <small class="text-uppercase text-success fw-bold">Asistencias</small>
+                                <h2 class="mt-2 mb-1">${presentes}</h2>
+                                <p class="text-muted small mb-0">Clases en las que estuviste presente.</p>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+                <div class="col-12 col-md-6 col-xl-6">
+                    <article class="card-stat h-100">
+                        <div class="card-stat-inner">
+                            <div class="icon-box bg-danger bg-opacity-10 text-danger"><i class="bi bi-x-circle-fill"></i></div>
+                            <div class="card-stat-copy">
+                                <small class="text-uppercase text-danger fw-bold">Inasistencias</small>
+                                <h2 class="mt-2 mb-1">${faltas}</h2>
+                                <p class="text-muted small mb-0">Clases que aún debes recuperar.</p>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+                <div class="col-12 col-md-6 col-xl-6">
+                    <article class="card-stat h-100">
+                        <div class="card-stat-inner">
+                            <div class="icon-box bg-warning bg-opacity-10 text-warning"><i class="bi bi-percent"></i></div>
+                            <div class="card-stat-copy">
+                                <small class="text-uppercase text-warning fw-bold">Porcentaje</small>
+                                <h2 class="mt-2 mb-1">${porcentaje}%</h2>
+                                <p class="text-muted small mb-0">Rendimiento general de asistencia.</p>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            `;
+        }
 
         if (placeholder) {
             placeholder.style.display = 'none';
@@ -134,6 +193,7 @@ async function cargarAsistenciasEstudiante() {
         contenedor.innerHTML = Object.entries(modulos).map(([nombre, registros], index) => {
             const total = registros.length;
             const asistenciasSi = registros.filter(r => String(r.asistio).toUpperCase() === 'SI').length;
+            const faltas = total - asistenciasSi;
             const porcentaje = total ? Math.round((asistenciasSi / total) * 100) : 0;
             const collapseId = `modulo${index + 1}`;
             
@@ -186,9 +246,13 @@ async function cargarAsistenciasEstudiante() {
                                 <div class="attendance-icon me-3">
                                     <i class="bi bi-journal-bookmark-fill fs-5"></i>
                                 </div>
-                                <div class="text-start">
+                                <div class="text-start flex-grow-1">
                                     <h5 class="mb-1 fw-bold text-dark fs-6 text-uppercase" style="letter-spacing: 0.3px;">${nombre}</h5>
-                                    <small class="text-muted d-block fw-normal">${total} clases registradas • <span class="fw-bold text-success">${porcentaje}% de asistencia</span></small>
+                                    <small class="text-muted d-block fw-normal">${total} clases • ${asistenciasSi} asistencias • ${faltas} inasistencias</small>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 ms-auto flex-wrap justify-content-end">
+                                    <span class="attendance-pill attendance-pill-success">${porcentaje}% asistencia</span>
+                                    <span class="attendance-pill">${total} clases</span>
                                 </div>
                             </div>
                         </button>
