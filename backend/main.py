@@ -298,12 +298,16 @@ def get_modulos_estudiante(id_usuario):
                 m.nombre,
                 DATE_FORMAT(m.fecha_inicio, '%Y-%m-%d') AS fecha_inicio,
                 DATE_FORMAT(m.fecha_fin, '%Y-%m-%d') AS fecha_fin,
-                c.nombre AS curso_nombre
+                c.nombre AS curso_nombre,
+                COALESCE(GROUP_CONCAT(DISTINCT CONCAT(u.nombres, ' ', u.apellidos) SEPARATOR ', '), 'Sin profesor asignado') AS profesores
             FROM Modulos m
             JOIN Cursos c ON m.id_curso = c.id_curso
             JOIN Alumnos a ON a.id_curso = m.id_curso
+            LEFT JOIN Profesor p ON p.id_curso = c.id_curso
+            LEFT JOIN Usuarios u ON u.id_usuario = p.id_usuario
             WHERE a.id_usuario = %s
               AND (m.fecha_inicio IS NOT NULL OR m.fecha_fin IS NOT NULL)
+            GROUP BY m.id_modulo, m.nombre, m.fecha_inicio, m.fecha_fin, c.nombre
             ORDER BY m.fecha_inicio ASC
         """
         cursor.execute(query, (id_usuario,))
@@ -485,39 +489,6 @@ def registrar_asistencia():
                 "error": f"No se puede registrar porque el modulo ya paso -- La fecha debe estar entre {fecha_inicio.isoformat()} y {fecha_fin.isoformat()}."
             }), 400
 
-        # Evitamos que la asistencia se registre más de una vez por módulo y fecha.
-        cursor.execute(
-            "SELECT COUNT(*) as total FROM Asistencia WHERE id_modulo = %s AND fecha = %s",
-            (id_modulo, fecha_iso)
-        )
-        registro_existente = cursor.fetchone()[0]
-        if registro_existente > 0:
-            cursor.close()
-            conn.close()
-            return jsonify({
-                "success": False,
-                "error": "No se puede registrar la asistencia porque ya la registraste para esta fecha y módulo."
-            }), 409
-        
-        # 1. Primero buscamos a TODOS los estudiantes inscritos en ese módulo
-        # Para saber quiénes NO vinieron (asistio = 0)
-        query_todos = """
-            SELECT u.id_usuario 
-            FROM Usuarios u
-            JOIN Alumnos al ON u.id_usuario = al.id_usuario
-            JOIN Modulos m ON al.id_curso = m.id_curso
-            WHERE m.id_modulo = %s
-        """
-        cursor.execute(query_todos, (id_modulo,))
-        todos_los_estudiantes = [row[0] for row in cursor.fetchall()]
-
-        # 2. Insertamos el registro para cada estudiante
-        insert_query = """
-            INSERT INTO Asistencia (id_usuario, id_modulo, fecha, asistio) 
-            VALUES (%s, %s, %s, %s)
-            ON DUPLICATE KEY UPDATE asistio = VALUES(asistio)
-        """
-
         estado_por_estudiante = {}
         if asistencias is not None:
             for item in asistencias:
@@ -526,12 +497,48 @@ def registrar_asistencia():
                 except (ValueError, TypeError):
                     continue
 
-        for id_estudiante in todos_los_estudiantes:
+        if asistencias is not None and len(asistencias) > 0:
+            estudiantes_a_registrar = list(estado_por_estudiante.keys())
+        elif ids_estudiantes_presentes is not None:
+            estudiantes_a_registrar = list(ids_estudiantes_presentes)
+        else:
+            query_todos = """
+                SELECT u.id_usuario 
+                FROM Usuarios u
+                JOIN Alumnos al ON u.id_usuario = al.id_usuario
+                JOIN Modulos m ON al.id_curso = m.id_curso
+                WHERE m.id_modulo = %s
+            """
+            cursor.execute(query_todos, (id_modulo,))
+            estudiantes_a_registrar = [row[0] for row in cursor.fetchall()]
+
+        if estudiantes_a_registrar:
+            placeholders = ','.join(['%s'] * len(estudiantes_a_registrar))
+            cursor.execute(
+                f"SELECT id_usuario FROM Asistencia WHERE id_modulo = %s AND fecha = %s AND id_usuario IN ({placeholders})",
+                (id_modulo, fecha_iso, *estudiantes_a_registrar)
+            )
+            estudiantes_ya_registrados = {row[0] for row in cursor.fetchall()}
+
+            if estudiantes_ya_registrados:
+                cursor.close()
+                conn.close()
+                return jsonify({
+                    "success": False,
+                    "error": "No se puede insertar asistencia porque uno o más estudiantes ya tienen asistencia registrada para esta fecha."
+                }), 409
+
+        insert_query = """
+            INSERT INTO Asistencia (id_usuario, id_modulo, fecha, asistio)
+            VALUES (%s, %s, %s, %s)
+        """
+
+        for id_estudiante in estudiantes_a_registrar:
             if id_estudiante in estado_por_estudiante:
                 asistio_texto = estado_por_estudiante[id_estudiante]
             else:
                 asistio_texto = 'SI' if ids_estudiantes_presentes and id_estudiante in ids_estudiantes_presentes else 'NO'
-            # Insertamos usando la fecha normalizada (sin hora)
+
             cursor.execute(insert_query, (id_estudiante, id_modulo, fecha_iso, asistio_texto))
 
         conn.commit()
