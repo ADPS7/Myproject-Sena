@@ -49,3 +49,27 @@
     color: #475569 !important; /* Gris oscuro elegante */
     font-weight: 500 !important;
 }
+
+/* --- 4. CONTENEDOR DE NOTAS CON SCROLL --- */
+#contenedorNotasEstudiante .notas-scroll {
+    max-height: 18rem;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+}
+
+#contenedorNotasEstudiante .notas-scroll::-webkit-scrollbar {
+    width: 8px;
+}
+
+#contenedorNotasEstudiante .notas-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+
+#contenedorNotasEstudiante .notas-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#contenedorNotasEstudiante .notas-list {
+    display: block;
+}

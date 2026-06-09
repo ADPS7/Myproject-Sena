@@ -191,7 +191,7 @@ function renderizarNotasEstudiante(data) {
             ? modulo.notas.map((nota, index) => `
                 <li class="list-group-item d-flex justify-content-between align-items-center py-3 px-0 border-0 border-bottom">
                     <span>Actividad ${index + 1}</span>
-                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill py-2 px-3">${Number(nota.nota).toFixed(2)}</span>
+                    <span class="badge bg-${nota.nota >= 3 ? 'success' : 'danger'} bg-opacity-10 text-${nota.nota >= 3 ? 'success' : 'danger'} rounded-pill py-2 px-3">${Number(nota.nota).toFixed(2)}</span>
                 </li>
               `).join('')
             : `
@@ -199,6 +199,8 @@ function renderizarNotasEstudiante(data) {
                     No tienes notas registradas en este módulo.
                 </div>
               `;
+
+        const mostrarScroll = Array.isArray(modulo.notas) && modulo.notas.length > 5;
 
         return `
             <div class="col-12 col-md-6 col-xl-4 mb-4">
@@ -216,9 +218,12 @@ function renderizarNotasEstudiante(data) {
                             </div>
                         </div>
                         ${Array.isArray(modulo.notas) && modulo.notas.length ? `
-                            <ul class="list-group list-group-flush mb-0 notas-list">
-                                ${notasHTML}
-                            </ul>
+                            <div class="notas-scroll ${mostrarScroll ? 'has-scroll' : ''}">
+                                <ul class="list-group list-group-flush mb-0 notas-list">
+                                    ${notasHTML}
+                                </ul>
+                            </div>
+                            ${mostrarScroll ? '<p class="text-muted small mt-2 mb-0">Desplázate para ver más notas.</p>' : ''}
                         ` : notasHTML}
                     </div>
                 </div>
@@ -226,7 +231,7 @@ function renderizarNotasEstudiante(data) {
         `;
     }).join('');
 
-    contenedor.innerHTML = `${tarjetas}`;
+    contenedor.innerHTML = tarjetas;
 }
 
 async function cargarResumenInicioEstudiante() {
