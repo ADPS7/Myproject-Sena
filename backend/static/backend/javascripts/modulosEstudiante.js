@@ -231,6 +231,8 @@ function renderizarNotasEstudiante(data) {
 
 async function cargarResumenInicioEstudiante() {
     const cursoLabel = document.getElementById('inicioCursoActual');
+    const cursoTitulo = document.getElementById('inicioTituloCurso');
+    const cursoDescripcion = document.getElementById('inicioDescripcionCurso');
     const modulosInscritos = document.getElementById('inicioModulosInscritos');
     const modulosPendientes = document.getElementById('inicioModulosPendientes');
     const promedioActual = document.getElementById('inicioPromedioActual');
@@ -253,11 +255,23 @@ async function cargarResumenInicioEstudiante() {
         const notasData = notasResp.ok ? await notasResp.json() : null;
         const asistData = asistResp.ok ? await asistResp.json() : null;
 
-        const cursoNombre = cursoData && cursoData.curso_nombre ? cursoData.curso_nombre : (cursoData && cursoData.curso ? cursoData.curso : 'Sin curso asignado');
-        cursoLabel.textContent = `Curso: ${cursoNombre}`;
+        const cursoInfo = cursoData && cursoData.curso ? cursoData.curso : cursoData;
+        const cursoNombre = cursoInfo?.curso_nombre || cursoInfo?.nombre || 'Sin curso asignado';
 
-        const totalModulos = cursoData && cursoData.curso && cursoData.curso.total_modulos !== undefined ? cursoData.curso.total_modulos : (cursoData && cursoData.total_modulos !== undefined ? cursoData.total_modulos : 0);
-        const completados = cursoData && cursoData.curso && cursoData.curso.modulos_hechos !== undefined ? cursoData.curso.modulos_hechos : 0;
+        cursoLabel.textContent = `Curso actual: ${cursoNombre}`;
+
+        if (cursoTitulo) {
+            cursoTitulo.textContent = cursoNombre || 'Tu curso actual';
+        }
+
+        if (cursoDescripcion) {
+            cursoDescripcion.textContent = cursoNombre
+                ? `Estás cursando ${cursoNombre}. Revisa módulos, notas y asistencia desde esta vista.`
+                : 'Aún no tienes un curso asignado en la plataforma.';
+        }
+
+        const totalModulos = Number(cursoInfo?.total_modulos || 0);
+        const completados = Number(cursoInfo?.modulos_hechos || 0);
 
         modulosInscritos.textContent = totalModulos;
         modulosPendientes.textContent = `Módulos completados: ${completados} • pendientes: ${Math.max(0, totalModulos - completados)}`;
@@ -285,14 +299,16 @@ async function cargarResumenInicioEstudiante() {
             const asistidos = registros.filter(item => String(item.asistio).toUpperCase() === 'SI').length;
             const porcentaje = totales ? Math.round((asistidos / totales) * 100) : 0;
             asistenciaLabel.textContent = `${porcentaje}%`;
-            asistenciaTexto.textContent = totales ? `${asistidos} de ${totales} clases asistidas` : 'Aún no hay registros de asistencia';
+            asistenciaTexto.textContent = totales ? `Asistencias: ${asistidos} de ${totales} clases asistidas` : 'Aún no hay registros de asistencia';
         } else {
             asistenciaLabel.textContent = '0%';
             asistenciaTexto.textContent = 'Aún no hay registros de asistencia';
         }
     } catch (error) {
         console.error('Error cargando el resumen del estudiante:', error);
-        cursoLabel.textContent = 'Curso: error al cargar';
+        if (cursoLabel) cursoLabel.textContent = 'Curso actual: error al cargar';
+        if (cursoTitulo) cursoTitulo.textContent = 'Tu curso actual';
+        if (cursoDescripcion) cursoDescripcion.textContent = 'No se pudo cargar la descripción del curso en este momento.';
         modulosPendientes.textContent = 'No se pudieron obtener datos completos.';
         promedioTexto.textContent = 'Intenta recargar la página.';
         asistenciaTexto.textContent = 'Intenta recargar la página.';
