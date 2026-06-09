@@ -193,13 +193,35 @@ async function verEstudiantesAsistencia(idModulo, nombreModulo) {
 
 function parseDateString(dateString) {
     if (!dateString) return null;
-    const fecha = new Date(dateString);
-    return isNaN(fecha.getTime()) ? null : fecha;
+
+    const texto = String(dateString).split('T')[0];
+    const [year, month, day] = texto.split('-').map(Number);
+
+    if (!year || !month || !day) {
+        const fecha = new Date(dateString);
+        return isNaN(fecha.getTime()) ? null : fecha;
+    }
+
+    return new Date(year, month - 1, day);
+}
+
+function formatDateLocal(date) {
+    if (!date || isNaN(date.getTime())) return '';
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
 }
 
 function formatDateForInput(dateString) {
     const fecha = parseDateString(dateString);
-    return fecha ? fecha.toISOString().split('T')[0] : '';
+    return fecha ? formatDateLocal(fecha) : '';
+}
+
+function getTodayLocalString() {
+    return formatDateLocal(new Date());
 }
 
 async function verHistorialModulo(idModulo, nombreModulo) {
@@ -263,10 +285,25 @@ function renderizarAsistenciaEstudiantes(idModulo, nombreModulo, estudiantes) {
             </div>`;
     }
 
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = getTodayLocalString();
     const moduloSeleccionado = modulosSeleccionados.find(m => m.id_modulo == idModulo) || {};
     const minFecha = formatDateForInput(moduloSeleccionado.fecha_inicio) || hoy;
-    const maxFecha = formatDateForInput(moduloSeleccionado.fecha_fin) || hoy;
+    const fechaFin = parseDateString(moduloSeleccionado.fecha_fin);
+    const fechaHoy = parseDateString(hoy);
+    const maxFechaDate = fechaFin && fechaHoy && fechaFin < fechaHoy ? fechaFin : fechaHoy;
+    const maxFecha = formatDateLocal(maxFechaDate) || hoy;
+
+    if (minFecha > maxFecha) {
+        contenedor.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-warning shadow-sm">
+                    No hay una fecha válida para registrar asistencia en este módulo en el rango actual.
+                </div>
+            </div>
+        `;
+        return;
+    }
+
     let fechaPredeterminada = hoy;
     if (fechaPredeterminada < minFecha) fechaPredeterminada = minFecha;
     if (fechaPredeterminada > maxFecha) fechaPredeterminada = maxFecha;
@@ -307,6 +344,7 @@ function renderizarAsistenciaEstudiantes(idModulo, nombreModulo, estudiantes) {
                                 <th class="ps-4">Estado</th>
                                 <th>Nombre</th>
                                 <th>Correo</th>
+                                <th class="text-end">Acción</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -320,6 +358,11 @@ function renderizarAsistenciaEstudiantes(idModulo, nombreModulo, estudiantes) {
                                     </td>
                                     <td class="fw-semibold">${est.nombres} ${est.apellidos}</td>
                                     <td>${est.correo}</td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-outline-primary btn-sm rounded-pill" onclick="registrarAsistenciaIndividual(${idModulo}, ${est.id_usuario}, '${est.nombres.replace(/'/g, "\\'")} ${est.apellidos.replace(/'/g, "\\'")}', this)">
+                                            <i class="bi bi-person-check"></i> Registrar
+                                        </button>
+                                    </td>
                                 </tr>
                             `).join('') : `
                                 <tr>
@@ -355,6 +398,74 @@ function toggleSeleccionTodos(checked) {
     });
 }
 
+async function registrarAsistenciaIndividual(idModulo, idUsuario, nombreUsuario, boton) {
+    const fechaInput = document.getElementById('fecha-asistencia');
+    if (!fechaInput || !fechaInput.value) {
+        mostrarToast('Atención', 'Selecciona primero una fecha para registrar la asistencia.', 'warning');
+        return;
+    }
+
+    const fecha = fechaInput.value;
+    const moduloSeleccionado = modulosSeleccionados.find(m => m.id_modulo == idModulo);
+
+    if (moduloSeleccionado) {
+        const fechaDate = parseDateString(fecha);
+        const minFechaDate = parseDateString(moduloSeleccionado.fecha_inicio);
+        const maxFechaDate = parseDateString(moduloSeleccionado.fecha_fin);
+        const hoyDate = new Date();
+        hoyDate.setHours(23, 59, 59, 999);
+
+        if (!fechaDate || !minFechaDate || !maxFechaDate) {
+            mostrarToast('Atención', 'No se pudo validar la fecha seleccionada.', 'warning');
+            return;
+        }
+
+        if (fechaDate < minFechaDate || fechaDate > maxFechaDate) {
+            mostrarToast('Atención', 'La fecha debe estar dentro del rango del módulo.', 'warning');
+            return;
+        }
+
+        if (fechaDate > hoyDate) {
+            mostrarToast('Atención', 'Solo puedes registrar asistencia del día actual o de fechas pasadas.', 'warning');
+            return;
+        }
+    }
+
+    if (boton) {
+        boton.disabled = true;
+        boton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Registrando...';
+    }
+
+    try {
+        const response = await fetch('/asistencia/registrar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id_modulo: idModulo,
+                asistencias: [{ id_usuario: Number(idUsuario), asistio: 'SI' }],
+                fecha: fecha
+            })
+        });
+
+        const res = await response.json();
+
+        if (res.success) {
+            mostrarToast('Éxito', `Asistencia registrada para ${nombreUsuario}.`, 'success');
+            verEstudiantesAsistencia(idModulo, moduloSeleccionado?.nombre || 'Módulo');
+        } else {
+            mostrarToast('Error', res.error || 'No se pudo registrar la asistencia.', 'danger');
+        }
+    } catch (error) {
+        console.error(error);
+        mostrarToast('Error', 'No se pudo registrar la asistencia individual.', 'danger');
+    } finally {
+        if (boton) {
+            boton.disabled = false;
+            boton.innerHTML = '<i class="bi bi-person-check"></i> Registrar';
+        }
+    }
+}
+
 async function guardarAsistencia(idModulo) {
     const fechaInput = document.getElementById('fecha-asistencia');
     if (!fechaInput) return;
@@ -380,6 +491,8 @@ async function guardarAsistencia(idModulo) {
         const fechaDate = parseDateString(fecha);
         const minFechaDate = parseDateString(moduloSeleccionado.fecha_inicio);
         const maxFechaDate = parseDateString(moduloSeleccionado.fecha_fin);
+        const hoyDate = new Date();
+        hoyDate.setHours(23, 59, 59, 999);
 
         if (!fechaDate || !minFechaDate || !maxFechaDate) {
             mostrarToast('Atención', 'No se pudo validar correctamente la fecha seleccionada.', 'warning');
@@ -390,15 +503,14 @@ async function guardarAsistencia(idModulo) {
             mostrarToast('Atención', `La fecha debe estar entre ${formatDateForInput(moduloSeleccionado.fecha_inicio)} y ${formatDateForInput(moduloSeleccionado.fecha_fin)}.`, 'warning');
             return;
         }
+
+        if (fechaDate > hoyDate) {
+            mostrarToast('Atención', 'Solo puedes registrar asistencia del día actual o de fechas pasadas.', 'warning');
+            return;
+        }
     }
 
     try {
-        const yaRegistrada = await consultarAsistenciaRegistrada(idModulo, fecha);
-        if (yaRegistrada) {
-            mostrarToast('Aviso', 'No puedes registrar la asistencia de nuevo para esta fecha, ya fue tomada.', 'warning');
-            return;
-        }
-
         const response = await fetch('/asistencia/registrar', {
             method: 'POST',
             headers: {
@@ -492,21 +604,19 @@ function renderizarHistorialAsistencia(historial) {
     const rows = Object.values(alumnos).map(est => {
         // ordenar registros por fecha desc (más recientes primero)
         est.asistencias.sort((a,b) => (b.fecha || '').localeCompare(a.fecha || ''));
-        const maxBadges = 20; // mostrar hasta 20 registros en la fila
-        const ultimos = est.asistencias.slice(0, maxBadges);
-        const restantes = Math.max(0, est.asistencias.length - ultimos.length);
+        const visibles = est.asistencias;
         const alerta = est.inasistencias > 3;
         const presentes = est.asistencias.filter(a => (a.asistio || '').toString().toUpperCase() === 'SI').length;
-        // construir badges (limpiando hora si existe y mostrando DD/MM)
-        const badgesHtml = (ultimos.length > 0 ? ultimos.map(a => {
-            let fechaStr = a.fecha ? String(a.fecha).slice(0,10) : '';
+        const rowKey = (est.id_usuario ?? est.nombre).toString().replace(/[^a-zA-Z0-9_-]/g, '_');
+
+        const renderBadges = (lista) => (lista.length > 0 ? lista.map(a => {
+            const fechaStr = a.fecha ? String(a.fecha).slice(0, 10) : '';
             const parts = fechaStr.split('-');
-            // Mostrar día/mes/año (DD/MM/YYYY) sin hora ni día de la semana
-            const dayMonth = (parts.length >= 3) ? `${parts[2]}/${parts[1]}/${parts[0]}` : (fechaStr || '—');
+            const dayMonth = (parts.length >= 3) ? `${parts[2]}/${parts[1]}` : (fechaStr || '—');
             const asistText = (a.asistio || '').toString().toUpperCase() || 'NO';
             const badgeClass = asistText === 'SI' ? 'bg-success text-white' : 'bg-danger text-white';
-            return `\n                                <span class="badge-date ${badgeClass}" title="${dayMonth}">${dayMonth}</span>\n                            `;
-        }).join('') : '<small class="text-muted">Sin registros</small>') + (restantes > 0 ? ` <span class="badge bg-secondary">+${restantes}</span>` : '');
+            return `<span class="badge-date ${badgeClass}" title="${fechaStr || dayMonth}">${dayMonth}</span>`;
+        }).join('') : '<small class="text-muted">Sin registros</small>');
 
         return `
             <tr class="${alerta ? 'table-danger' : ''}">
@@ -520,17 +630,10 @@ function renderizarHistorialAsistencia(historial) {
                     <span class="fw-bold ${presentes > 0 ? 'text-success' : 'text-muted'}">${presentes} </span>
                 </td>
                 <td class="ps-4">
-                    <div class="d-flex gap-1">
-                        ${ultimos.length > 0 ? ultimos.map(a => {
-                            const fechaStr = a.fecha ? String(a.fecha) : '';
-                            const parts = fechaStr.split('-');
-                            const dayMonth = (parts.length >= 3) ? `${parts[2]}/${parts[1]}` : (fechaStr || '—');
-                            const asistText = (a.asistio || '').toString().toUpperCase() || 'NO';
-                            const badgeClass = asistText === 'SI' ? 'bg-success text-white' : 'bg-danger text-white';
-                            return `
-                                <span class="badge-date ${badgeClass}" title="${fechaStr}">${dayMonth}</span>
-                            `;
-                        }).join('') : '<small class="text-muted">Sin registros</small>'}
+                    <div class="historial-stack">
+                        <div class="historial-scroll">
+                            <div class="historial-badges">${renderBadges(visibles)}</div>
+                        </div>
                     </div>
                 </td>
             </tr>
