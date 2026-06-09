@@ -298,12 +298,16 @@ def get_modulos_estudiante(id_usuario):
                 m.nombre,
                 DATE_FORMAT(m.fecha_inicio, '%Y-%m-%d') AS fecha_inicio,
                 DATE_FORMAT(m.fecha_fin, '%Y-%m-%d') AS fecha_fin,
-                c.nombre AS curso_nombre
+                c.nombre AS curso_nombre,
+                COALESCE(GROUP_CONCAT(DISTINCT CONCAT(u.nombres, ' ', u.apellidos) SEPARATOR ', '), 'Sin profesor asignado') AS profesores
             FROM Modulos m
             JOIN Cursos c ON m.id_curso = c.id_curso
             JOIN Alumnos a ON a.id_curso = m.id_curso
+            LEFT JOIN Profesor p ON p.id_curso = c.id_curso
+            LEFT JOIN Usuarios u ON u.id_usuario = p.id_usuario
             WHERE a.id_usuario = %s
               AND (m.fecha_inicio IS NOT NULL OR m.fecha_fin IS NOT NULL)
+            GROUP BY m.id_modulo, m.nombre, m.fecha_inicio, m.fecha_fin, c.nombre
             ORDER BY m.fecha_inicio ASC
         """
         cursor.execute(query, (id_usuario,))

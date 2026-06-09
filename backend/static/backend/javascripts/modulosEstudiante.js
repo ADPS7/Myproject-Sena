@@ -28,6 +28,7 @@ function mostrarvistaModulosEstudiante() {
     ocultarVistasEstudiante();
     document.getElementById('mostrarModulosEstudiante').style.display = 'block';
     activarMenuEstudiante('modulos');
+    cargarProfesorAsignadoModulo();
     cargarModulosEstudiante();
 }
 
@@ -46,7 +47,7 @@ async function cargarCursoEstudiante() {
                 <small class="text-uppercase text-primary fw-bold" style="letter-spacing: 1px;">Programa de formación</small>
                 <h2 class="fw-bold mt-3 mb-2" id="cursoEstudianteNombre">Cargando...</h2>
                 <p class="text-muted mb-2" id="cursoEstudianteDescripcion">Descripción general del curso.</p>
-                <p class="text-muted small mb-0" id="cursoEstudianteProfesores">Profesor: Cargando...</p>
+                <p class="text-muted small mb-0" id="cursoEstudianteProfesores">Profesor asignado: Cargando...</p>
             </div>
             <div class="row g-3 mb-3">
                 <div class="col-6">
@@ -100,7 +101,7 @@ async function cargarCursoEstudiante() {
         document.getElementById('cursoEstudianteDescripcion').textContent = curso.curso_nombre
             ? `Curso diseñado para desarrollar tus competencias en ${curso.curso_nombre} y avanzar con ejercicios y módulos prácticos.`
             : 'Descripción general del curso.';
-        document.getElementById('cursoEstudianteProfesores').textContent = curso.profesores ? `Profesor: ${curso.profesores}` : 'Profesor no asignado';
+        document.getElementById('cursoEstudianteProfesores').textContent = curso.profesores ? `Profesor asignado: ${curso.profesores}` : 'Profesor asignado: Sin profesor asignado';
         document.getElementById('cursoEstudiantePeriodo').textContent = '2026';
         document.getElementById('cursoEstudianteEstado').textContent = 'Activo';
         document.getElementById('cursoEstudianteTotalModulos').textContent = curso.total_modulos || 0;
@@ -321,6 +322,32 @@ if (window.USER_ID) {
     }
 }
 
+async function cargarProfesorAsignadoModulo() {
+    const profesorLabel = document.getElementById('profesorAsignadoModulo');
+
+    if (!profesorLabel) return;
+
+    try {
+        const response = await fetch(`/curso/estudiante/${window.USER_ID}`);
+        if (!response.ok) {
+            throw new Error('No se pudo cargar el profesor asignado');
+        }
+
+        const data = await response.json();
+
+        if (!data.success || !data.curso) {
+            throw new Error(data.message || 'No hay información del curso');
+        }
+
+        profesorLabel.textContent = data.curso.profesores
+            ? `Profesor asignado: ${data.curso.profesores}`
+            : 'Profesor asignado: Sin profesor asignado';
+    } catch (error) {
+        console.error(error);
+        profesorLabel.textContent = 'Profesor asignado: No disponible';
+    }
+}
+
 async function cargarModulosEstudiante() {
     const lista = document.getElementById('cursoEstudianteModulos') || document.getElementById('listaModulosEstudiante');
 
@@ -395,9 +422,19 @@ function renderizarModulosEstudiante(modulos) {
     }
 
     lista.innerHTML = modulos.map(modulo => {
+        const notas = Array.isArray(modulo.notas) ? modulo.notas : [];
+        const promedio = notas.length
+            ? (notas.reduce((sum, nota) => sum + Number(nota.nota || 0), 0) / notas.length).toFixed(1)
+            : null;
+        const porcentaje = promedio ? Math.min(100, Math.round((Number(promedio) / 5) * 100)) : 0;
+        const estadoTexto = promedio
+            ? `Promedio ${promedio} / 5.0`
+            : 'Sin notas registradas';
+        const estadoClase = promedio ? 'text-success' : 'text-muted';
+
         return `
             <div class="col-12 col-sm-6 col-xl-4">
-                <div class="card border-0 shadow-lg modulo-card overflow-hidden h-100">
+                <div class="card border-0 shadow-lg modulo-card overflow-hidden h-100" style="cursor: default;">
                     <div class="bg-primary p-4 text-white">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -410,7 +447,7 @@ function renderizarModulosEstudiante(modulos) {
                         </div>
                     </div>
                     <div class="card-body p-4">
-                        <div class="bg-light rounded-4 p-3 mb-4">
+                        <div class="bg-light rounded-4 p-3 mb-3">
                             <div class="d-flex justify-content-between mb-2">
                                 <small class="text-muted">Inicio</small>
                                 <span class="fw-semibold">${formatDate(modulo.fecha_inicio)}</span>
@@ -419,9 +456,6 @@ function renderizarModulosEstudiante(modulos) {
                                 <small class="text-muted">Finaliza</small>
                                 <span class="fw-semibold">${formatDate(modulo.fecha_fin)}</span>
                             </div>
-                        </div>
-                        <div class="d-flex justify-content-end align-items-center">
-                            <span class="text-primary fw-semibold">Ver detalles →</span>
                         </div>
                     </div>
                 </div>
