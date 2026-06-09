@@ -55,7 +55,8 @@
 }
 .table-responsive {
     border-radius: 15px;
-    overflow-x: auto;
+    overflow-x: hidden;
+    overflow-y: hidden;
 }
 
 .historial-stack {
@@ -63,7 +64,7 @@
     flex-direction: column;
     gap: 0.35rem;
     width: 100%;
-    min-width: 320px;
+    min-width: 0;
 }
 
 
@@ -175,7 +176,7 @@
 
 table td:last-child,
 table th:last-child {
-    min-width: 320px;
+    min-width: 0;
 }
 
 /* Estados de asistencia */
