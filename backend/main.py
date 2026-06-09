@@ -7,10 +7,23 @@ import hashlib
 from datetime import datetime
 from collections import defaultdict
 
-
 app = Flask(__name__)
 CORS(app)
 app.secret_key = 'edullinas_secret_key_2026_pro_MADAN'
+
+
+#correo
+
+from flask_mail import Mail, Message
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'marksgutierrez10@gmail.com'
+app.config['MAIL_PASSWORD'] = 'wjhk hmhd imol rwsy' # NO tu contraseña normal
+
+mail = Mail(app)
+#fin correo
 
 def get_db_connection():
     return mysql.connector.connect(
@@ -69,6 +82,59 @@ def create_user():
             (nombres, apellidos, correo, fecha_nacimiento, hashed_password, 5)
         )
         conn.commit()
+        try:
+            # 1. Correo para el usuario
+            html_bienvenida = f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px; overflow: hidden;">
+                <div style="background-color: #7C4DFF; padding: 20px; text-align: center; color: white;">
+                    <h1 style="margin: 0;">¡Bienvenido a Edullinas!</h1>
+                </div>
+                <div style="padding: 20px; color: #333;">
+                    <p>Hola <strong>{nombres}</strong>,</p>
+                    <p>Nos alegra mucho tenerte con nosotros. Tu registro en nuestra plataforma ha sido exitoso.</p>
+                    <p>Ya puedes acceder a todos nuestros recursos educativos. Estamos trabajando para ofrecerte la mejor experiencia.</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="http://127.0.0.1:5000" style="background-color: #7C4DFF; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Ir a mi cuenta</a>
+                    </div>
+                    <p>Si tienes alguna duda, no dudes en responder a este correo.</p>
+                    <p>Atentamente,<br>El equipo de Edullinas</p>
+                </div>
+            </div>
+            """
+
+            msg_usuario = Message("¡Bienvenido a Edullinas!",
+                                  sender="marksgutierrez10@gmail.com",
+                                  recipients=[correo]) # Corregido aquí
+            msg_usuario.html = html_bienvenida
+            mail.send(msg_usuario)
+
+            # 2. Correo para el Administrador
+            html_admin = f"""
+            <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #ccc; border-radius: 10px; overflow: hidden;">
+                <div style="background-color: #333; padding: 15px; text-align: center; color: white;">
+                    <h2 style="margin: 0;">🚨 Nuevo Registro en Edullinas</h2>
+                </div>
+                <div style="padding: 20px; background-color: #f9f9f9;">
+                    <p>Se ha registrado un nuevo usuario en la plataforma. Por favor, procede con la asignación de rol.</p>
+                    <div style="background-color: white; padding: 15px; border-radius: 5px; border-left: 5px solid #7C4DFF;">
+                        <p style="margin: 5px 0;"><strong>Nombre:</strong> {nombres} {apellidos}</p>
+                        <p style="margin: 5px 0;"><strong>Correo:</strong> {correo}</p>
+                        <p style="margin: 5px 0;"><strong>Fecha de Nacimiento:</strong> {fecha_nacimiento}</p>
+                    </div>
+                    <div style="text-align: center; margin-top: 25px;">
+                        <a href="http://127.0.0.1:5000" style="background-color: #7C4DFF; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Gestionar Usuario</a>
+                    </div>
+                </div>
+            </div>
+            """
+
+            msg_admin = Message("Nuevo registro - Edullinas",
+                                sender="marksgutierrez10@gmail.com",
+                                recipients=["markusgutierrez10@gmail.com"])
+            msg_admin.html = html_admin
+            mail.send(msg_admin)
+        except Exception as e:
+            print(f"Error al enviar correo: {e}")
         cursor.close()
         conn.close()
         if request.is_json:
