@@ -145,16 +145,17 @@ function renderizarReporteFinal(idCurso, idModulo) {
                                             </span>
                                         </td>
                                         <td class="ps-4">
-                                            <div class="d-flex gap-1 flex-wrap">
-                                                ${est.asistencias.length > 0 ? 
-                                                    est.asistencias.slice(-6).map(a => `
-                                                        <span class="badge px-2 py-1 ${a.asistio === 'SI' ? 'bg-success text-white' : 'bg-danger text-white'}" 
-                                                              title="${a.fecha}">
-                                                            ${a.fecha.split('-')[2]}/${a.fecha.split('-')[1]}
-                                                        </span>
-                                                    `).join('') : 
-                                                    '<small class="text-muted">Sin registros</small>'
-                                                }
+                                            <div class="historial-stack">
+                                                <div class="historial-scroll">
+                                                    <div class="historial-badges">
+                                                        ${est.asistencias.length > 0 ? est.asistencias.map(a => `
+                                                            <span class="badge-date ${a.asistio === 'SI' ? 'bg-success text-white' : 'bg-danger text-white'}"
+                                                                  title="${a.fecha}">
+                                                                ${a.fecha.split('-')[2]}/${a.fecha.split('-')[1]}
+                                                            </span>
+                                                        `).join('') : '<small class="text-muted">Sin registros</small>'}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </td>
                                     </tr>`;

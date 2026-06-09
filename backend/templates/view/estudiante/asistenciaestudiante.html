@@ -15,15 +15,12 @@
 
 <div class="container-fluid asistencia-container py-5">
 
-    <div class="attendance-header bg-white p-4 p-md-5 rounded-4 shadow-sm border mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
-        <div>
-            <h4 class="fw-bold text-dark mb-1" style="letter-spacing: -0.5px;">Control de Asistencias</h4>
-            <p class="text-secondary small mb-0">Revisa detalladamente tu historial de clases, porcentajes de asistencia y registros por cada módulo académico.</p>
-        </div>
-        <div class="d-none d-md-block">
-            <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-bold small text-uppercase">Estudiante Activo</span>
-        </div>
-    </div>
+    <section class="attendance-header bg-white p-4 p-md-5 rounded-4 shadow-sm border mb-4">
+        <h4 class="fw-bold text-dark mb-1" style="letter-spacing: -0.5px;">Control de Asistencias</h4>
+        <p class="text-secondary small mb-0">Revisa detalladamente tu historial de clases, porcentajes de asistencia y registros por cada módulo académico.</p>
+    </section>
+
+    <div id="resumenAsistenciaEstudiante" class="row g-3 mb-4"></div>
 
     <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white overflow-hidden d-none" id="seccionTablaModulo">
         <div class="card-header bg-white py-3 border-bottom">
