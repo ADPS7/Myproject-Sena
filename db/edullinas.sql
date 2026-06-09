@@ -78,20 +78,12 @@ CREATE TABLE CursosModulos (
 
 CREATE TABLE Notas (
     id_nota INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(200),
     nota DECIMAL(3,2) NOT NULL,
     id_modulo INT NOT NULL,
     id_usuario INT NOT NULL,
     FOREIGN KEY (id_modulo) REFERENCES Modulos (id_modulo),
     FOREIGN KEY (id_usuario) REFERENCES Usuarios (id_usuario)
-); 
-
-CREATE TABLE NotaFinal(
-    id_nota_final INT PRIMARY KEY AUTO_INCREMENT,
-    nota_final DECIMAL(3,2) NOT NULL,
-    id_alumno INT NOT NULL,
-    id_nota INT NOT NULL,
-    FOREIGN KEY (id_alumno) REFERENCES Alumnos(id_alumno),
-    FOREIGN KEY (id_nota) REFERENCES Notas(id_nota)
 );
 
 CREATE TABLE Profesor(
