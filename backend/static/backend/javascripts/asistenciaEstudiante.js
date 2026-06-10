@@ -1,3 +1,36 @@
+function formatearFechaAsistencia(fecha) {
+    if (fecha === null || fecha === undefined || fecha === '') {
+        return 'Sin fecha registrada';
+    }
+
+    const texto = String(fecha).trim();
+    if (!texto) {
+        return 'Sin fecha registrada';
+    }
+
+    // Formato típico de MySQL: YYYY-MM-DD
+    const coincidencia = texto.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (coincidencia) {
+        const [, anio, mes, dia] = coincidencia;
+        return `${String(dia).padStart(2, '0')}/${String(mes).padStart(2, '0')}/${anio}`;
+    }
+
+    // Soporte para objetos Date o cadenas como 'Tue Jun 09 2026 ...'
+    const fechaDate = fecha instanceof Date ? fecha : new Date(texto);
+    if (!Number.isNaN(fechaDate.getTime())) {
+        return new Intl.DateTimeFormat('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            timeZone: 'UTC'
+        }).format(fechaDate);
+    }
+
+    // Fallback seguro: quitar cualquier hora y dejar solo la parte de fecha si existe.
+    const fechaLimpia = texto.includes('T') ? texto.split('T')[0] : texto.split(' ')[0];
+    return fechaLimpia || 'Sin fecha registrada';
+}
+
 // =========================================================================
 // 1. FUNCIÓN: DETALLE INDIVIDUAL POR MÓDULO (Estructura de Tabla Estilizada)
 // =========================================================================
@@ -44,12 +77,7 @@ async function verAsistencia(idModulo, nombreModulo){
             const estadoClase = estadoAsistencia === "SI" ? "estado-asistio" : "estado-falta";
             const textoEstado = estadoAsistencia === "SI" ? "ASISTIÓ" : "INASISTENCIA";
             
-            let fechaLimpia = 'Fecha no disponible';
-            if (asistencia.fecha) {
-                fechaLimpia = asistencia.fecha.includes('T') 
-                    ? asistencia.fecha.split('T')[0] 
-                    : asistencia.fecha.split(' 00:')[0];
-            }
+            const fechaLimpia = formatearFechaAsistencia(asistencia.fecha);
 
             tabla.innerHTML += `
                 <tr>
@@ -204,25 +232,7 @@ async function cargarAsistenciasEstudiante() {
                 const estadoClase = asistio === 'SI' ? 'success' : 'fail';
                 const icono = asistio === 'SI' ? 'bi-check-lg' : 'bi-x-lg';
                 
-                // Conversor robusto de fechas para prevenir desbordamientos o cadenas GMT de MySQL
-                let fechaFormateada = 'Fecha no disponible';
-                if (registro.fecha) {
-                    try {
-                        const d = new Date(registro.fecha);
-                        if (!isNaN(d.getTime())) {
-                            const año = d.getFullYear();
-                            const mes = String(d.getMonth() + 1).padStart(2, '0');
-                            const dia = String(d.getDate()).padStart(2, '0');
-                            fechaFormateada = `${año}-${mes}-${dia}`;
-                        } else {
-                            fechaFormateada = registro.fecha.includes('T') 
-                                ? registro.fecha.split('T')[0] 
-                                : registro.fecha.split(' 00:')[0];
-                        }
-                    } catch (e) {
-                        fechaFormateada = 'Fecha no disponible';
-                    }
-                }
+                const fechaFormateada = formatearFechaAsistencia(registro.fecha);
 
                 // Generación de estructura alineada simétricamente a través de Flexbox
                 return `
