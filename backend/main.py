@@ -240,7 +240,7 @@ def get_asistencias(id_usuario):
        
         query = """
             SELECT 
-                a.fecha,
+                DATE(a.fecha) AS fecha,
                 a.asistio,
                 m.nombre as modulo_nombre,
                 c.nombre as curso_nombre,
@@ -484,7 +484,7 @@ def get_historial_asistencias_modulo(id_modulo):
             SELECT 
                 u.id_usuario,
                 CONCAT(u.nombres, ' ', u.apellidos) AS estudiante,
-                a.fecha,
+                DATE(a.fecha) AS fecha,
                 a.asistio
             FROM Asistencia a
             JOIN Usuarios u ON a.id_usuario = u.id_usuario
