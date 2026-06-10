@@ -243,10 +243,24 @@ function guardarPerfilProfesor() {
     .then(response => response.json())
     .then(res => {
         if (res.exito) {
-            mostrarToast('Éxito', 'Perfil actualizado de forma segura. Reiniciando sesión...', 'exito');
+            mostrarToast('Éxito', 'Perfil actualizado', 'exito');
             setTimeout(() => {
-                window.location.href = '/logout';
-            }, 2500);
+                // Intenta volver a la página anterior
+                if (document.referrer && document.referrer !== window.location.href) {
+                    window.location.href = document.referrer;
+                } else {
+                    // Si no hay referrer (o es la misma página), redirigir según rol
+                    const rol = document.getElementById('rol_prof').value.toLowerCase();
+                    
+                    if (rol.includes('admin') || rol.includes('administrador')) {
+                        window.location.href = '/dashboard';
+                    } else if (rol.includes('profesor') || rol.includes('docente')) {
+                        window.location.href = '/profesor/menuProfesor';  // o la ruta que uses
+                    } else {
+                        window.location.href = '/dashboard';
+                    }
+                }
+            }, 1800);
         } else {
             if (res.mensaje && res.mensaje.includes("número de documento")) {
                 camposMapeados.numero_documento.classList.add('is-invalid');
@@ -381,34 +395,42 @@ function aplicarRestriccionesDeEntrada() {
 }
 
 // =========================================================================
-// 6. BLINDAJE TOTAL DE LA INTERFAZ: CERRAR SESIÓN AL REGRESAR (CORREGIDO)
+// 6. NAVEGACIÓN NORMAL EN LA VISTA DE DATOS PERSONALES
 // =========================================================================
-function blindarPantallaObligatoria() {
-    // Registramos un estado inicial en el historial para poder interceptar el evento "Atrás"
-    window.history.pushState(null, "", window.location.href);
-    
-    // Si el usuario presiona el botón de regresar del navegador o celular, lo mandamos directo al /logout de Flask
-    window.addEventListener('popstate', function () {
-        window.location.href = '/logout';
-    });
 
-    // Alerta interceptora si intentan recargar la página o cerrar la pestaña del navegador manualmente
-    window.addEventListener('beforeunload', function (e) {
-        e.preventDefault();
-        e.returnValue = 'Atención: Tienes datos obligatorios pendientes por guardar.';
-    });
-
-    // Ocultar dinámicamente barras de navegación o elementos con links para que no se escape cliqueando cosas
-    const navbar = document.querySelector('.navbar, .navbar-custom');
-    const sidebar = document.querySelector('.sidebar') || document.getElementById('sidebar');
-    const botonesVolver = document.querySelectorAll('.btn-volver, .btn-regresar, [href="/dashboard"]');
-
-    if (navbar) navbar.style.display = 'none';
-    if (sidebar) sidebar.style.display = 'none';
-    botonesVolver.forEach(btn => btn.style.display = 'none');
-}
 
 // Inicialización de componentes e inyección del blindaje al cargar el script
 inicializarComponentesGeograficosYEps();
 aplicarRestriccionesDeEntrada();
-blindarPantallaObligatoria();
+
+
+// =============================================
+// BLOQUEO SUAVE DEL BOTÓN ATRÁS (Sin alerta nativa del navegador)
+// =============================================
+
+function bloquearRetroceso() {
+    // Empujar un estado nuevo en el historial para poder controlarlo
+    history.pushState(null, null, location.href);
+
+    window.addEventListener('popstate', function (event) {
+        // Cuando el usuario pulse el botón Atrás
+        Swal.fire({
+            title: '¡Perfil Incompleto!',
+            html: `
+                <p class="mb-3">Debes completar todos tus datos personales para poder continuar.</p>
+                <strong>Por favor, llena el formulario antes de salir.</strong>
+            `,
+            icon: 'warning',
+            confirmButtonText: 'Completar Ahora',
+            confirmButtonColor: '#198754',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showCancelButton: false
+        }).then(() => {
+            // Volvemos a empujar el estado para que no pueda salir
+            history.pushState(null, null, location.href);
+        });
+    });
+}
+
+bloquearRetroceso();
