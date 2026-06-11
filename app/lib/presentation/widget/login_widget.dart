@@ -5,6 +5,7 @@ import '../view/homeAdmin.dart';
 import '../view/homeCoordinacion.dart';
 import '../view/homeTeacher.dart';
 import '../view/homestudent.dart';
+import '../view/olvidarClave.dart';
 import 'register_widget.dart';
 
 class LoginView extends StatefulWidget {
@@ -183,10 +184,20 @@ class _LoginViewState extends State<LoginView> {
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
-                              onPressed: () {},
-                              style: TextButton.styleFrom(foregroundColor: const Color(0xFF7C4DFF)),
-                              child: const Text("¿Olvidaste tu contraseña?", 
-                                style: TextStyle(fontWeight: FontWeight.w600)),
+                              onPressed: () {
+                                // Navegación a la nueva vista
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const ForgotPasswordView()),
+                                );
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: const Color(0xFF7C4DFF),
+                              ),
+                              child: const Text(
+                                "¿Olvidaste tu contraseña?", 
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
                             ),
                           ),
 
