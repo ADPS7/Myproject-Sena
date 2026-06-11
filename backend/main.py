@@ -2456,6 +2456,42 @@ def actualizar_nota(id_nota):
         return jsonify({"status": "success", "message": "Nota actualizada correctamente"}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+    
+@app.route('/notas/modulo/historial/<int:id_modulo>', methods=['GET'])
+def get_historial_notas_con_actividades(id_modulo):
+    try:
+        conn = get_db_connection()
+        # Usamos dictionary=True para obtener los resultados como objetos clave-valor
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+            SELECT 
+                u.id_usuario,
+                u.nombres AS nombre_estudiante,
+                u.apellidos AS apellido_estudiante,
+                u.correo,
+                n.id_nota,
+                n.nota,
+                COALESCE(n.nombre, 'Sin actividad') AS nombre_actividad
+            FROM Usuarios u
+            JOIN Alumnos a ON u.id_usuario = a.id_usuario
+            JOIN Modulos m ON a.id_curso = m.id_curso
+            LEFT JOIN Notas n 
+                ON n.id_usuario = u.id_usuario 
+                AND n.id_modulo = %s
+            WHERE m.id_modulo = %s
+            ORDER BY u.apellidos, u.nombres, n.id_nota DESC
+        """
+        cursor.execute(query, (id_modulo, id_modulo))
+        data = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

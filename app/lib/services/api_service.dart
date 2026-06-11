@@ -818,4 +818,21 @@ class ApiService {
       return {'success': false, 'error': 'Error de conexión: $e'};
     }
   }
+
+  Future<List<dynamic>> getHistorialNotas(int idModulo) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/notas/modulo/historial_v2/$idModulo'),
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        return [];
+      }
+    } catch (e) {
+      print("Error al obtener historial: $e");
+      return [];
+    }
+  }
 }

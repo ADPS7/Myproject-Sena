@@ -555,7 +555,8 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
                                                 if (item['nota'] != null) {
                                                   estudiantesAgrupados[idUsuario]!['notas'].add({
                                                     "id_nota": item['id_nota'],
-                                                    "nota": item['nota']
+                                                    "nota": item['nota'],
+                                                    "nombre_actividad": item['nombre_actividad'] ?? 'Actividad',
                                                   });
                                                 }
                                               }
@@ -575,6 +576,8 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
                                                 itemBuilder: (context, indexEstudiante) {
                                                   final est = estudiantes[indexEstudiante];
                                                   final correo = est['correo']?.toString().trim() ?? '';
+
+                                                  final notasEstudiante = (est['notas'] as List<dynamic>? ?? []);
 
                                                   return Container(
                                                     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -604,20 +607,31 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
                                                             crossAxisAlignment: CrossAxisAlignment.start,
                                                             children: [
                                                               Text(
-                                                                est['nombre'] ?? 'Estudiante',
-                                                                style: const TextStyle(
-                                                                  fontSize: 14,
-                                                                  fontWeight: FontWeight.w600,
-                                                                ),
+                                                                est['nombre']?.toString() ?? 'Estudiante',
+                                                                style: const TextStyle(fontWeight: FontWeight.bold),
                                                               ),
                                                               const SizedBox(height: 4),
-                                                              Text(
-                                                                est['correo'] ?? 'correo no disponible',
-                                                                style: TextStyle(
-                                                                  color: Colors.grey[500],
-                                                                  fontSize: 12,
-                                                                ),
-                                                              ),
+                                                              if (notasEstudiante.isEmpty)
+                                                                const Text(
+                                                                  'Sin actividades registradas',
+                                                                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                                                                )
+                                                              else
+                                                                ...notasEstudiante.map((notaItem) {
+                                                                  final nombreActividad = notaItem['nombre_actividad']?.toString() ?? 'Actividad';
+                                                                  final notaValor = notaItem['nota'];
+                                                                  final notaTexto = notaValor is num
+                                                                      ? notaValor.toStringAsFixed(2)
+                                                                      : notaValor?.toString() ?? 'N/A';
+
+                                                                  return Padding(
+                                                                    padding: const EdgeInsets.only(top: 2),
+                                                                    child: Text(
+                                                                      '$nombreActividad: $notaTexto',
+                                                                      style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                                                                    ),
+                                                                  );
+                                                                }).toList(),
                                                             ],
                                                           ),
                                                         ),
