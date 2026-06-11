@@ -18,9 +18,36 @@
                     <small class="text-success" style="font-size: 0.75rem;">Sesión activa</small>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
+                <script>
+                        async function fetchCoordinatorStats(){
+                            try{
+                                const res = await fetch('/api/coordinator/stats', {cache: 'no-store'});
+                                if(!res.ok) return;
+
+                                const d = await res.json();
+
+                                document.getElementById('stat-usuarios').textContent = (d.users ?? '—');
+                                document.getElementById('stat-cursos').textContent = (d.courses ?? '—');
+                                document.getElementById('stat-modulos').textContent = (d.modules ?? '—');
+
+                                const att = d.attendance;
+
+                                document.getElementById('stat-asistencia').textContent =
+                                    (att !== undefined && att !== null)
+                                        ? (String(att).replace('%', '') + '%')
+                                        : '—';
+
+                            }catch(err){
+                                console.error('Error fetching coordinator stats:', err);
+                            }
+                        }
+
+                        // Se ejecuta una sola vez al cargar la vista
+                        fetchCoordinatorStats();
+                        </script>
+                                </div>
+                            </div>
+                        </div>
 
 <div class="mb-4">
     <h2 class="menu-label mb-3">Resumen de supervisión</h2>
@@ -35,7 +62,7 @@
                             <i class="bi bi-people text-primary fs-4"></i>
                         </div>
                         <div>
-                            <h5 class="fw-bold mb-0">120</h5>
+                            <h5 class="fw-bold mb-0"><span id="stat-usuarios"></span></h5>
                             <small class="text-muted">Usuarios a cargo</small>
                         </div>
                     </div>
@@ -52,7 +79,7 @@
                             <i class="bi bi-journal-text fs-4" style="color: #16a34a;"></i>
                         </div>
                         <div>
-                            <h5 class="fw-bold mb-0">12</h5>
+                            <h5 class="fw-bold mb-0"><span id="stat-cursos"></span></h5>
                             <small class="text-muted">Cursos activos</small>
                         </div>
                     </div>
@@ -69,7 +96,7 @@
                             <i class="bi bi-layers fs-4" style="color: #9333ea;"></i>
                         </div>
                         <div>
-                            <h5 class="fw-bold mb-0">45</h5>
+                            <h5 class="fw-bold mb-0"><span id="stat-modulos">45</span></h5>
                             <small class="text-muted">Módulos/Resultados</small>
                         </div>
                     </div>
@@ -86,7 +113,8 @@
                             <i class="bi bi-calendar-check fs-4" style="color: #ea580c;"></i>
                         </div>
                         <div>
-                            <h5 class="fw-bold mb-0">94%</h5>
+                            <h5 class="fw-bold mb-0"><span id="stat-asistencia">94%</span></h5>
+
                             <small class="text-muted">Asistencia global</small>
                         </div>
                     </div>
