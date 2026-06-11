@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'aut_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.129.165:5000';
+  static const String baseUrl = 'http://10.2.128.48:5000';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,
@@ -780,7 +780,7 @@ class ApiService {
     }
   }
 
-    // NUEVO: Guardar nota con nombre de actividad
+  // NUEVO: Guardar nota con nombre de actividad
   Future<Map<String, dynamic>> guardarNotaConActividad({
     required int idUsuario,
     required int idModulo,
@@ -797,10 +797,7 @@ class ApiService {
           ? await http.put(
               uri,
               headers: {'Content-Type': 'application/json'},
-              body: json.encode({
-                'nota': nota,
-                'nombre': nombreActividad,
-              }),
+              body: json.encode({'nota': nota, 'nombre': nombreActividad}),
             )
           : await http.post(
               uri,
