@@ -261,12 +261,15 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
     );
   }
 
-  void _mostrarDialogoEditarNota(Map estudiante, String moduloNombre, dynamic notaActual, int idModulo) {
+    void _mostrarDialogoEditarNota(Map estudiante, String moduloNombre, dynamic notaActual, int idModulo) {
     final existingNotaValue = notaActual is Map ? notaActual['nota'] : notaActual;
     final existingNotaId = notaActual is Map ? notaActual['id_nota'] as int? : null;
 
-    final TextEditingController controller = TextEditingController(
+    final TextEditingController notaController = TextEditingController(
       text: existingNotaValue?.toString() ?? '',
+    );
+    final TextEditingController actividadController = TextEditingController(
+      text: notaActual is Map ? notaActual['nombre']?.toString() ?? '' : '',
     );
     
     final bool esNuevaNota = notaActual == null;
@@ -279,16 +282,32 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
       context: context,
       builder: (_) => AlertDialog(
         title: Text(tituloDialogo),
-        content: TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(
-            hintText: "Ej: 4.5",
-            labelText: "Nota",
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // === CAMPO NUEVO: Nombre de la Actividad ===
+            TextField(
+              controller: actividadController,
+              decoration: const InputDecoration(
+                labelText: "Nombre de la Actividad",
+                hintText: "Examen Parcial 1, Taller Final, Quiz 3...",
+                border: OutlineInputBorder(),
+              ),
             ),
-          ),
+            const SizedBox(height: 12),
+            
+            TextField(
+              controller: notaController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                hintText: "Ej: 4.5",
+                labelText: "Nota",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -297,8 +316,9 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
           ),
           ElevatedButton(
             onPressed: () async {
-              final value = controller.text.trim().replaceAll(',', '.');
+              final value = notaController.text.trim().replaceAll(',', '.');
               final nota = double.tryParse(value);
+              final nombreActividad = actividadController.text.trim();
 
               if (nota == null || value.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -307,11 +327,13 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
                 return;
               }
 
-              final result = await _api.guardarNota(
-                idNota: existingNotaId,
+              // === AQUÍ USAMOS EL MÉTODO QUE SÍ ENVÍA EL NOMBRE ===
+              final result = await _api.guardarNotaConActividad(
                 idUsuario: estudiante['id_usuario'],
                 idModulo: idModulo,
                 nota: nota,
+                nombreActividad: nombreActividad.isEmpty ? "Evaluación" : nombreActividad,
+                idNota: existingNotaId,
               );
 
               Navigator.pop(context);
@@ -331,7 +353,7 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
                 );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(result['error'] ?? 'No se pudo guardar la nota.')),
+                  SnackBar(content: Text(result['error'] ?? 'Nota actualizada correctamente')),
                 );
               }
             },

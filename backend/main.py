@@ -2435,6 +2435,27 @@ def get_historial_notas_detallado(id_modulo):
     except Exception as e:
         print(f"Error en historial detallado: {e}")
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/notas/<int:id_nota>', methods=['PUT'])
+def actualizar_nota(id_nota):
+    try:
+        datos = request.json
+        nota = datos.get('nota')
+        nombre = datos.get('nombre')
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        query = "UPDATE Notas SET nota = %s, nombre = %s WHERE id_nota = %s"
+        cursor.execute(query, (nota, nombre, id_nota))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"status": "success", "message": "Nota actualizada correctamente"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

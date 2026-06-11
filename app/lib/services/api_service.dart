@@ -187,6 +187,7 @@ class ApiService {
         Uri.parse('$baseUrl/notas/modulo/$idModulo'),
       );
       if (response.statusCode == 200) {
+        print("Notas por módulo: ${response.body}");
         return json.decode(response.body);
       }
       return [];
@@ -776,6 +777,45 @@ class ApiService {
       return json.decode(response.body);
     } catch (e) {
       return {"success": false, "error": e.toString()};
+    }
+  }
+
+    // NUEVO: Guardar nota con nombre de actividad
+  Future<Map<String, dynamic>> guardarNotaConActividad({
+    required int idUsuario,
+    required int idModulo,
+    required double nota,
+    required String nombreActividad,
+    int? idNota,
+  }) async {
+    try {
+      final uri = idNota != null
+          ? Uri.parse('$baseUrl/notas/$idNota')
+          : Uri.parse('$baseUrl/notas');
+
+      final response = idNota != null
+          ? await http.put(
+              uri,
+              headers: {'Content-Type': 'application/json'},
+              body: json.encode({
+                'nota': nota,
+                'nombre': nombreActividad,
+              }),
+            )
+          : await http.post(
+              uri,
+              headers: {'Content-Type': 'application/json'},
+              body: json.encode({
+                'id_usuario': idUsuario,
+                'id_modulo': idModulo,
+                'nota': nota,
+                'nombre': nombreActividad,
+              }),
+            );
+
+      return json.decode(response.body);
+    } catch (e) {
+      return {'success': false, 'error': 'Error de conexión: $e'};
     }
   }
 }
