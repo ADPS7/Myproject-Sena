@@ -92,7 +92,7 @@ def create_user():
                 <div style="padding: 20px; color: #333;">
                     <p>Hola <strong>{nombres}</strong>,</p>
                     <p>Nos alegra mucho tenerte con nosotros. Tu registro en nuestra plataforma ha sido exitoso.</p>
-                    <p>Ya puedes acceder a todos nuestros recursos educativos. Estamos trabajando para ofrecerte la mejor experiencia.</p>
+                    <p>Tendra que esperar a que se le asigne el rol de un plazo de 24 horas. Gracias por su atencion. Estamos trabajando para ofrecerte la mejor experiencia.</p>
                     <div style="text-align: center; margin: 30px 0;">
                         <a href="http://127.0.0.1:5000" style="background-color: #7C4DFF; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Ir a mi cuenta</a>
                     </div>
@@ -839,62 +839,42 @@ def get_notas_modulo(id_modulo):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
+
 @app.route('/notas', methods=['POST'])
 def guardar_nota():
     try:
         data = request.json
-        id_usuario = data['id_usuario']
-        id_modulo = data['id_modulo']
-        nota = data['nota']
+        id_usuario = data.get('id_usuario')
+        id_modulo = data.get('id_modulo')
+        nota = data.get('nota')
+        nombre = data.get('nombre', 'Evaluación sin nombre')  # ← NUEVO: Recibir nombre
 
-        if nota is None or float(nota) > 5.0:
-            return jsonify({"error": "La nota no puede ser mayor a 5.0."}), 400
+        if not all([id_usuario, id_modulo, nota is not None]):
+            return jsonify({"error": "Faltan datos requeridos"}), 400
+
+        if float(nota) > 5.0 or float(nota) < 0:
+            return jsonify({"error": "La nota debe estar entre 0 y 5."}), 400
 
         conn = get_db_connection()
         cursor = conn.cursor()
 
+        # INSERT con el nombre de la actividad
         query = """
-            INSERT INTO Notas (id_usuario, id_modulo, nota)
-            VALUES (%s, %s, %s)
+            INSERT INTO Notas (id_usuario, id_modulo, nota, nombre)
+            VALUES (%s, %s, %s, %s)
         """
-
-        cursor.execute(query, (id_usuario, id_modulo, nota))
+        cursor.execute(query, (id_usuario, id_modulo, nota, nombre))
         conn.commit()
 
         cursor.close()
         conn.close()
 
-        return jsonify({"success": True}), 200
+        return jsonify({"success": True, "message": "Nota guardada correctamente"}), 200
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"Error guardando nota: {e}")
+        return jsonify({"error": str(e)}), 500    
 
-@app.route('/notas/<int:id_nota>', methods=['PUT'])
-def actualizar_nota(id_nota):
-    try:
-        data = request.json
-        nota = data['nota']
-
-        if nota is None or float(nota) > 5.0:
-            return jsonify({"error": "La nota no puede ser mayor a 5.0."}), 400
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        cursor.execute(
-            "UPDATE Notas SET nota = %s WHERE id_nota = %s",
-            (nota, id_nota)
-        )
-        conn.commit()
-
-        cursor.close()
-        conn.close()
-
-        return jsonify({"success": True}), 200
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
     
 @app.route('/notas/<int:id_nota>', methods=['DELETE'])
 def eliminar_nota(id_nota):
@@ -2419,6 +2399,99 @@ def guardar_perfil_web():
     finally:
         cursor.close()
         conexion.close()
+
+    
+@app.route('/notas/modulo/historial/<int:id_modulo>', methods=['GET'])
+def get_historial_notas_detallado(id_modulo):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+            SELECT 
+                u.id_usuario,
+                CONCAT(u.nombres, ' ', u.apellidos) AS nombre,
+                u.correo,
+                n.id_nota,
+                n.nota,
+                COALESCE(n.nombre, 'Sin nombre') AS nombre_actividad
+            FROM Usuarios u
+            JOIN Alumnos a ON u.id_usuario = a.id_usuario
+            JOIN Modulos m ON a.id_curso = m.id_curso
+            LEFT JOIN Notas n 
+                ON n.id_usuario = u.id_usuario 
+                AND n.id_modulo = %s
+            WHERE m.id_modulo = %s
+            ORDER BY u.apellidos, u.nombres, n.id_nota DESC
+        """
+        cursor.execute(query, (id_modulo, id_modulo))
+        data = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify(data), 200
+
+    except Exception as e:
+        print(f"Error en historial detallado: {e}")
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/notas/<int:id_nota>', methods=['PUT'])
+def actualizar_nota(id_nota):
+    try:
+        datos = request.json
+        nota = datos.get('nota')
+        nombre = datos.get('nombre')
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        query = "UPDATE Notas SET nota = %s, nombre = %s WHERE id_nota = %s"
+        cursor.execute(query, (nota, nombre, id_nota))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"status": "success", "message": "Nota actualizada correctamente"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    
+@app.route('/notas/modulo/historial/<int:id_modulo>', methods=['GET'])
+def get_historial_notas_con_actividades(id_modulo):
+    try:
+        conn = get_db_connection()
+        # Usamos dictionary=True para obtener los resultados como objetos clave-valor
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+            SELECT 
+                u.id_usuario,
+                u.nombres AS nombre_estudiante,
+                u.apellidos AS apellido_estudiante,
+                u.correo,
+                n.id_nota,
+                n.nota,
+                COALESCE(n.nombre, 'Sin actividad') AS nombre_actividad
+            FROM Usuarios u
+            JOIN Alumnos a ON u.id_usuario = a.id_usuario
+            JOIN Modulos m ON a.id_curso = m.id_curso
+            LEFT JOIN Notas n 
+                ON n.id_usuario = u.id_usuario 
+                AND n.id_modulo = %s
+            WHERE m.id_modulo = %s
+            ORDER BY u.apellidos, u.nombres, n.id_nota DESC
+        """
+        cursor.execute(query, (id_modulo, id_modulo))
+        data = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'aut_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.131.65:5000';
+  static const String baseUrl = 'http://10.2.129.165:5000';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,
@@ -187,6 +187,7 @@ class ApiService {
         Uri.parse('$baseUrl/notas/modulo/$idModulo'),
       );
       if (response.statusCode == 200) {
+        print("Notas por módulo: ${response.body}");
         return json.decode(response.body);
       }
       return [];
@@ -776,6 +777,62 @@ class ApiService {
       return json.decode(response.body);
     } catch (e) {
       return {"success": false, "error": e.toString()};
+    }
+  }
+
+    // NUEVO: Guardar nota con nombre de actividad
+  Future<Map<String, dynamic>> guardarNotaConActividad({
+    required int idUsuario,
+    required int idModulo,
+    required double nota,
+    required String nombreActividad,
+    int? idNota,
+  }) async {
+    try {
+      final uri = idNota != null
+          ? Uri.parse('$baseUrl/notas/$idNota')
+          : Uri.parse('$baseUrl/notas');
+
+      final response = idNota != null
+          ? await http.put(
+              uri,
+              headers: {'Content-Type': 'application/json'},
+              body: json.encode({
+                'nota': nota,
+                'nombre': nombreActividad,
+              }),
+            )
+          : await http.post(
+              uri,
+              headers: {'Content-Type': 'application/json'},
+              body: json.encode({
+                'id_usuario': idUsuario,
+                'id_modulo': idModulo,
+                'nota': nota,
+                'nombre': nombreActividad,
+              }),
+            );
+
+      return json.decode(response.body);
+    } catch (e) {
+      return {'success': false, 'error': 'Error de conexión: $e'};
+    }
+  }
+
+  Future<List<dynamic>> getHistorialNotas(int idModulo) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/notas/modulo/historial_v2/$idModulo'),
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        return [];
+      }
+    } catch (e) {
+      print("Error al obtener historial: $e");
+      return [];
     }
   }
 }

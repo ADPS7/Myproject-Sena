@@ -261,12 +261,18 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
     );
   }
 
-  void _mostrarDialogoEditarNota(Map estudiante, String moduloNombre, dynamic notaActual, int idModulo) {
+    void _mostrarDialogoEditarNota(Map estudiante, String moduloNombre, dynamic notaActual, int idModulo) {
     final existingNotaValue = notaActual is Map ? notaActual['nota'] : notaActual;
     final existingNotaId = notaActual is Map ? notaActual['id_nota'] as int? : null;
 
-    final TextEditingController controller = TextEditingController(
+    final TextEditingController notaController = TextEditingController(
       text: existingNotaValue?.toString() ?? '',
+    );
+    final actividadActual = notaActual is Map
+        ? (notaActual['nombre'] ?? notaActual['nombre_actividad'] ?? notaActual['actividad'] ?? '')
+        : '';
+    final TextEditingController actividadController = TextEditingController(
+      text: actividadActual.toString(),
     );
     
     final bool esNuevaNota = notaActual == null;
@@ -279,16 +285,32 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
       context: context,
       builder: (_) => AlertDialog(
         title: Text(tituloDialogo),
-        content: TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(
-            hintText: "Ej: 4.5",
-            labelText: "Nota",
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // === CAMPO NUEVO: Nombre de la Actividad ===
+            TextField(
+              controller: actividadController,
+              decoration: const InputDecoration(
+                labelText: "Nombre de la Actividad",
+                hintText: "Examen Parcial 1, Taller Final, Quiz 3...",
+                border: OutlineInputBorder(),
+              ),
             ),
-          ),
+            const SizedBox(height: 12),
+            
+            TextField(
+              controller: notaController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                hintText: "Ej: 4.5",
+                labelText: "Nota",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -297,8 +319,9 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
           ),
           ElevatedButton(
             onPressed: () async {
-              final value = controller.text.trim().replaceAll(',', '.');
+              final value = notaController.text.trim().replaceAll(',', '.');
               final nota = double.tryParse(value);
+              final nombreActividad = actividadController.text.trim();
 
               if (nota == null || value.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -307,11 +330,13 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
                 return;
               }
 
-              final result = await _api.guardarNota(
-                idNota: existingNotaId,
+              // === AQUÍ USAMOS EL MÉTODO QUE SÍ ENVÍA EL NOMBRE ===
+              final result = await _api.guardarNotaConActividad(
                 idUsuario: estudiante['id_usuario'],
                 idModulo: idModulo,
                 nota: nota,
+                nombreActividad: nombreActividad.isEmpty ? "Evaluación" : nombreActividad,
+                idNota: existingNotaId,
               );
 
               Navigator.pop(context);
@@ -331,7 +356,7 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
                 );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(result['error'] ?? 'No se pudo guardar la nota.')),
+                  SnackBar(content: Text(result['error'] ?? 'Nota actualizada correctamente')),
                 );
               }
             },
@@ -533,7 +558,8 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
                                                 if (item['nota'] != null) {
                                                   estudiantesAgrupados[idUsuario]!['notas'].add({
                                                     "id_nota": item['id_nota'],
-                                                    "nota": item['nota']
+                                                    "nota": item['nota'],
+                                                    "nombre_actividad": item['nombre_actividad'] ?? 'Actividad',
                                                   });
                                                 }
                                               }
@@ -554,57 +580,97 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
                                                   final est = estudiantes[indexEstudiante];
                                                   final correo = est['correo']?.toString().trim() ?? '';
 
+                                                  final notasEstudiante = (est['notas'] as List<dynamic>? ?? []);
+
                                                   return Container(
                                                     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                                                    padding: const EdgeInsets.all(12),
+                                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                                                     decoration: BoxDecoration(
                                                       color: Colors.white,
                                                       borderRadius: BorderRadius.circular(12),
                                                       border: Border.all(color: borderGrey, width: 0.5),
                                                     ),
-                                                    child: Row(
-                                                      children: [
-                                                        Container(
-                                                          padding: const EdgeInsets.all(8),
-                                                          decoration: BoxDecoration(
-                                                            color: Colors.green.withOpacity(0.08),
-                                                            borderRadius: BorderRadius.circular(8),
-                                                          ),
-                                                          child: const Icon(
-                                                            Icons.person,
-                                                            color: Colors.green,
-                                                            size: 20,
-                                                          ),
+                                                    child: ExpansionTile(
+                                                      tilePadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                      childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                                                      leading: Container(
+                                                        padding: const EdgeInsets.all(8),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.green.withOpacity(0.08),
+                                                          borderRadius: BorderRadius.circular(8),
                                                         ),
-                                                        const SizedBox(width: 12),
-                                                        Expanded(
-                                                          child: Column(
-                                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                                            children: [
-                                                              Text(
-                                                                est['nombre'] ?? 'Estudiante',
-                                                                style: const TextStyle(
-                                                                  fontSize: 14,
-                                                                  fontWeight: FontWeight.w600,
+                                                        child: const Icon(
+                                                          Icons.person,
+                                                          color: Colors.green,
+                                                          size: 20,
+                                                        ),
+                                                      ),
+                                                      title: Text(
+                                                        est['nombre']?.toString() ?? 'Estudiante',
+                                                        style: const TextStyle(fontWeight: FontWeight.bold),
+                                                      ),
+                                                      subtitle: Text(
+                                                        notasEstudiante.isEmpty
+                                                            ? 'Sin actividades registradas'
+                                                            : '${notasEstudiante.length} actividad(es)',
+                                                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                                                      ),
+                                                      children: notasEstudiante.isEmpty
+                                                          ? [
+                                                              const Padding(
+                                                                padding: EdgeInsets.symmetric(vertical: 8),
+                                                                child: Text(
+                                                                  'Sin actividades registradas',
+                                                                  style: TextStyle(color: Colors.grey, fontSize: 13),
                                                                 ),
                                                               ),
-                                                              const SizedBox(height: 4),
-                                                              Text(
-                                                                est['correo'] ?? 'correo no disponible',
-                                                                style: TextStyle(
-                                                                  color: Colors.grey[500],
-                                                                  fontSize: 12,
+                                                            ]
+                                                          : notasEstudiante.map((notaItem) {
+                                                              final nombreActividad = notaItem['nombre_actividad']?.toString() ?? 'Actividad';
+                                                              final notaValor = notaItem['nota'];
+                                                              final notaTexto = notaValor is num
+                                                                  ? notaValor.toStringAsFixed(2)
+                                                                  : notaValor?.toString() ?? 'N/A';
+
+                                                              return Padding(
+                                                                padding: const EdgeInsets.only(top: 4),
+                                                                child: Row(
+                                                                  children: [
+                                                                    Expanded(
+                                                                      child: Text(
+                                                                        nombreActividad,
+                                                                        style: const TextStyle(
+                                                                          fontSize: 13,
+                                                                          fontWeight: FontWeight.w600,
+                                                                          color: Colors.black87,
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                    const SizedBox(width: 8),
+                                                                    Text(
+                                                                      'Nota: $notaTexto',
+                                                                      style: const TextStyle(
+                                                                        fontSize: 13,
+                                                                        fontWeight: FontWeight.w600,
+                                                                        color: Colors.blue,
+                                                                      ),
+                                                                    ),
+                                                                    IconButton(
+                                                                      icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                                                                      tooltip: 'Editar nota',
+                                                                      padding: EdgeInsets.zero,
+                                                                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                                                      onPressed: () => _mostrarDialogoEditarNota(
+                                                                        est,
+                                                                        modulo['nombre'] ?? 'Módulo',
+                                                                        notaItem,
+                                                                        modulo['id_modulo'],
+                                                                      ),
+                                                                    ),
+                                                                  ],
                                                                 ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                        IconButton(
-                                                          icon: const Icon(Icons.edit, color: Colors.blue),
-                                                          tooltip: 'Ver y editar notas',
-                                                          onPressed: () => _mostrarDialogoNota(est, modulo['id_modulo']),
-                                                        ),
-                                                      ],
+                                                              );
+                                                            }).toList(),
                                                     ),
                                                   );
                                                 },

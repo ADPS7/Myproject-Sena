@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchStudentInput = document.getElementById("searchStudentInput");
     const applyAllNotaBtn = document.getElementById("applyAllNotaBtn");
 
-    // 🔹 Cargar cursos desde el backend (usa `id_curso`) - solo cursos del profesor
+    // 🔹 Cargar cursos del profesor
     fetch(`/cursos/profesor/${window.USER_ID}`)
         .then(res => res.json())
         .then(cursos => {
@@ -29,7 +29,6 @@ document.addEventListener("DOMContentLoaded", () => {
     cursoSelect.addEventListener("change", () => {
         moduloSelect.innerHTML = '<option value="">-- Selecciona un módulo --</option>';
         const cursoId = cursoSelect.value;
-
         selectedCourseName.textContent = cursoSelect.options[cursoSelect.selectedIndex].text || '—';
 
         if (cursoId) {
@@ -46,43 +45,49 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Delegated handlers: evitar listeners repetidos
-    // Click delegado para botones de guardar individuales
+    // ==================== GUARDAR NOTA INDIVIDUAL ====================
     if (tablaEstudiantes && !tablaEstudiantes.dataset.delegateAttached) {
         tablaEstudiantes.dataset.delegateAttached = '1';
         tablaEstudiantes.addEventListener('click', async (ev) => {
             const btn = ev.target.closest('.guardar-btn');
             if (!btn) return;
+
             const id = btn.dataset.id;
             const input = tablaEstudiantes.querySelector(`.nota-input[data-id="${id}"]`);
             if (!input) return;
 
-            // Validar valor
+            const nombreActividad = document.getElementById('nombreActividad') ? 
+                                  document.getElementById('nombreActividad').value.trim() || "Evaluación" : "Evaluación";
+
             const raw = (input.value || '').toString().trim();
             const n = parseFloat(raw);
+
             notaFeedback.innerHTML = '';
             if (raw === '' || isNaN(n) || n < 0 || n > 5) {
                 input.classList.add('is-invalid');
-                btn.disabled = true;
                 notaFeedback.innerHTML = `<div class="alert alert-warning">Ingrese una nota válida entre 0 y 5.</div>`;
                 return;
             }
 
-            // Enviar petición individual
             btn.disabled = true;
             try {
                 const res = await fetch(`/notas`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ id_usuario: Number(id), id_modulo: Number(moduloSelect.value), nota: Number(n) })
+                    body: JSON.stringify({ 
+                        id_usuario: Number(id), 
+                        id_modulo: Number(moduloSelect.value), 
+                        nota: Number(n),
+                        nombre: nombreActividad
+                    })
                 });
                 const data = await res.json();
                 if (data.success) {
-                    notaFeedback.innerHTML = `<div class="alert alert-success">Nota guardada correctamente.</div>`;
+                    notaFeedback.innerHTML = `<div class="alert alert-success">✅ Nota guardada: <strong>${nombreActividad}</strong></div>`;
                     input.classList.remove('is-invalid');
                     input.classList.add('is-valid');
                 } else {
-                    notaFeedback.innerHTML = `<div class="alert alert-danger">Error: ${data.error || 'No se pudo guardar la nota'}</div>`;
+                    notaFeedback.innerHTML = `<div class="alert alert-danger">Error: ${data.error || 'No se pudo guardar'}</div>`;
                 }
             } catch (err) {
                 console.error(err);
@@ -93,7 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Input delegado para validar en tiempo real y habilitar/deshabilitar botones guardar
+    // Validación en tiempo real
     if (tablaEstudiantes && !tablaEstudiantes.dataset.inputAttached) {
         tablaEstudiantes.dataset.inputAttached = '1';
         tablaEstudiantes.addEventListener('input', (ev) => {
@@ -125,27 +130,23 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 🔹 Mostrar estudiantes al elegir módulo
+    // ==================== MOSTRAR ESTUDIANTES + APLICAR NOTAS EN LOTE ====================
     moduloSelect.addEventListener("change", () => {
         tablaEstudiantes.innerHTML = "";
         const moduloId = moduloSelect.value;
-
-        tablaEstudiantes.innerHTML = "";
         selectedModuleName.textContent = moduloSelect.options[moduloSelect.selectedIndex].text || '—';
 
         if (moduloId) {
-            // habilitar botón ver notas
             if (viewAllNotasBtn) viewAllNotasBtn.disabled = false;
-            // endpoint que devuelve estudiantes (y notas si existen): /notas/modulo/<id_modulo>
+
             fetch(`/notas/modulo/${moduloId}`)
                 .then(res => res.json())
                 .then(estudiantes => {
-                    // esperar array con objetos que incluyan: id_usuario, nombres, apellidos, correo, nota, id_nota
                     const seen = new Set();
                     estudiantes.forEach(e => {
                         const studentId = e.id_usuario || e.id || e.user_id;
                         const sid = String(studentId);
-                        if (seen.has(sid)) return; // ignorar duplicados
+                        if (seen.has(sid)) return;
                         seen.add(sid);
 
                         const studentName = e.nombre || `${e.nombres || ''} ${e.apellidos || ''}`.trim();
@@ -162,8 +163,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         tablaEstudiantes.appendChild(fila);
                     });
 
-                    // Habilitar botón de aplicar notas si hay estudiantes
-                    const hasStudents = estudiantes && estudiantes.length;
+                    const hasStudents = estudiantes && estudiantes.length > 0;
                     if (applyAllNotaBtn) applyAllNotaBtn.disabled = !hasStudents;
                     if (searchStudentInput) {
                         searchStudentInput.disabled = !hasStudents;
@@ -171,11 +171,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                     filtrarEstudiantesPorNombre('');
 
-                    // Lógica: guardar en lote las notas actualmente ingresadas en los inputs
+                    // ==================== BOTÓN APLICAR NOTAS (CORREGIDO) ====================
                     if (applyAllNotaBtn && !applyAllNotaBtn.dataset.bulkAttached) {
                         applyAllNotaBtn.dataset.bulkAttached = '1';
                         applyAllNotaBtn.addEventListener('click', async () => {
-                            const moduloIdLocal = moduloId;
+                            const moduloIdLocal = moduloSelect.value;
+                            const nombreActividad = document.getElementById('nombreActividad') ? 
+                                                  document.getElementById('nombreActividad').value.trim() || "Evaluación" : "Evaluación";
+
                             notaFeedback.innerHTML = '';
 
                             const inputs = Array.from(document.querySelectorAll('.nota-input'));
@@ -184,63 +187,75 @@ document.addEventListener("DOMContentLoaded", () => {
                                 return;
                             }
 
-
-                            // Validar y marcar inputs: solo valores numéricos entre 0 y 5 se enviarán
                             inputs.forEach(i => i.classList.remove('is-invalid', 'is-valid'));
                             const updates = [];
                             let invalidCount = 0;
+
                             inputs.forEach(i => {
                                 const raw = (i.value || '').toString().trim();
-                                if (raw === '') return; // vacío -> omitir
+                                if (raw === '') return;
                                 const n = parseFloat(raw);
                                 if (isNaN(n) || n < 0 || n > 5) {
                                     i.classList.add('is-invalid');
                                     invalidCount++;
                                 } else {
                                     i.classList.add('is-valid');
-                                    updates.push({ id: i.dataset.id, nota: n });
+                                    updates.push({ 
+                                        id: i.dataset.id, 
+                                        nota: n,
+                                        nombre: nombreActividad
+                                    });
                                 }
                             });
 
                             if (invalidCount > 0) {
-                                notaFeedback.innerHTML = `<div class="alert alert-warning">Hay ${invalidCount} entradas inválidas. Corrija los campos marcados antes de aplicar.</div>`;
+                                notaFeedback.innerHTML = `<div class="alert alert-warning">Hay ${invalidCount} notas inválidas. Corríjalas antes de aplicar.</div>`;
                                 return;
                             }
 
                             if (!updates.length) {
-                                notaFeedback.innerHTML = `<div class="alert alert-warning">No hay notas válidas para guardar. Complete las notas antes de aplicar.</div>`;
+                                notaFeedback.innerHTML = `<div class="alert alert-warning">No hay notas válidas para guardar.</div>`;
                                 return;
                             }
 
                             const guardarBtns = Array.from(document.querySelectorAll('.guardar-btn'));
                             guardarBtns.forEach(b => b.disabled = true);
-                            if (applyAllNotaBtn) applyAllNotaBtn.disabled = true;
+                            applyAllNotaBtn.disabled = true;
 
-                            const promises = updates.map(u => {
-                                return fetch(`/notas`, {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ id_usuario: Number(u.id), id_modulo: Number(moduloIdLocal), nota: Number(u.nota) })
-                                })
-                                .then(res => res.json())
-                                .then(data => ({ id: u.id, ok: !!data.success, error: data.error }))
-                                .catch(err => ({ id: u.id, ok: false, error: err && err.message }))
-                            });
+                            try {
+                                const promises = updates.map(u => {
+                                    return fetch(`/notas`, {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ 
+                                            id_usuario: Number(u.id), 
+                                            id_modulo: Number(moduloIdLocal), 
+                                            nota: Number(u.nota),
+                                            nombre: u.nombre
+                                        })
+                                    })
+                                    .then(res => res.json())
+                                    .then(data => ({ id: u.id, ok: !!data.success }))
+                                    .catch(() => ({ id: u.id, ok: false }));
+                                });
 
-                            const results = await Promise.all(promises);
-                            const successCount = results.filter(r => r.ok).length;
-                            const failCount = results.length - successCount;
+                                const results = await Promise.all(promises);
+                                const successCount = results.filter(r => r.ok).length;
+                                const failCount = results.length - successCount;
 
-                            if (successCount && !failCount) {
-                                notaFeedback.innerHTML = `<div class="alert alert-success">Notas guardadas correctamente: ${successCount}.</div>`;
-                            } else if (successCount && failCount) {
-                                notaFeedback.innerHTML = `<div class="alert alert-warning">${successCount} guardadas, ${failCount} fallaron.</div>`;
-                            } else {
-                                notaFeedback.innerHTML = `<div class="alert alert-danger">No se pudieron guardar las notas.</div>`;
+                                if (successCount && !failCount) {
+                                    notaFeedback.innerHTML = `<div class="alert alert-success">✅ ${successCount} notas guardadas correctamente (${nombreActividad})</div>`;
+                                } else if (successCount && failCount) {
+                                    notaFeedback.innerHTML = `<div class="alert alert-warning">${successCount} guardadas, ${failCount} fallaron.</div>`;
+                                } else {
+                                    notaFeedback.innerHTML = `<div class="alert alert-danger">No se pudieron guardar las notas.</div>`;
+                                }
+                            } catch (err) {
+                                notaFeedback.innerHTML = `<div class="alert alert-danger">Error de conexión.</div>`;
+                            } finally {
+                                guardarBtns.forEach(b => b.disabled = false);
+                                applyAllNotaBtn.disabled = false;
                             }
-
-                            guardarBtns.forEach(b => b.disabled = false);
-                            if (applyAllNotaBtn) applyAllNotaBtn.disabled = false;
                         });
                     }
                 });
@@ -249,7 +264,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Ver todas las notas: mostrar la vista completa del módulo (sin modal)
+    // Ver historial de notas
     if (viewAllNotasBtn) {
         viewAllNotasBtn.addEventListener('click', () => {
             const moduloId = moduloSelect.value;
@@ -260,9 +275,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// --- Vista completa de notas (historial) ---
 async function verHistorialNotasModulo(idModulo, nombreModulo) {
-    // Mostrar la vista propia de historial de notas y renderizar dentro
     const mostrarNotasDiv = document.getElementById('mostrarNotasProfesor');
     const mostrarHistorialDiv = document.getElementById('mostrarHistorialNotas');
     if (mostrarNotasDiv) mostrarNotasDiv.style.display = 'none';
@@ -271,121 +284,134 @@ async function verHistorialNotasModulo(idModulo, nombreModulo) {
     const titleEl = document.getElementById('historial-view-title');
     const subtitleEl = document.getElementById('historial-view-subtitle');
     if (titleEl) titleEl.innerText = nombreModulo || 'Notas del módulo';
-    if (subtitleEl) subtitleEl.innerText = 'Historial y resumen de calificaciones del módulo';
+    if (subtitleEl) subtitleEl.innerText = 'Historial detallado de calificaciones';
 
     const historialContainer = document.getElementById('historialNotasContainer');
     if (!historialContainer) return;
-    historialContainer.innerHTML = `<div class="col-12"><div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div><p class="mt-2 text-muted">Cargando historial de notas...</p></div></div>`;
 
-    // Conectar botón volver en la nueva vista
+    historialContainer.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-3 text-muted">Cargando historial detallado...</p>
+        </div>`;
+
     const backBtn = document.getElementById('historial-back-btn');
-    if (backBtn) backBtn.onclick = () => {
-        if (mostrarHistorialDiv) mostrarHistorialDiv.style.display = 'none';
-        if (mostrarNotasDiv) mostrarNotasDiv.style.display = 'block';
-        // restaurar títulos
-        const mainTitle = document.getElementById('view-title');
-        const mainSubtitle = document.getElementById('view-subtitle');
-        if (mainTitle) mainTitle.innerText = 'Notas';
-        if (mainSubtitle) mainSubtitle.innerText = 'Aquí puedes ver y actualizar las calificaciones de tus estudiantes.';
-        historialContainer.innerHTML = '';
-    };
+    if (backBtn) {
+        backBtn.onclick = () => {
+            if (mostrarHistorialDiv) mostrarHistorialDiv.style.display = 'none';
+            if (mostrarNotasDiv) mostrarNotasDiv.style.display = 'block';
+        };
+    }
 
-    try {
-        const res = await fetch(`/notas/modulo/${idModulo}`);
+        try {
+        // NUEVA RUTA PARA HISTORIAL DETALLADO
+        const res = await fetch(`/notas/modulo/historial/${idModulo}`);
         const data = await res.json();
-        if (!Array.isArray(data)) throw new Error('Respuesta inesperada del servidor');
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
         renderizarHistorialNotas(data);
     } catch (err) {
-        console.error('Error cargando historial de notas:', err);
-        historialContainer.innerHTML = `<div class="alert alert-danger">No se pudo cargar el historial de notas.</div>`;
+        console.error(err);
+        historialContainer.innerHTML = `
+            <div class="alert alert-danger text-center py-4">
+                <i class="bi bi-exclamation-triangle-fill"></i><br>
+                No se pudo cargar el historial de notas.
+            </div>`;
     }
 }
 
 function filtrarEstudiantesPorNombre(query) {
-        const tbody = document.getElementById('tablaEstudiantes');
-        if (!tbody) return;
-        const texto = (query || '').toLowerCase().trim();
-        let visibleCount = 0;
+    const tbody = document.getElementById('tablaEstudiantes');
+    if (!tbody) return;
+    const texto = (query || '').toLowerCase().trim();
+    let visibleCount = 0;
 
-        tbody.querySelectorAll('tr').forEach(row => {
-            const nombre = (row.querySelector('td:nth-child(1)')?.textContent || '').toLowerCase();
-            const correo = (row.querySelector('td:nth-child(2)')?.textContent || '').toLowerCase();
-            const matches = !texto || nombre.includes(texto) || correo.includes(texto);
-            row.style.display = matches ? '' : 'none';
-            if (matches) visibleCount += 1;
-        });
+    tbody.querySelectorAll('tr').forEach(row => {
+        const nombre = (row.querySelector('td:nth-child(1)')?.textContent || '').toLowerCase();
+        const correo = (row.querySelector('td:nth-child(2)')?.textContent || '').toLowerCase();
+        const matches = !texto || nombre.includes(texto) || correo.includes(texto);
+        row.style.display = matches ? '' : 'none';
+        if (matches) visibleCount += 1;
+    });
+}
 
-        let placeholder = document.getElementById('tablaEstudiantesPlaceholder');
-        if (visibleCount === 0 && tbody.querySelectorAll('tr').length > 0) {
-            if (!placeholder) {
-                placeholder = document.createElement('tr');
-                placeholder.id = 'tablaEstudiantesPlaceholder';
-                placeholder.innerHTML = `<td colspan="4" class="text-center text-muted py-4">No se encontró ningún estudiante.</td>`;
-                tbody.appendChild(placeholder);
-            }
-        } else if (placeholder) {
-            placeholder.remove();
-        }
-    }
 
-    function renderizarHistorialNotas(list) {
-    const historialContainer = document.getElementById('historialNotasContainer');
-    if (!historialContainer) return;
+function renderizarHistorialNotas(list) {
+    const container = document.getElementById('historialNotasContainer');
+    if (!container) return;
 
     if (!Array.isArray(list) || list.length === 0) {
-        historialContainer.innerHTML = `
-            <div class="card border-0 shadow-sm rounded-4 p-4">
-                <div class="text-muted">Aún no hay notas registradas para este módulo.</div>
-            </div>
-        `;
+        container.innerHTML = `
+            <div class="alert alert-info text-center py-5">
+                <i class="bi bi-info-circle fs-1 mb-3 d-block"></i>
+                <h5>Aún no hay notas registradas</h5>
+                <p class="text-muted">Cuando califiques a los estudiantes aparecerán aquí.</p>
+            </div>`;
         return;
     }
 
-    // Agrupar por estudiante
-    const alumnos = {};
+    const estudiantes = {};
+
     list.forEach(item => {
-        const nombre = item.nombre || (`Usuario ${item.id_usuario || ''}`);
-        const notaVal = (item.nota !== undefined && item.nota !== null) ? Number(item.nota) : null;
-        if (!alumnos[nombre]) alumnos[nombre] = { id_usuario: item.id_usuario, nombre: nombre, notas: [] };
-        if (notaVal !== null) alumnos[nombre].notas.push(notaVal);
+        const id = item.id_usuario;
+        if (!estudiantes[id]) {
+            estudiantes[id] = {
+                nombre: item.nombre || 'Estudiante',
+                correo: item.correo || '',
+                notas: []
+            };
+        }
+        if (item.nota !== null && item.nota !== undefined) {
+            estudiantes[id].notas.push({
+                actividad: item.nombre_actividad || 'Sin nombre',
+                nota: parseFloat(item.nota).toFixed(1),
+                fecha: item.fecha || ''
+            });
+        }
     });
 
-    const rows = Object.values(alumnos).map(est => {
-        const notasArr = est.notas || [];
-        const promedio = notasArr.length ? (notasArr.reduce((a,b)=>a+b,0)/notasArr.length) : null;
-        const alerta = promedio !== null ? promedio < 3.0 : false;
-        const promedioDisplay = promedio !== null ? promedio.toFixed(2) : '—';
-        const ultimosHtml = notasArr.length ? notasArr.slice(0,10).map(n => `<span class="badge bg-info text-dark me-1">${n}</span>`).join('') : '<small class="text-muted">Sin notas</small>';
+    let html = `<div class="row g-4">`;
 
-        return `
-            <tr class="${alerta ? 'table-warning' : ''}">
-                <td class="ps-4"><div class="fw-bold">${est.nombre}</div></td>
-                <td class="text-center"><span class="fw-bold">${promedioDisplay}</span></td>
-                <td class="text-center">${alerta ? '<span class="badge bg-danger">Reprobado</span>' : '<span class="badge bg-success">Aprobado</span>'}</td>
-                <td class="ps-4"><div class="d-flex gap-1 align-items-center">${ultimosHtml}</div></td>
-            </tr>
-        `;
-    }).join('');
+    Object.values(estudiantes).forEach(est => {
+        const total = est.notas.length;
+        const promedio = total > 0 
+            ? (est.notas.reduce((sum, n) => sum + parseFloat(n.nota), 0) / total).toFixed(1) 
+            : '—';
 
-    historialContainer.innerHTML = `
-        <div class="card border-0 shadow-sm rounded-4 p-4">
-            <h5 class="fw-semibold mb-3">Historial de notas</h5>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="ps-4">Estudiante</th>
-                            <th class="text-center">Promedio</th>
-                            <th class="text-center">Estado</th>
-                            <th class="ps-4">Últimas notas</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${rows}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    `;
+        html += `
+            <div class="col-12 col-lg-6">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-header bg-light py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 fw-bold">${est.nombre}</h6>
+                                <small class="text-muted">${est.correo}</small>
+                            </div>
+                            <span class="badge bg-primary fs-5 px-3">${promedio}</span>
+                        </div>
+                    </div>
+                    <div class="card-body p-3">
+                        ${est.notas.length > 0 ? 
+                            est.notas.map(n => `
+                                <div class="d-flex justify-content-between align-items-center p-3 mb-2 border rounded bg-white">
+                                    <div class="flex-grow-1">
+                                        <strong>${n.actividad}</strong>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="fs-4 fw-bold text-success">${n.nota}</span>
+                                    </div>
+                                </div>
+                            `).join('') :
+                            `<p class="text-muted text-center py-4">Sin calificaciones</p>`
+                        }
+                    </div>
+                </div>
+            </div>`;
+    });
+
+    html += `</div>`;
+    container.innerHTML = html;
 }
-

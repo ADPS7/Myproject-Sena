@@ -86,6 +86,7 @@ CREATE TABLE Notas (
     FOREIGN KEY (id_usuario) REFERENCES Usuarios (id_usuario)
 );
 
+
 CREATE TABLE Profesor(
     id_profesor INT PRIMARY KEY AUTO_INCREMENT,
     id_usuario INT NOT NULL,
@@ -93,6 +94,7 @@ CREATE TABLE Profesor(
     FOREIGN KEY (id_curso) REFERENCES Cursos(id_curso),
     FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario)
 );
+
 
 INSERT INTO Roles (nombre) values ('admin');
 INSERT INTO Roles (nombre) values ('estudiante');
