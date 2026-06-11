@@ -406,6 +406,10 @@ async function registrarAsistenciaIndividual(idModulo, idUsuario, nombreUsuario,
     }
 
     const fecha = fechaInput.value;
+
+    const selectEstudiante = document.querySelector(`.asistencia-status[data-id="${idUsuario}"]`);
+    const asistio = selectEstudiante ? selectEstudiante.value : 'SI';
+
     const moduloSeleccionado = modulosSeleccionados.find(m => m.id_modulo == idModulo);
 
     if (moduloSeleccionado) {
@@ -442,7 +446,10 @@ async function registrarAsistenciaIndividual(idModulo, idUsuario, nombreUsuario,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 id_modulo: idModulo,
-                asistencias: [{ id_usuario: Number(idUsuario), asistio: 'SI' }],
+                asistencias: [{ 
+                    id_usuario: Number(idUsuario), 
+                    asistio: asistio   
+                }],
                 fecha: fecha
             })
         });
@@ -450,7 +457,7 @@ async function registrarAsistenciaIndividual(idModulo, idUsuario, nombreUsuario,
         const res = await response.json();
 
         if (res.success) {
-            mostrarToast('Éxito', `Asistencia registrada para ${nombreUsuario}.`, 'success');
+            mostrarToast('Éxito', `Asistencia registrada para ${nombreUsuario} como ${asistio === 'SI' ? 'Presente' : 'Ausente'}.`, 'success');
             verEstudiantesAsistencia(idModulo, moduloSeleccionado?.nombre || 'Módulo');
         } else {
             mostrarToast('Error', res.error || 'No se pudo registrar la asistencia.', 'danger');
