@@ -268,8 +268,11 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
     final TextEditingController notaController = TextEditingController(
       text: existingNotaValue?.toString() ?? '',
     );
+    final actividadActual = notaActual is Map
+        ? (notaActual['nombre'] ?? notaActual['nombre_actividad'] ?? notaActual['actividad'] ?? '')
+        : '';
     final TextEditingController actividadController = TextEditingController(
-      text: notaActual is Map ? notaActual['nombre']?.toString() ?? '' : '',
+      text: actividadActual.toString(),
     );
     
     final bool esNuevaNota = notaActual == null;
@@ -581,66 +584,93 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
 
                                                   return Container(
                                                     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                                                    padding: const EdgeInsets.all(12),
+                                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                                                     decoration: BoxDecoration(
                                                       color: Colors.white,
                                                       borderRadius: BorderRadius.circular(12),
                                                       border: Border.all(color: borderGrey, width: 0.5),
                                                     ),
-                                                    child: Row(
-                                                      children: [
-                                                        Container(
-                                                          padding: const EdgeInsets.all(8),
-                                                          decoration: BoxDecoration(
-                                                            color: Colors.green.withOpacity(0.08),
-                                                            borderRadius: BorderRadius.circular(8),
-                                                          ),
-                                                          child: const Icon(
-                                                            Icons.person,
-                                                            color: Colors.green,
-                                                            size: 20,
-                                                          ),
+                                                    child: ExpansionTile(
+                                                      tilePadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                      childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                                                      leading: Container(
+                                                        padding: const EdgeInsets.all(8),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.green.withOpacity(0.08),
+                                                          borderRadius: BorderRadius.circular(8),
                                                         ),
-                                                        const SizedBox(width: 12),
-                                                        Expanded(
-                                                          child: Column(
-                                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                                            children: [
-                                                              Text(
-                                                                est['nombre']?.toString() ?? 'Estudiante',
-                                                                style: const TextStyle(fontWeight: FontWeight.bold),
-                                                              ),
-                                                              const SizedBox(height: 4),
-                                                              if (notasEstudiante.isEmpty)
-                                                                const Text(
+                                                        child: const Icon(
+                                                          Icons.person,
+                                                          color: Colors.green,
+                                                          size: 20,
+                                                        ),
+                                                      ),
+                                                      title: Text(
+                                                        est['nombre']?.toString() ?? 'Estudiante',
+                                                        style: const TextStyle(fontWeight: FontWeight.bold),
+                                                      ),
+                                                      subtitle: Text(
+                                                        notasEstudiante.isEmpty
+                                                            ? 'Sin actividades registradas'
+                                                            : '${notasEstudiante.length} actividad(es)',
+                                                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                                                      ),
+                                                      children: notasEstudiante.isEmpty
+                                                          ? [
+                                                              const Padding(
+                                                                padding: EdgeInsets.symmetric(vertical: 8),
+                                                                child: Text(
                                                                   'Sin actividades registradas',
-                                                                  style: TextStyle(color: Colors.grey, fontSize: 12),
-                                                                )
-                                                              else
-                                                                ...notasEstudiante.map((notaItem) {
-                                                                  final nombreActividad = notaItem['nombre_actividad']?.toString() ?? 'Actividad';
-                                                                  final notaValor = notaItem['nota'];
-                                                                  final notaTexto = notaValor is num
-                                                                      ? notaValor.toStringAsFixed(2)
-                                                                      : notaValor?.toString() ?? 'N/A';
+                                                                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                                                                ),
+                                                              ),
+                                                            ]
+                                                          : notasEstudiante.map((notaItem) {
+                                                              final nombreActividad = notaItem['nombre_actividad']?.toString() ?? 'Actividad';
+                                                              final notaValor = notaItem['nota'];
+                                                              final notaTexto = notaValor is num
+                                                                  ? notaValor.toStringAsFixed(2)
+                                                                  : notaValor?.toString() ?? 'N/A';
 
-                                                                  return Padding(
-                                                                    padding: const EdgeInsets.only(top: 2),
-                                                                    child: Text(
-                                                                      '$nombreActividad: $notaTexto',
-                                                                      style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                                                              return Padding(
+                                                                padding: const EdgeInsets.only(top: 4),
+                                                                child: Row(
+                                                                  children: [
+                                                                    Expanded(
+                                                                      child: Text(
+                                                                        nombreActividad,
+                                                                        style: const TextStyle(
+                                                                          fontSize: 13,
+                                                                          fontWeight: FontWeight.w600,
+                                                                          color: Colors.black87,
+                                                                        ),
+                                                                      ),
                                                                     ),
-                                                                  );
-                                                                }).toList(),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                        IconButton(
-                                                          icon: const Icon(Icons.edit, color: Colors.blue),
-                                                          tooltip: 'Ver y editar notas',
-                                                          onPressed: () => _mostrarDialogoNota(est, modulo['id_modulo']),
-                                                        ),
-                                                      ],
+                                                                    const SizedBox(width: 8),
+                                                                    Text(
+                                                                      'Nota: $notaTexto',
+                                                                      style: const TextStyle(
+                                                                        fontSize: 13,
+                                                                        fontWeight: FontWeight.w600,
+                                                                        color: Colors.blue,
+                                                                      ),
+                                                                    ),
+                                                                    IconButton(
+                                                                      icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                                                                      tooltip: 'Editar nota',
+                                                                      padding: EdgeInsets.zero,
+                                                                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                                                      onPressed: () => _mostrarDialogoEditarNota(
+                                                                        est,
+                                                                        modulo['nombre'] ?? 'Módulo',
+                                                                        notaItem,
+                                                                        modulo['id_modulo'],
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              );
+                                                            }).toList(),
                                                     ),
                                                   );
                                                 },
