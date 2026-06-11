@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../services/api_service.dart';
+
 class ForgotPasswordView extends StatefulWidget {
   const ForgotPasswordView({super.key});
 
@@ -20,17 +22,23 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
     }
 
     setState(() => isLoading = true);
-    
-    // Aquí iría tu lógica de Firebase o API para resetear contraseña
-    await Future.delayed(const Duration(seconds: 2)); 
-    
+
+    // Llamada a tu ApiService
+    final result = await ApiService().checkEmailExists(emailController.text.trim());
+
     setState(() => isLoading = false);
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Si el correo existe, hemos enviado instrucciones')),
-      );
-      Navigator.pop(context);
+      if (result['exists'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Se han enviado las instrucciones a tu correo')),
+        );
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['error'] ?? 'Correo no encontrado')),
+        );
+      }
     }
   }
 
@@ -47,7 +55,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
       ),
       body: Stack(
         children: [
-          // Mantenemos la decoración geométrica
+          // Decoración
           Positioned(
             top: -size.height * 0.1,
             right: -size.width * 0.1,
@@ -64,85 +72,66 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
             ),
           ),
           
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 30),
-                child: Column(
-                  children: [
-                    const Icon(Icons.lock_reset_rounded, size: 80, color: Color(0xFF7C4DFF)),
-                    const SizedBox(height: 20),
-                    const Text(
-                      "Recuperar contraseña",
-                      style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      "Ingresa tu correo para recibir instrucciones",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Color(0xFF64748B), fontSize: 15),
-                    ),
-                    const SizedBox(height: 40),
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 30),
+              child: Column(
+                children: [
+                  const Icon(Icons.lock_reset_rounded, size: 80, color: Color(0xFF7C4DFF)),
+                  const SizedBox(height: 20),
+                  const Text("Recuperar contraseña",
+                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text("Ingresa tu correo para verificar tu cuenta",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Color(0xFF64748B), fontSize: 15),
+                  ),
+                  const SizedBox(height: 40),
 
-                    // Tarjeta de Input
-                    Container(
-                      padding: const EdgeInsets.all(28),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 10))],
-                      ),
-                      child: Column(
-                        children: [
-                          _customInput(
-                            controller: emailController,
-                            label: "Correo electrónico",
-                            icon: Icons.alternate_email_rounded,
-                          ),
-                          const SizedBox(height: 30),
-                          _buildActionButton(),
-                        ],
-                      ),
+                  Container(
+                    padding: const EdgeInsets.all(28),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 10))],
                     ),
-                  ],
-                ),
+                    child: Column(
+                      children: [
+                        TextField(
+                          controller: emailController,
+                          decoration: InputDecoration(
+                            labelText: "Correo electrónico",
+                            labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 14),
+                            prefixIcon: const Icon(Icons.alternate_email_rounded, color: Color(0xFF7C4DFF)),
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                          ),
+                        ),
+                        const SizedBox(height: 25),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 58,
+                          child: ElevatedButton(
+                            onPressed: isLoading ? null : _handleResetPassword,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF7C4DFF),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            ),
+                            child: isLoading 
+                              ? const CircularProgressIndicator(color: Colors.white)
+                              : const Text("Verificar correo", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _customInput({required TextEditingController controller, required String label, required IconData icon}) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 14),
-        prefixIcon: Icon(icon, color: const Color(0xFF7C4DFF), size: 22),
-        filled: true,
-        fillColor: const Color(0xFFF8FAFC),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFF7C4DFF), width: 2)),
-      ),
-    );
-  }
-
-  Widget _buildActionButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 58,
-      child: ElevatedButton(
-        onPressed: isLoading ? null : _handleResetPassword,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF7C4DFF),
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        ),
-        child: isLoading 
-          ? const CircularProgressIndicator(color: Colors.white)
-          : const Text("Enviar instrucciones", style: TextStyle(fontWeight: FontWeight.bold)),
       ),
     );
   }

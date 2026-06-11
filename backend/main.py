@@ -6,6 +6,10 @@ from mysql.connector import Error
 import hashlib
 from datetime import datetime
 from collections import defaultdict
+import random
+import string
+from flask_mail import Mail, Message
+
 
 app = Flask(__name__)
 CORS(app)
@@ -13,8 +17,6 @@ app.secret_key = 'edullinas_secret_key_2026_pro_MADAN'
 
 
 #correo
-
-from flask_mail import Mail, Message
 
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
@@ -102,9 +104,7 @@ def create_user():
             </div>
             """
 
-            msg_usuario = Message("¡Bienvenido a Edullinas!",
-                                  sender="marksgutierrez10@gmail.com",
-                                  recipients=[correo]) # Corregido aquí
+            msg_usuario = Message("¡Bienvenido a Edullinas!", sender="marksgutierrez10@gmail.com", recipients=[correo])
             msg_usuario.html = html_bienvenida
             mail.send(msg_usuario)
 
@@ -128,9 +128,7 @@ def create_user():
             </div>
             """
 
-            msg_admin = Message("Nuevo registro - Edullinas",
-                                sender="marksgutierrez10@gmail.com",
-                                recipients=["markusgutierrez10@gmail.com"])
+            msg_admin = Message("Nuevo registro - Edullinas", sender="marksgutierrez10@gmail.com", recipients=["markusgutierrez10@gmail.com"])
             msg_admin.html = html_admin
             mail.send(msg_admin)
         except Exception as e:
@@ -2461,7 +2459,6 @@ def actualizar_nota(id_nota):
 def get_historial_notas_con_actividades(id_modulo):
     try:
         conn = get_db_connection()
-        # Usamos dictionary=True para obtener los resultados como objetos clave-valor
         cursor = conn.cursor(dictionary=True)
 
         query = """
@@ -2492,6 +2489,116 @@ def get_historial_notas_con_actividades(id_modulo):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+
+
+
+#olvidar contraseña
+# --- Funciones de Gestión de Usuarios y Recuperación ---
+
+@app.route('/check-email', methods=['POST'])
+def check_email():
+    data = request.json
+    correo = data.get('correo')
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT id_usuario FROM Usuarios WHERE correo = %s", (correo,))
+    usuario = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    
+    if usuario:
+        return jsonify({"exists": True}), 200
+    else:
+        return jsonify({"exists": False, "error": "Correo no encontrado"}), 404
+
+@app.route('/request-reset', methods=['POST'])
+def request_reset():
+    data = request.json
+    correo = data.get('correo')
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT nombres FROM Usuarios WHERE correo = %s", (correo,))
+    usuario = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    
+    if not usuario:
+        return jsonify({"error": "Correo no registrado"}), 404
+        
+    nombres = usuario['nombres']
+    codigo = ''.join(random.choices(string.digits, k=6))
+    codigos_temporales[correo] = {"codigo": codigo, "intentos": 0}
+    
+    html_template = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px; overflow: hidden;">
+        <div style="background-color: #7C4DFF; padding: 20px; text-align: center; color: white;">
+            <h1 style="margin: 0;">Recuperación de cuenta</h1>
+        </div>
+        <div style="padding: 20px; color: #333;">
+            <p>Hola <strong>{nombres}</strong>,</p>
+            <p>Hemos recibido una solicitud para restablecer tu contraseña en <strong>Edullinas</strong>.</p>
+            <p>Para continuar, utiliza el siguiente código de verificación:</p>
+            <div style="text-align: center; margin: 30px 0; font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #7C4DFF;">
+                {codigo}
+            </div>
+            <p>Este código es válido por un corto periodo de tiempo. Si no solicitaste este cambio, puedes ignorar este mensaje.</p>
+            <p>Atentamente,<br>El equipo de Edullinas</p>
+        </div>
+    </div>
+    """
+    
+    msg = Message("Código de verificación Edullinas",
+                  sender="tu_correo@gmail.com",
+                  recipients=[correo])
+    msg.html = html_template
+    mail.send(msg)
+    
+    return jsonify({"message": "Código enviado con éxito"}), 200
+
+@app.route('/verify-code', methods=['POST'])
+def verify_code():
+    data = request.json
+    correo = data.get('correo')
+    codigo_ingresado = data.get('codigo')
+    
+    info = codigos_temporales.get(correo)
+    if not info: 
+        return jsonify({"error": "Solicita un código primero"}), 400
+    
+    if info["intentos"] >= 5:
+        return jsonify({"error": "Has excedido los intentos. Solicita otro código"}), 403
+        
+    if info["codigo"] == codigo_ingresado:
+        # Opcional: borrar el código tras verificarlo con éxito
+        return jsonify({"success": True}), 200
+    else:
+        info["intentos"] += 1
+        intentos_restantes = 5 - info["intentos"]
+        return jsonify({
+            "error": f"Código incorrecto. Intentos restantes: {intentos_restantes}",
+            "intentos_restantes": intentos_restantes
+        }), 401
+
+@app.route('/update-password', methods=['POST'])
+def update_password():
+    data = request.json
+    correo = data.get('correo')
+    nueva_clave = data.get('clave') # Asegúrate de que venga hasheada o hashéala aquí
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    query = "UPDATE Usuarios SET clave = %s WHERE correo = %s"
+    cursor.execute(query, (nueva_clave, correo))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    # Limpiar el código temporal tras el cambio exitoso
+    codigos_temporales.pop(correo, None)
+    
+    return jsonify({"success": True, "message": "Contraseña actualizada"}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
