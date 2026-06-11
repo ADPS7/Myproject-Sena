@@ -55,6 +55,18 @@ class _ModulosScreenState extends State<ModulosScreen> {
     }
   }
 
+  bool _inicioEsHoyOPosterior() {
+    if (_inicioController.text.isEmpty) return false;
+    try {
+      DateTime inicio = DateTime.parse(_inicioController.text.split(' ')[0]);
+      final hoy = DateTime.now();
+      final fechaHoy = DateTime(hoy.year, hoy.month, hoy.day);
+      return !inicio.isBefore(fechaHoy);
+    } catch (e) {
+      return false;
+    }
+  }
+
   InputDecoration _inputStyle(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
@@ -145,6 +157,10 @@ class _ModulosScreenState extends State<ModulosScreen> {
                 }
                 if (!_validarFechas()) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error en las fechas"), backgroundColor: Colors.redAccent));
+                  return;
+                }
+                if (moduloEditar == null && !_inicioEsHoyOPosterior()) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("La fecha de inicio debe ser hoy o posterior"), backgroundColor: Colors.redAccent));
                   return;
                 }
                 try {
