@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'aut_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.128.48:5000';
+  static const String baseUrl = 'http://10.2.128.147:5000';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,
@@ -101,6 +101,7 @@ class ApiService {
   Future<Map<String, dynamic>> guardarAsistencia({
     required int idModulo,
     required List<int> idsEstudiantes,
+    List<Map<String, dynamic>> asistencias = const [],
   }) async {
     try {
       final response = await http.post(
@@ -110,6 +111,7 @@ class ApiService {
           'id_modulo': idModulo,
           'estudiantes': idsEstudiantes,
           'fecha': DateTime.now().toIso8601String().split('T')[0],
+          'asistencias': asistencias,
         }),
       );
 

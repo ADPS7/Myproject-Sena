@@ -411,22 +411,32 @@ class _AsistsTeacherState extends State<AsistsTeacher> {
                                                   width: double.infinity,
                                                   child: ElevatedButton.icon(
                                                     onPressed: () async {
-                                                      final presentes =
+                                                      final List<
+                                                        Map<String, dynamic>
+                                                      >
+                                                      asistenciasList =
                                                           asistencia.entries
-                                                              .where(
-                                                                (e) => e.value,
-                                                              )
-                                                              .map((e) => e.key)
+                                                              .map((entry) {
+                                                                return {
+                                                                  'id_usuario':
+                                                                      entry.key,
+                                                                  'asistio':
+                                                                      entry
+                                                                          .value
+                                                                      ? 'SI'
+                                                                      : 'NO',
+                                                                };
+                                                              })
                                                               .toList();
 
-                                                      final result =
-                                                          await _apiService
-                                                              .guardarAsistencia(
-                                                                idModulo:
-                                                                    modulo['id_modulo'],
-                                                                idsEstudiantes:
-                                                                    presentes,
-                                                              );
+                                                      final result = await _apiService
+                                                          .guardarAsistencia(
+                                                            idModulo:
+                                                                modulo['id_modulo'],
+                                                            idsEstudiantes: [],
+                                                            asistencias:
+                                                                asistenciasList,
+                                                          );
 
                                                       if (result['success'] ==
                                                           true) {
