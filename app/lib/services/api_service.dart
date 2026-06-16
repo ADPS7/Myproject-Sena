@@ -101,6 +101,7 @@ class ApiService {
   Future<Map<String, dynamic>> guardarAsistencia({
     required int idModulo,
     required List<int> idsEstudiantes,
+    List<Map<String, dynamic>> asistencias = const [],
   }) async {
     try {
       final response = await http.post(
@@ -110,6 +111,7 @@ class ApiService {
           'id_modulo': idModulo,
           'estudiantes': idsEstudiantes,
           'fecha': DateTime.now().toIso8601String().split('T')[0],
+          'asistencias': asistencias,
         }),
       );
 
@@ -780,7 +782,7 @@ class ApiService {
     }
   }
 
-    // NUEVO: Guardar nota con nombre de actividad
+  // NUEVO: Guardar nota con nombre de actividad
   Future<Map<String, dynamic>> guardarNotaConActividad({
     required int idUsuario,
     required int idModulo,
@@ -797,10 +799,7 @@ class ApiService {
           ? await http.put(
               uri,
               headers: {'Content-Type': 'application/json'},
-              body: json.encode({
-                'nota': nota,
-                'nombre': nombreActividad,
-              }),
+              body: json.encode({'nota': nota, 'nombre': nombreActividad}),
             )
           : await http.post(
               uri,

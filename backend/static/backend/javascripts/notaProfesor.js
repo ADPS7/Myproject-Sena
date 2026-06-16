@@ -45,15 +45,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // ==================== GUARDAR NOTA INDIVIDUAL ====================
-    if (tablaEstudiantes && !tablaEstudiantes.dataset.delegateAttached) {
-        tablaEstudiantes.dataset.delegateAttached = '1';
-        tablaEstudiantes.addEventListener('click', async (ev) => {
+    // ==================== GUARDAR NOTA INDIVIDUAL (delegado en body para soportar tabla o cards) ====================
+    if (!document.body.dataset.profNotasDelegateAttached) {
+        document.body.dataset.profNotasDelegateAttached = '1';
+        document.body.addEventListener('click', async (ev) => {
             const btn = ev.target.closest('.guardar-btn');
             if (!btn) return;
 
             const id = btn.dataset.id;
-            const input = tablaEstudiantes.querySelector(`.nota-input[data-id="${id}"]`);
+            const input = document.querySelector(`.nota-input[data-id="${id}"]`);
             if (!input) return;
 
             const nombreActividad = document.getElementById('nombreActividad') ? 
@@ -98,14 +98,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Validación en tiempo real
-    if (tablaEstudiantes && !tablaEstudiantes.dataset.inputAttached) {
-        tablaEstudiantes.dataset.inputAttached = '1';
-        tablaEstudiantes.addEventListener('input', (ev) => {
+    // Validación en tiempo real (delegada)
+    if (!document.body.dataset.profNotasInputAttached) {
+        document.body.dataset.profNotasInputAttached = '1';
+        document.body.addEventListener('input', (ev) => {
             const input = ev.target.closest('.nota-input');
             if (!input) return;
             const raw = (input.value || '').toString().trim();
-            const btn = tablaEstudiantes.querySelector(`.guardar-btn[data-id="${input.dataset.id}"]`);
+            const btn = document.querySelector(`.guardar-btn[data-id="${input.dataset.id}"]`);
             if (raw === '') {
                 input.classList.remove('is-invalid', 'is-valid');
                 if (btn) btn.disabled = false;
@@ -132,7 +132,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ==================== MOSTRAR ESTUDIANTES + APLICAR NOTAS EN LOTE ====================
     moduloSelect.addEventListener("change", () => {
-        tablaEstudiantes.innerHTML = "";
+        if (tablaEstudiantes) tablaEstudiantes.innerHTML = "";
+        const listaContainer = document.getElementById('listaEstudiantesNotas');
+        if (listaContainer) listaContainer.innerHTML = "";
         const moduloId = moduloSelect.value;
         selectedModuleName.textContent = moduloSelect.options[moduloSelect.selectedIndex].text || '—';
 
@@ -142,26 +144,28 @@ document.addEventListener("DOMContentLoaded", () => {
             fetch(`/notas/modulo/${moduloId}`)
                 .then(res => res.json())
                 .then(estudiantes => {
-                    const seen = new Set();
-                    estudiantes.forEach(e => {
-                        const studentId = e.id_usuario || e.id || e.user_id;
-                        const sid = String(studentId);
-                        if (seen.has(sid)) return;
-                        seen.add(sid);
+                        const seen = new Set();
+                        if (tablaEstudiantes) tablaEstudiantes.innerHTML = '';
+                        estudiantes.forEach(e => {
+                            const studentId = e.id_usuario || e.id || e.user_id;
+                            const sid = String(studentId);
+                            if (seen.has(sid)) return;
+                            seen.add(sid);
 
-                        const studentName = e.nombre || `${e.nombres || ''} ${e.apellidos || ''}`.trim();
-                        const studentEmail = e.correo || e.email || '';
-                        const notaVal = (e.nota !== undefined && e.nota !== null) ? e.nota : '';
+                            const studentName = e.nombre || `${e.nombres || ''} ${e.apellidos || ''}`.trim();
+                            const studentEmail = e.correo || e.email || '';
+                            const notaVal = (e.nota !== undefined && e.nota !== null) ? e.nota : '';
 
-                        const fila = document.createElement("tr");
-                        fila.innerHTML = `
-                            <td>${studentName}</td>
-                            <td>${studentEmail}</td>
-                            <td><input type="number" class="form-control nota-input" min="0" max="5" step="0.1" data-id="${studentId}" value="${notaVal}"></td>
-                            <td class="text-nowrap"><button class="btn btn-success btn-sm guardar-btn" data-id="${studentId}">Guardar</button></td>
-                        `;
-                        tablaEstudiantes.appendChild(fila);
-                    });
+                            // Crear fila en la tabla de estudiantes
+                            const fila = document.createElement("tr");
+                            fila.innerHTML = `
+                                <td>${studentName}</td>
+                                <td>${studentEmail}</td>
+                                <td><input type="number" class="form-control nota-input" min="0" max="5" step="0.1" data-id="${studentId}" value="${notaVal}"></td>
+                                <td class="text-nowrap"><button class="btn btn-success btn-sm guardar-btn" data-id="${studentId}">Guardar</button></td>
+                            `;
+                            if (tablaEstudiantes) tablaEstudiantes.appendChild(fila);
+                        });
 
                     const hasStudents = estudiantes && estudiantes.length > 0;
                     if (applyAllNotaBtn) applyAllNotaBtn.disabled = !hasStudents;
@@ -324,18 +328,34 @@ async function verHistorialNotasModulo(idModulo, nombreModulo) {
 }
 
 function filtrarEstudiantesPorNombre(query) {
-    const tbody = document.getElementById('tablaEstudiantes');
-    if (!tbody) return;
     const texto = (query || '').toLowerCase().trim();
     let visibleCount = 0;
 
-    tbody.querySelectorAll('tr').forEach(row => {
-        const nombre = (row.querySelector('td:nth-child(1)')?.textContent || '').toLowerCase();
-        const correo = (row.querySelector('td:nth-child(2)')?.textContent || '').toLowerCase();
-        const matches = !texto || nombre.includes(texto) || correo.includes(texto);
-        row.style.display = matches ? '' : 'none';
-        if (matches) visibleCount += 1;
-    });
+    // Filtrar filas de tabla (fallback)
+    const tbody = document.getElementById('tablaEstudiantes');
+    if (tbody) {
+        tbody.querySelectorAll('tr').forEach(row => {
+            const nombre = (row.querySelector('td:nth-child(1)')?.textContent || '').toLowerCase();
+            const correo = (row.querySelector('td:nth-child(2)')?.textContent || '').toLowerCase();
+            const matches = !texto || nombre.includes(texto) || correo.includes(texto);
+            row.style.display = matches ? '' : 'none';
+            if (matches) visibleCount += 1;
+        });
+    }
+
+    // Filtrar cards en lista de estudiantes
+    const lista = document.getElementById('listaEstudiantesNotas');
+    if (lista) {
+        Array.from(lista.children).forEach(col => {
+            const nombre = (col.querySelector('h5')?.textContent || '').toLowerCase();
+            const correo = (col.querySelector('.text-muted')?.textContent || '').toLowerCase();
+            const matches = !texto || nombre.includes(texto) || correo.includes(texto);
+            col.style.display = matches ? '' : 'none';
+            if (matches) visibleCount += 1;
+        });
+    }
+
+    return visibleCount;
 }
 
 
@@ -380,33 +400,49 @@ function renderizarHistorialNotas(list) {
         const promedio = total > 0 
             ? (est.notas.reduce((sum, n) => sum + parseFloat(n.nota), 0) / total).toFixed(1) 
             : '—';
+        const notasHTML = total > 0
+            ? est.notas.map((n, index) => `
+                <li class="list-group-item d-flex justify-content-between align-items-center py-3 px-0 border-0 border-bottom">
+                    <div>
+                        <strong class="actividad-nombre">${n.actividad}</strong>
+                        ${n.fecha ? `<div class="small text-muted mt-1">${n.fecha}</div>` : ''}
+                    </div>
+                    <span class="badge bg-${parseFloat(n.nota) >= 3 ? 'success' : 'danger'} bg-opacity-10 text-${parseFloat(n.nota) >= 3 ? 'success' : 'danger'} rounded-pill py-2 px-3">
+                        ${n.nota}
+                    </span>
+                </li>
+            `).join('')
+            : `
+                <div class="alert alert-warning py-3 mb-0 small text-center">
+                    Sin calificaciones
+                </div>
+            `;
+        const mostrarScroll = total > 5;
 
         html += `
-            <div class="col-12 col-lg-6">
-                <div class="card h-100 shadow-sm border-0">
-                    <div class="card-header bg-light py-3">
-                        <div class="d-flex justify-content-between align-items-center">
+            <div class="col-12 col-md-6 col-xl-4 mb-4">
+                <div class="card border-0 shadow-sm notas-card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
                             <div>
-                                <h6 class="mb-0 fw-bold">${est.nombre}</h6>
-                                <small class="text-muted">${est.correo}</small>
+                                <small class="text-uppercase text-primary fw-bold">Estudiante</small>
+                                <h5 class="fw-bold mt-2 mb-1">${est.nombre}</h5>
+                                <p class="text-muted mb-0">${est.correo}</p>
                             </div>
-                            <span class="badge bg-primary fs-5 px-3">${promedio}</span>
+                            <div class="text-end">
+                                <span class="badge ${promedio !== '—' ? 'bg-success text-white' : 'bg-secondary text-white'} rounded-pill py-2 px-3">
+                                    ${promedio !== '—' ? promedio + ' / 5.0' : 'Sin nota'}
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="card-body p-3">
-                        ${est.notas.length > 0 ? 
-                            est.notas.map(n => `
-                                <div class="d-flex justify-content-between align-items-center p-3 mb-2 border rounded bg-white">
-                                    <div class="flex-grow-1">
-                                        <strong>${n.actividad}</strong>
-                                    </div>
-                                    <div class="text-end">
-                                        <span class="fs-4 fw-bold text-success">${n.nota}</span>
-                                    </div>
-                                </div>
-                            `).join('') :
-                            `<p class="text-muted text-center py-4">Sin calificaciones</p>`
-                        }
+                        ${total > 0 ? `
+                            <div class="notas-scroll ${mostrarScroll ? 'has-scroll' : ''}" style="max-height: 18rem; overflow-y: auto;">
+                                <ul class="list-group list-group-flush mb-0 notas-list">
+                                    ${notasHTML}
+                                </ul>
+                            </div>
+                            ${mostrarScroll ? '<p class="text-muted small mt-2 mb-0">Desplázate para ver más notas.</p>' : ''}
+                        ` : notasHTML}
                     </div>
                 </div>
             </div>`;

@@ -617,11 +617,34 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
                                                       ),
                                                       children: notasEstudiante.isEmpty
                                                           ? [
-                                                              const Padding(
-                                                                padding: EdgeInsets.symmetric(vertical: 8),
-                                                                child: Text(
-                                                                  'Sin actividades registradas',
-                                                                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                                                              Padding(
+                                                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                                                child: Column(
+                                                                  children: [
+                                                                    const Text(
+                                                                      'Sin actividades registradas',
+                                                                      style: TextStyle(
+                                                                        color: Colors.grey,
+                                                                        fontSize: 13,
+                                                                      ),
+                                                                    ),
+                                                                    const SizedBox(height: 10),
+                                                                    IconButton(
+                                                                      icon: const Icon(
+                                                                        Icons.add_circle,
+                                                                        color: Colors.green,
+                                                                        size: 30,
+                                                                      ),
+                                                                      onPressed: () {
+                                                                        _mostrarDialogoEditarNota(
+                                                                          est,
+                                                                          modulo['nombre'] ?? 'Módulo',
+                                                                          null,
+                                                                          modulo['id_modulo'],
+                                                                        );
+                                                                      },
+                                                                    ),
+                                                                  ],
                                                                 ),
                                                               ),
                                                             ]

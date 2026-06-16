@@ -2,11 +2,11 @@ import 'package:app/services/aut_service.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../../services/api_service.dart';
 
 class AttendanceScreen extends StatelessWidget {
   const AttendanceScreen({super.key});
 
-  // Paleta de colores del patrón
   final Color primaryPurple = const Color(0xFF7C4DFF);
   final Color darkBlue = const Color(0xFF1A202C);
   final Color bgGrey = const Color(0xFFF8FAFC);
@@ -17,12 +17,13 @@ class AttendanceScreen extends StatelessWidget {
     if (userId == null) throw Exception('Usuario no encontrado');
 
     final response = await http.get(
-      Uri.parse('http://10.2.130.34:5000/asistencias/$userId'),
+      Uri.parse('${ApiService.baseUrl}/asistencias/$userId'),
       headers: {'Content-Type': 'application/json'},
     );
 
-    if (response.statusCode != 200)
+    if (response.statusCode != 200) {
       throw Exception('Error al cargar asistencias');
+    }
 
     final data = json.decode(response.body);
     final List<dynamic> asistencias = data['asistencias'] ?? [];
@@ -43,11 +44,31 @@ class AttendanceScreen extends StatelessWidget {
       modulos[modulo]!.add(item);
     }
 
+    // Ordenar por fecha descendente
     modulos.forEach((_, lista) {
-      lista.sort((a, b) => b['fecha'].compareTo(a['fecha']));
+      lista.sort(
+        (a, b) => b['fecha'].toString().compareTo(a['fecha'].toString()),
+      );
     });
 
     return {'curso': cursoNombre, 'modulos': modulos};
+  }
+
+  String _formatearFecha(String fechaStr) {
+    if (fechaStr.isEmpty || fechaStr == null) return 'Sin fecha';
+
+    try {
+      // Tomamos solo la parte de la fecha (YYYY-MM-DD)
+      String fechaLimpia = fechaStr.split(' ')[0];
+
+      final List<String> partes = fechaLimpia.split('-');
+      if (partes.length == 3) {
+        return "${partes[2]}/${partes[1]}/${partes[0]}"; // Día/Mes/Año
+      }
+      return fechaLimpia;
+    } catch (e) {
+      return fechaStr;
+    }
   }
 
   String _limpiarModulo(String nombre) {
@@ -88,7 +109,6 @@ class AttendanceScreen extends StatelessWidget {
             return CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
-                // Header siguiendo el patrón
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -144,7 +164,6 @@ class AttendanceScreen extends StatelessWidget {
                   ),
                 ),
 
-                // Lista de Módulos
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   sliver: modulos.isEmpty
@@ -164,12 +183,12 @@ class AttendanceScreen extends StatelessWidget {
                             );
                             final List<dynamic> registros = modulos[moduloKey]!;
 
-                            // Calcular porcentaje de asistencia simple
                             int presentes = registros
                                 .where((r) => r['asistio'] == 'SI')
                                 .length;
-                            double porcentaje =
-                                (presentes / registros.length) * 100;
+                            double porcentaje = registros.isNotEmpty
+                                ? (presentes / registros.length) * 100
+                                : 0;
 
                             return Container(
                               margin: const EdgeInsets.only(bottom: 16),
@@ -211,7 +230,7 @@ class AttendanceScreen extends StatelessWidget {
                                     ),
                                   ),
                                   subtitle: Text(
-                                    "${registros.length} días registrados • ${porcentaje.toStringAsFixed(0)}%",
+                                    "${registros.length} días • ${porcentaje.toStringAsFixed(0)}%",
                                     style: TextStyle(
                                       color: Colors.grey[500],
                                       fontSize: 13,
@@ -233,7 +252,7 @@ class AttendanceScreen extends StatelessWidget {
                                               horizontal: 30,
                                             ),
                                         title: Text(
-                                          item['fecha'],
+                                          _formatearFecha(item['fecha']),
                                           style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w500,

@@ -238,7 +238,7 @@ def get_asistencias(id_usuario):
        
         query = """
             SELECT 
-                DATE(a.fecha) AS fecha,
+                DATE_FORMAT(a.fecha, '%Y-%m-%d') AS fecha,
                 a.asistio,
                 m.nombre as modulo_nombre,
                 c.nombre as curso_nombre,
@@ -1206,6 +1206,45 @@ def get_estudiantes_sin_curso():
         return jsonify(estudiantes), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/coordinator/stats', methods=['GET'])
+def coordinator_stats():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Usuarios (estudiantes) a cargo
+        cursor.execute("SELECT COUNT(*) FROM Usuarios WHERE id_rol = 2")
+        users = cursor.fetchone()[0] or 0
+
+        # Cursos activos
+        cursor.execute("SELECT COUNT(*) FROM Cursos")
+        courses = cursor.fetchone()[0] or 0
+
+        # Módulos/Resultados
+        cursor.execute("SELECT COUNT(*) FROM Modulos")
+        modules = cursor.fetchone()[0] or 0
+
+        # Asistencia global: porcentaje de registros con 'SI'
+        cursor.execute("SELECT SUM(CASE WHEN asistio = 'SI' THEN 1 ELSE 0 END) as yes, COUNT(*) as total FROM Asistencia")
+        row = cursor.fetchone()
+        yes = row[0] or 0
+        total = row[1] or 0
+        attendance_pct = round((yes / total) * 100, 0) if total > 0 else 0
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            "users": int(users),
+            "courses": int(courses),
+            "modules": int(modules),
+            "attendance": int(attendance_pct)
+        }), 200
+    except Exception as e:
+        print(f"Error en coordinator_stats: {e}")
+        return jsonify({"error": "Error interno del servidor"}), 500
 
 @app.route('/cursos/<int:id_curso>/estudiantes', methods=['GET'])
 def get_estudiantes_por_curso(id_curso):
