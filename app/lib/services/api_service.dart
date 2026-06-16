@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'aut_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.2.130.46:5000';
+  static const String baseUrl = 'http://10.2.130.34:5000';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,
@@ -843,16 +843,51 @@ class ApiService {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'correo': email}),
       );
-
-      final decodedData = json.decode(response.body);
-
-      if (response.statusCode == 200) {
-        return {"exists": true};
-      } else {
-        return {"exists": false, "error": decodedData['error']};
-      }
+      return json.decode(response.body);
     } catch (e) {
-      return {"exists": false, "error": "Error de conexión con el servidor"};
+      return {"exists": false, "error": "Error de conexión"};
+    }
+  }
+
+  // 2. Solicita el envío del código de 6 dígitos al correo
+  Future<Map<String, dynamic>> requestReset(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/request-reset'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'correo': email}),
+      );
+      return json.decode(response.body);
+    } catch (e) {
+      return {"error": "No se pudo solicitar el código"};
+    }
+  }
+
+  // 3. Verifica si el código ingresado por el usuario es correcto
+  Future<Map<String, dynamic>> verifyCode(String email, String codigo) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/verify-code'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'correo': email, 'codigo': codigo}),
+      );
+      return json.decode(response.body);
+    } catch (e) {
+      return {"error": "Error al verificar código"};
+    }
+  }
+
+  // 4. Actualiza la contraseña en la base de datos
+  Future<Map<String, dynamic>> updatePassword(String email, String nuevaClave) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/update-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'correo': email, 'clave': nuevaClave}),
+      );
+      return json.decode(response.body);
+    } catch (e) {
+      return {"success": false, "error": "Error al actualizar la contraseña"};
     }
   }
 }
