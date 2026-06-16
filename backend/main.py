@@ -240,7 +240,7 @@ def get_asistencias(id_usuario):
        
         query = """
             SELECT 
-                DATE(a.fecha) AS fecha,
+                DATE_FORMAT(a.fecha, '%Y-%m-%d') AS fecha,
                 a.asistio,
                 m.nombre as modulo_nombre,
                 c.nombre as curso_nombre,
