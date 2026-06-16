@@ -269,7 +269,7 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
       text: existingNotaValue?.toString() ?? '',
     );
     final actividadActual = notaActual is Map
-        ? (notaActual['nombre'] ?? notaActual['nombre_actividad'] ?? notaActual['actividad'] ?? '')
+        ? (notaActual['nombre_actividad'] ?? notaActual['nombre'] ?? notaActual['actividad'] ?? '')
         : '';
     final TextEditingController actividadController = TextEditingController(
       text: actividadActual.toString(),
@@ -559,6 +559,7 @@ class _NotasProfesorViewState extends State<NotasProfesorView> {
                                                   estudiantesAgrupados[idUsuario]!['notas'].add({
                                                     "id_nota": item['id_nota'],
                                                     "nota": item['nota'],
+                                                    // Leer el nombre de la actividad desde la BD
                                                     "nombre_actividad": item['nombre_actividad'] ?? 'Actividad',
                                                   });
                                                 }
