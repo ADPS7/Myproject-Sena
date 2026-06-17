@@ -817,7 +817,8 @@ def get_notas_modulo(id_modulo):
                 CONCAT(u.nombres, ' ', u.apellidos) AS nombre,
                 u.correo,
                 n.id_nota,
-                n.nota
+                n.nota,
+                COALESCE(n.nombre, 'Sin nombre') AS nombre_actividad
             FROM Usuarios u
             JOIN Alumnos a ON u.id_usuario = a.id_usuario
             JOIN Modulos m ON a.id_curso = m.id_curso
