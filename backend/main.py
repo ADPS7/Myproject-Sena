@@ -1542,7 +1542,7 @@ def actualizar_usuario(id_usuario):
         db = get_db_connection()
         cursor = db.cursor()
 
-        # 1. Actualizar tabla Usuarios
+        # 1. Actualizar ÚNICAMENTE la tabla Usuarios
         query_usuario = """
             UPDATE Usuarios
             SET nombres = %s,
@@ -1552,6 +1552,7 @@ def actualizar_usuario(id_usuario):
                 id_rol = %s
             WHERE id_usuario = %s
         """
+        
         cursor.execute(query_usuario, (
             datos.get('nombres'),
             datos.get('apellidos'),
@@ -1560,77 +1561,13 @@ def actualizar_usuario(id_usuario):
             datos.get('id_rol'),
             id_usuario
         ))
-
-        # 2. INSERT o UPDATE en DatosUsuarios
-        cursor.execute(
-            "SELECT id_datos_usuario FROM DatosUsuarios WHERE id_usuario = %s",
-            (id_usuario,)
-        )
-        registro_existente = cursor.fetchone()
-
-        if registro_existente:
-            query_datos = """
-                UPDATE DatosUsuarios
-                SET direccion = %s,
-                    departamento = %s,
-                    municipio = %s,
-                    telefono = %s,
-                    telefono_emergencia = %s,
-                    tipo_documento = %s,
-                    numero_documento = %s,
-                    Estrato = %s,
-                    Sexo = %s,
-                    eps = %s
-                WHERE id_usuario = %s
-            """
-            valores_datos = (
-                datos.get('direccion'),
-                datos.get('departamento'),
-                datos.get('municipio'),
-                datos.get('telefono'),
-                datos.get('telefono_emergencia'),
-                datos.get('tipo_documento'),
-                datos.get('numero_documento'),
-                datos.get('estrato'),
-                datos.get('sexo'),
-                datos.get('eps'),
-                id_usuario
-            )
-        else:
-            query_datos = """
-                INSERT INTO DatosUsuarios
-                    (direccion, departamento, municipio, telefono, telefono_emergencia,
-                     tipo_documento, numero_documento, Estrato, Sexo, eps,
-                     estado, id_usuario)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Pendiente', %s)
-            """
-            valores_datos = (
-                datos.get('direccion'),
-                datos.get('departamento'),
-                datos.get('municipio'),
-                datos.get('telefono'),
-                datos.get('telefono_emergencia'),
-                datos.get('tipo_documento'),
-                datos.get('numero_documento'),
-                datos.get('estrato'),
-                datos.get('sexo'),
-                datos.get('eps'),
-                id_usuario
-            )
-
-        cursor.execute(query_datos, valores_datos)
+        
         db.commit()
-
-        return jsonify({"status": "success"})
+        return jsonify({"status": "success", "message": "Usuario actualizado correctamente"})
 
     except Exception as e:
         if db:
             db.rollback()
-        if "1062" in str(e):
-            return jsonify({
-                "status": "error",
-                "message": "El número de documento ya está registrado por otro usuario."
-            }), 409
         return jsonify({"status": "error", "message": str(e)}), 500
 
     finally:
