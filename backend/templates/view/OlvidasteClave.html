@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión - Edullinas</title>
+    <title>Recuperar Contraseña - Edullinas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -17,10 +17,10 @@
         </div>
 
         <div class="login-card">
-            <h2>Bienvenido</h2>
-            <p class="subtitle">Ingresa tus credenciales para continuar</p>
+            <h2>¿Olvidaste tu contraseña?</h2>
+            <p class="subtitle">Introduce tu correo electrónico y te enviaremos las instrucciones para restablecerla.</p>
 
-            <form id="loginForm">
+            <form id="recoverForm">
                 <div class="input-group-custom">
                     <label>Correo Electrónico</label>
                     <div class="input-field">
@@ -29,29 +29,18 @@
                     </div>
                 </div>
 
-                <div class="input-group-custom">
-                    <label>Contraseña</label>
-                    <div class="input-field">
-                        <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" required>
-                        <i class="bi bi-lock"></i>
-                    </div>
-                    <div class="text-end mt-1">
-                        <a href="{{ url_for('render_static_page', page_name='OlvidasteClave') }}" class="text-decoration-none" style="font-size: 0.85rem; color: var(--accent-blue);">¿Olvidaste tu contraseña?</a>
-                    </div>
-                </div>
-
                 <button type="submit" id="submitBtn" class="btn-submit">
-                    Iniciar Sesión
+                    Enviar Instrucciones
                 </button>
             </form>
 
             <div class="footer-link">
-                ¿No tienes una cuenta? <a href="/registrarse">Regístrate aquí</a>
+                ¿Recordaste tu contraseña? <a href="{{ url_for('render_static_page', page_name='login') }}">Inicia sesión aquí</a>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='backend/javascripts/login.js') }}"></script>
+    <script src="{{ url_for('static', filename='backend/javascripts/olvidasteClave.js') }}"></script>
 </body>
 </html>
