@@ -904,7 +904,8 @@ def obtener_notas_estudiante(id_usuario):
                 m.id_modulo,
                 m.nombre AS modulo_nombre,
                 n.id_nota,
-                n.nota
+                n.nota,
+                n.nombre AS nombre_actividad
             FROM alumnos a
             JOIN cursos c ON a.id_curso = c.id_curso
             LEFT JOIN modulos m ON m.id_curso = c.id_curso
@@ -932,6 +933,7 @@ def obtener_notas_estudiante(id_usuario):
             modulo_nombre = row['modulo_nombre']
             nota_id = row['id_nota']
             nota = row['nota']
+            nota_nombre = row.get('nombre_actividad') if row.get('nombre_actividad') else None
 
             if modulo_id is None:
                 continue
@@ -942,7 +944,8 @@ def obtener_notas_estudiante(id_usuario):
             if nota is not None:
                 modulos_dict[modulo_id]['notas'].append({
                     'id_nota': nota_id,
-                    'nota': float(nota)
+                    'nota': float(nota),
+                    'nombre_actividad': nota_nombre
                 })
 
         resultado_modulos = [
