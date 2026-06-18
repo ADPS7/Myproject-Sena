@@ -575,44 +575,60 @@ function generarFilasExportacion(lista) {
 }
 
 function exportHistorialToPdf(rows) {
-    const jsPDFConstructor = window.jspdf?.jsPDF || window.jsPDF;
-    if (!jsPDFConstructor || !window.jspdf?.jsPDF) {
+    const { jsPDF } = window.jspdf || {};
+    
+    if (!jsPDF) {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'No se pudo generar el PDF. Falta la librería jsPDF.'
+            text: 'No se pudo cargar jsPDF. Intenta recargar la página.'
         });
         return;
     }
 
-    const doc = new jsPDFConstructor({ orientation: 'landscape' });
-    doc.setFontSize(14);
-    doc.text('Historial de notas', 14, 15);
+    try {
+        const doc = new jsPDF({ orientation: 'landscape' });
+        
+        doc.setFontSize(16);
+        doc.text('Historial de Notas del Módulo', 14, 20);
+        
+        doc.setFontSize(11);
+        doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 30);
 
-    const body = rows.map(r => [r.nombre, r.correo, r.promedioText, r.estado]);
-    const headers = [['Nombre', 'Correo', 'Promedio', 'Estado']];
+        const tableColumn = ['Nombre', 'Correo', 'Promedio', 'Estado'];
+        const tableRows = rows.map(r => [
+            r.nombre,
+            r.correo,
+            r.promedioText,
+            r.estado
+        ]);
 
-    if (typeof doc.autoTable !== 'function') {
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 40,
+            styles: { fontSize: 10 },
+            headStyles: { 
+                fillColor: [0, 123, 255],
+                textColor: 255,
+                fontStyle: 'bold'
+            },
+            alternateRowStyles: { fillColor: [245, 245, 245] },
+            margin: { top: 40, left: 14, right: 14 },
+            theme: 'grid'
+        });
+
+        const nombreArchivo = `historial-notas-${new Date().toISOString().slice(0, 10)}.pdf`;
+        doc.save(nombreArchivo);
+
+    } catch (error) {
+        console.error(error);
         Swal.fire({
             icon: 'error',
-            title: 'Error',
-            text: 'La función autoTable no está disponible para generar el PDF.'
+            title: 'Error al generar PDF',
+            text: 'Ocurrió un problema al crear el archivo PDF.'
         });
-        return;
     }
-
-    doc.autoTable({
-        head: headers,
-        body,
-        startY: 22,
-        styles: { fontSize: 9 },
-        headStyles: { fillColor: [33, 37, 41], textColor: 255 },
-        theme: 'striped',
-        margin: { left: 14, right: 14 }
-    });
-
-    const nombreArchivo = `historial-notas-${new Date().toISOString().slice(0, 10)}.pdf`;
-    doc.save(nombreArchivo);
 }
 
 function exportHistorialToExcel(rows) {
