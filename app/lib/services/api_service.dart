@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'aut_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.1.59:5000';
+  static const String baseUrl = 'http://10.2.133.39:5000';
   Future<Map<String, dynamic>> login({
     required String correo,
     required String clave,
@@ -877,7 +877,10 @@ class ApiService {
   }
 
   // 4. Actualiza la contraseña en la base de datos
-  Future<Map<String, dynamic>> updatePassword(String email, String nuevaClave) async {
+  Future<Map<String, dynamic>> updatePassword(
+    String email,
+    String nuevaClave,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/update-password'),
