@@ -8,6 +8,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const viewAllNotasBtn = document.getElementById("viewAllNotasBtn");
     const searchStudentInput = document.getElementById("searchStudentInput");
     const applyAllNotaBtn = document.getElementById("applyAllNotaBtn");
+    const historialEstadoFilter = document.getElementById("historialEstadoFilter");
+    const exportPdfBtn = document.getElementById("exportPdfBtn");
+    const exportExcelBtn = document.getElementById("exportExcelBtn");
+    let historialNotasCache = [];
 
     // 🔹 Cargar cursos del profesor
     fetch(`/cursos/profesor/${window.USER_ID}`)
@@ -127,6 +131,23 @@ document.addEventListener("DOMContentLoaded", () => {
     if (searchStudentInput) {
         searchStudentInput.addEventListener('input', () => {
             filtrarEstudiantesPorNombre(searchStudentInput.value);
+        });
+    }
+
+    if (historialEstadoFilter) {
+        historialEstadoFilter.addEventListener('change', () => {
+            filtrarHistorialNotasPorEstado();
+        });
+    }
+
+    if (exportPdfBtn) {
+        exportPdfBtn.addEventListener('click', () => {
+            exportHistorialNotas('pdf');
+        });
+    }
+    if (exportExcelBtn) {
+        exportExcelBtn.addEventListener('click', () => {
+            exportHistorialNotas('excel');
         });
     }
 
@@ -337,9 +358,9 @@ function filtrarEstudiantesPorNombre(query) {
         tbody.querySelectorAll('tr').forEach(row => {
             const nombre = (row.querySelector('td:nth-child(1)')?.textContent || '').toLowerCase();
             const correo = (row.querySelector('td:nth-child(2)')?.textContent || '').toLowerCase();
-            const matches = !texto || nombre.includes(texto) || correo.includes(texto);
-            row.style.display = matches ? '' : 'none';
-            if (matches) visibleCount += 1;
+            const matchesSearch = !texto || nombre.includes(texto) || correo.includes(texto);
+            row.style.display = matchesSearch ? '' : 'none';
+            if (matchesSearch) visibleCount += 1;
         });
     }
 
@@ -349,9 +370,9 @@ function filtrarEstudiantesPorNombre(query) {
         Array.from(lista.children).forEach(col => {
             const nombre = (col.querySelector('h5')?.textContent || '').toLowerCase();
             const correo = (col.querySelector('.text-muted')?.textContent || '').toLowerCase();
-            const matches = !texto || nombre.includes(texto) || correo.includes(texto);
-            col.style.display = matches ? '' : 'none';
-            if (matches) visibleCount += 1;
+            const matchesSearch = !texto || nombre.includes(texto) || correo.includes(texto);
+            col.style.display = matchesSearch ? '' : 'none';
+            if (matchesSearch) visibleCount += 1;
         });
     }
 
@@ -420,7 +441,7 @@ function renderizarHistorialNotas(list) {
         const mostrarScroll = total > 5;
 
         html += `
-            <div class="col-12 col-md-6 col-xl-4 mb-4">
+            <div class="col-12 col-md-6 col-xl-4 mb-4 notas-historial-card" data-promedio="${promedio !== '—' ? promedio : ''}">
                 <div class="card border-0 shadow-sm notas-card h-100">
                     <div class="card-body d-flex flex-column">
                         <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
@@ -450,4 +471,180 @@ function renderizarHistorialNotas(list) {
 
     html += `</div>`;
     container.innerHTML = html;
+    historialNotasCache = list;
+    if (exportPdfBtn) exportPdfBtn.disabled = !historialNotasCache.length;
+    if (exportExcelBtn) exportExcelBtn.disabled = !historialNotasCache.length;
+}
+
+function filtrarHistorialNotasPorEstado() {
+    const filtro = document.getElementById('historialEstadoFilter');
+    const estado = filtro ? filtro.value : 'all';
+    const cards = document.querySelectorAll('.notas-historial-card');
+
+    cards.forEach(card => {
+        const promedioValue = card.dataset.promedio;
+        const promedio = promedioValue !== '' ? parseFloat(promedioValue) : null;
+        let mostrar = true;
+
+        if (estado === 'aprobados') {
+            mostrar = promedio !== null && promedio >= 3;
+        } else if (estado === 'no_aprobados') {
+            mostrar = promedio === null || promedio < 3;
+        }
+
+        card.style.display = mostrar ? '' : 'none';
+    });
+}
+
+function exportHistorialNotas(tipo) {
+    if (!historialNotasCache || !historialNotasCache.length) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sin datos',
+            text: 'No hay historial de notas para exportar.'
+        });
+        return;
+    }
+
+    const filtro = document.getElementById('historialEstadoFilter');
+    const estado = filtro ? filtro.value : 'all';
+    const filas = generarFilasExportacion(historialNotasCache)
+        .filter(row => {
+            if (estado === 'aprobados') return row.estado === 'Aprobado';
+            if (estado === 'no_aprobados') return row.estado === 'Desaprobado';
+            return true;
+        })
+        .sort((a, b) => {
+            if (a.estado === b.estado) return 0;
+            return a.estado === 'Desaprobado' ? -1 : 1;
+        });
+
+    if (!filas.length) {
+        Swal.fire({
+            icon: 'info',
+            title: 'No hay resultados',
+            text: 'El filtro actual no devuelve registros para exportar.'
+        });
+        return;
+    }
+
+    if (tipo === 'pdf') {
+        exportHistorialToPdf(filas);
+    } else {
+        exportHistorialToExcel(filas);
+    }
+}
+
+function generarFilasExportacion(lista) {
+    const estudiantes = {};
+
+    lista.forEach(item => {
+        const id = item.id_usuario || item.id || item.user_id;
+        if (!id) return;
+
+        if (!estudiantes[id]) {
+            estudiantes[id] = {
+                nombre: item.nombre || `${item.nombres || ''} ${item.apellidos || ''}`.trim() || 'Estudiante',
+                correo: item.correo || item.email || '',
+                notas: []
+            };
+        }
+
+        if (item.nota !== null && item.nota !== undefined && item.nota !== '') {
+            const valor = parseFloat(item.nota);
+            if (!Number.isNaN(valor)) {
+                estudiantes[id].notas.push(valor);
+            }
+        }
+    });
+
+    return Object.values(estudiantes).map(est => {
+        const promedio = est.notas.length > 0
+            ? est.notas.reduce((sum, n) => sum + n, 0) / est.notas.length
+            : null;
+        const promedioText = promedio !== null ? promedio.toFixed(1) : 'Sin nota';
+        const estado = promedio === null || promedio < 3 ? 'Desaprobado' : 'Aprobado';
+        return {
+            nombre: est.nombre,
+            correo: est.correo,
+            promedio: promedio,
+            promedioText,
+            estado
+        };
+    });
+}
+
+function exportHistorialToPdf(rows) {
+    const jsPDFConstructor = window.jspdf?.jsPDF || window.jsPDF;
+    if (!jsPDFConstructor || !window.jspdf?.jsPDF) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo generar el PDF. Falta la librería jsPDF.'
+        });
+        return;
+    }
+
+    const doc = new jsPDFConstructor({ orientation: 'landscape' });
+    doc.setFontSize(14);
+    doc.text('Historial de notas', 14, 15);
+
+    const body = rows.map(r => [r.nombre, r.correo, r.promedioText, r.estado]);
+    const headers = [['Nombre', 'Correo', 'Promedio', 'Estado']];
+
+    if (typeof doc.autoTable !== 'function') {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'La función autoTable no está disponible para generar el PDF.'
+        });
+        return;
+    }
+
+    doc.autoTable({
+        head: headers,
+        body,
+        startY: 22,
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [33, 37, 41], textColor: 255 },
+        theme: 'striped',
+        margin: { left: 14, right: 14 }
+    });
+
+    const nombreArchivo = `historial-notas-${new Date().toISOString().slice(0, 10)}.pdf`;
+    doc.save(nombreArchivo);
+}
+
+function exportHistorialToExcel(rows) {
+    if (!window.XLSX || typeof window.XLSX.utils === 'undefined') {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo generar el archivo Excel. Falta la librería SheetJS.'
+        });
+        return;
+    }
+
+    const datos = rows.map(r => ({
+        Nombre: r.nombre,
+        Correo: r.correo,
+        Promedio: r.promedioText,
+        Estado: r.estado
+    }));
+
+    const workbook = window.XLSX.utils.book_new();
+    const worksheet = window.XLSX.utils.json_to_sheet(datos, { header: ['Nombre', 'Correo', 'Promedio', 'Estado'] });
+    window.XLSX.utils.book_append_sheet(workbook, worksheet, 'Historial');
+
+    const workbookArray = window.XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([workbookArray], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `historial-notas-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
