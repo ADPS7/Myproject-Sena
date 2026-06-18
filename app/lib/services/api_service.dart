@@ -877,7 +877,10 @@ class ApiService {
   }
 
   // 4. Actualiza la contraseña en la base de datos
-  Future<Map<String, dynamic>> updatePassword(String email, String nuevaClave) async {
+  Future<Map<String, dynamic>> updatePassword(
+    String email,
+    String nuevaClave,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/update-password'),
