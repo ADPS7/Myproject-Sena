@@ -187,18 +187,24 @@ function renderizarNotasEstudiante(data) {
 
     const tarjetas = data.modulos.map(modulo => {
         const promedioModulo = calcularPromedioModulo(modulo.notas);
+        
         const notasHTML = Array.isArray(modulo.notas) && modulo.notas.length
-            ? modulo.notas.map((nota, index) => `
-                <li class="list-group-item d-flex justify-content-between align-items-center py-3 px-0 border-0 border-bottom">
-                    <span>Actividad ${index + 1}</span>
-                    <span class="badge bg-${nota.nota >= 3 ? 'success' : 'danger'} bg-opacity-10 text-${nota.nota >= 3 ? 'success' : 'danger'} rounded-pill py-2 px-3">${Number(nota.nota).toFixed(2)}</span>
-                </li>
-              `).join('')
+            ? modulo.notas.map((nota, index) => {
+                const nombreActividad = nota.nombre_actividad || nota.nombre || nota.actividad || `Actividad ${index + 1}`;
+                return `
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-3 px-0 border-0 border-bottom">
+                        <span class="fw-medium">${nombreActividad}</span>
+                        <span class="badge bg-${nota.nota >= 3 ? 'success' : 'danger'} bg-opacity-10 text-${nota.nota >= 3 ? 'success' : 'danger'} rounded-pill py-2 px-3">
+                            ${Number(nota.nota).toFixed(2)}
+                        </span>
+                    </li>
+                `;
+            }).join('')
             : `
                 <div class="alert alert-warning py-3 mb-0 small">
                     No tienes notas registradas en este módulo.
                 </div>
-              `;
+            `;
 
         const mostrarScroll = Array.isArray(modulo.notas) && modulo.notas.length > 5;
 

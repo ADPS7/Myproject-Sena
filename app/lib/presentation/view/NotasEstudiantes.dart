@@ -137,12 +137,16 @@ class NotasEstudiantesScreen extends StatelessWidget {
                               ),
                               children: [
                                 const Divider(height: 1, indent: 20, endIndent: 20, color: Color(0xFFF1F5F9)),
-                                ...notas.asMap().entries.map((entry) {
-                                  final i = entry.key + 1;
-                                  final nota = entry.value;
+                                ...notasRaw.asMap().entries.map((entry) {
+                                  final item = entry.value as Map<String, dynamic>?;
+                                  final nombreActividad = item?['nombre_actividad'] ?? item?['nombre'] ?? item?['actividad'] ?? 'Actividad ${entry.key + 1}';
+                                  final nota = item != null && item.containsKey('nota')
+                                      ? double.tryParse(item['nota'].toString()) ?? 0
+                                      : 0;
+
                                   return ListTile(
                                     contentPadding: const EdgeInsets.symmetric(horizontal: 30),
-                                    title: Text("Actividad $i", style: const TextStyle(fontSize: 14)),
+                                    title: Text(nombreActividad, style: const TextStyle(fontSize: 14)),
                                     trailing: Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                                       decoration: BoxDecoration(
