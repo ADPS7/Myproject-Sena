@@ -3,6 +3,23 @@ let cursoSeleccionado = null;
 let modulosSeleccionados = [];
 let cursosAsistenciaCargados = false;
 
+function parseDateYMD(dateString) {
+    if (!dateString) return null;
+    const text = String(dateString).split('T')[0];
+    const parts = text.split('-').map(Number);
+    if (parts.length !== 3 || parts.some(isNaN)) return null;
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+}
+
+function isModuloVencido(modulo) {
+    if (!modulo || !modulo.fecha_fin) return false;
+    const fechaFin = parseDateYMD(modulo.fecha_fin);
+    if (!fechaFin) return false;
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    return fechaFin < hoy;
+}
+
 console.log('[asistenciaProfesor.js] Script cargado, window.USER_ID =', window.USER_ID);
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -149,7 +166,18 @@ function renderizarModulosAsistencia(nombreCurso, modulos) {
         return;
     }
 
-    contenedor.innerHTML = modulos.map(mod => `
+    contenedor.innerHTML = modulos.map(mod => {
+        const expirado = isModuloVencido(mod);
+        const botonAsistencia = expirado
+            ? `<button class="btn btn-sm btn-secondary rounded-pill" disabled><i class="bi bi-slash-circle"></i> Módulo vencido</button>`
+            : `<button class="btn btn-sm btn-primary rounded-pill" onclick="verEstudiantesAsistencia(${mod.id_modulo}, '${mod.nombre.replace(/'/g, "\\'")}')">
+                    <i class="bi bi-pencil-square"></i> Tomar asistencia
+               </button>`;
+        const badge = expirado
+            ? `<span class="badge bg-danger bg-opacity-10 text-danger">Vencido</span>`
+            : `<span class="badge bg-success bg-opacity-10 text-success">Activo</span>`;
+
+        return `
         <div class="col-12 col-md-6">
             <div class="card card-asistencia shadow-sm p-3 border-start border-primary border-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -157,18 +185,18 @@ function renderizarModulosAsistencia(nombreCurso, modulos) {
                         <h6 class="fw-bold mb-0">${mod.nombre}</h6>
                         <small class="text-muted">Ver alumnos y registrar asistencia</small>
                     </div>
+                    ${badge}
                 </div>
                 <div class="d-flex gap-2">
-                    <button class="btn btn-sm btn-primary rounded-pill" onclick="verEstudiantesAsistencia(${mod.id_modulo}, '${mod.nombre.replace(/'/g, "\\'")}')">
-                        <i class="bi bi-pencil-square"></i> Tomar asistencia
-                    </button>
+                    ${botonAsistencia}
                     <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="verHistorialModulo(${mod.id_modulo}, '${mod.nombre.replace(/'/g, "\\'")}'); event.stopPropagation();">
                         <i class="bi bi-clock-history"></i> Ver asistencia
                     </button>
                 </div>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 async function verEstudiantesAsistencia(idModulo, nombreModulo) {
@@ -287,6 +315,7 @@ function renderizarAsistenciaEstudiantes(idModulo, nombreModulo, estudiantes) {
 
     const hoy = getTodayLocalString();
     const moduloSeleccionado = modulosSeleccionados.find(m => m.id_modulo == idModulo) || {};
+    const expirado = isModuloVencido(moduloSeleccionado);
     const minFecha = formatDateForInput(moduloSeleccionado.fecha_inicio) || hoy;
     const fechaFin = parseDateString(moduloSeleccionado.fecha_fin);
     const fechaHoy = parseDateString(hoy);
@@ -307,26 +336,34 @@ function renderizarAsistenciaEstudiantes(idModulo, nombreModulo, estudiantes) {
     let fechaPredeterminada = hoy;
     if (fechaPredeterminada < minFecha) fechaPredeterminada = minFecha;
     if (fechaPredeterminada > maxFecha) fechaPredeterminada = maxFecha;
+    const disabledInputs = expirado ? 'disabled' : '';
+    const avisoExpirado = expirado ? `
+        <div class="col-12 mb-4">
+            <div class="alert alert-warning shadow-sm">
+                Este módulo ya venció. No es posible registrar nuevas asistencias.
+            </div>
+        </div>` : '';
 
     contenedor.innerHTML = `
+        ${avisoExpirado}
         <div class="col-12 mb-4">
             <div class="card border-0 shadow-sm overflow-hidden rounded-4">
                 <div class="card-body p-4">
                     <div class="row g-3 align-items-end">
                         <div class="col-12 col-md-4">
                             <label class="form-label fw-semibold">Fecha</label>
-                            <input id="fecha-asistencia" type="date" class="form-control" value="${fechaPredeterminada}" min="${minFecha}" max="${maxFecha}">
+                            <input id="fecha-asistencia" type="date" class="form-control" value="${fechaPredeterminada}" min="${minFecha}" max="${maxFecha}" ${disabledInputs}>
                         </div>
                         <div class="col-12 col-md-4">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="select-all-estudiantes" onchange="toggleSeleccionTodos(this.checked)">
+                                <input class="form-check-input" type="checkbox" id="select-all-estudiantes" onchange="toggleSeleccionTodos(this.checked)" ${disabledInputs}>
                                 <label class="form-check-label" for="select-all-estudiantes">
                                     Marcar todos como presentes
                                 </label>
                             </div>
                         </div>
                         <div class="col-12 col-md-4 text-md-end">
-                            <button class="btn btn-primary rounded-pill px-4" onclick="guardarAsistencia(${idModulo})">
+                            <button class="btn btn-primary rounded-pill px-4" onclick="guardarAsistencia(${idModulo})" ${disabledInputs}>
                                 <i class="bi bi-check2-circle"></i> Registrar asistencia
                             </button>
                         </div>
@@ -351,7 +388,7 @@ function renderizarAsistenciaEstudiantes(idModulo, nombreModulo, estudiantes) {
                             ${estudiantes.length > 0 ? estudiantes.map(est => `
                                 <tr>
                                     <td class="ps-4">
-                                        <select class="form-select form-select-sm asistencia-status" data-id="${est.id_usuario}" aria-label="Estado de asistencia">
+                                        <select class="form-select form-select-sm asistencia-status" data-id="${est.id_usuario}" aria-label="Estado de asistencia" ${disabledInputs}>
                                             <option value="SI">Presente</option>
                                             <option value="NO">Ausente</option>
                                         </select>
@@ -359,7 +396,7 @@ function renderizarAsistenciaEstudiantes(idModulo, nombreModulo, estudiantes) {
                                     <td class="fw-semibold">${est.nombres} ${est.apellidos}</td>
                                     <td>${est.correo}</td>
                                     <td class="text-end">
-                                        <button type="button" class="btn btn-outline-primary btn-sm rounded-pill" onclick="registrarAsistenciaIndividual(${idModulo}, ${est.id_usuario}, '${est.nombres.replace(/'/g, "\\'")} ${est.apellidos.replace(/'/g, "\\'")}', this)">
+                                        <button type="button" class="btn btn-outline-primary btn-sm rounded-pill" onclick="registrarAsistenciaIndividual(${idModulo}, ${est.id_usuario}, '${est.nombres.replace(/'/g, "\\'")} ${est.apellidos.replace(/'/g, "\\'")}', this)" ${disabledInputs}>
                                             <i class="bi bi-person-check"></i> Registrar
                                         </button>
                                     </td>
@@ -413,6 +450,11 @@ async function registrarAsistenciaIndividual(idModulo, idUsuario, nombreUsuario,
     const moduloSeleccionado = modulosSeleccionados.find(m => m.id_modulo == idModulo);
 
     if (moduloSeleccionado) {
+        if (isModuloVencido(moduloSeleccionado)) {
+            mostrarToast('Atención', 'Este módulo ya venció, no se puede registrar asistencia.', 'warning');
+            return;
+        }
+
         const fechaDate = parseDateString(fecha);
         const minFechaDate = parseDateString(moduloSeleccionado.fecha_inicio);
         const maxFechaDate = parseDateString(moduloSeleccionado.fecha_fin);
@@ -495,6 +537,11 @@ async function guardarAsistencia(idModulo) {
 
     const moduloSeleccionado = modulosSeleccionados.find(m => m.id_modulo == idModulo);
     if (moduloSeleccionado) {
+        if (isModuloVencido(moduloSeleccionado)) {
+            mostrarToast('Atención', 'Este módulo ya venció, no se puede registrar asistencia.', 'warning');
+            return;
+        }
+
         const fechaDate = parseDateString(fecha);
         const minFechaDate = parseDateString(moduloSeleccionado.fecha_inicio);
         const maxFechaDate = parseDateString(moduloSeleccionado.fecha_fin);

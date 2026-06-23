@@ -97,10 +97,16 @@ async function cargarCursoEstudiante() {
         }
 
         const curso = data.curso;
-        document.getElementById('cursoEstudianteNombre').textContent = curso.curso_nombre || 'Curso sin nombre';
-        document.getElementById('cursoEstudianteDescripcion').textContent = curso.curso_nombre
+        const modulosResponse = await fetch(`/modulos/estudiante/${window.USER_ID}`);
+        const modulosList = modulosResponse.ok ? await modulosResponse.json() : [];
+        const modulosExpirados = Array.isArray(modulosList) ? modulosList.filter(isModuloVencido).length : 0;
+
+        const cursoDescripcion = curso.curso_nombre
             ? `Curso diseñado para desarrollar tus competencias en ${curso.curso_nombre} y avanzar con ejercicios y módulos prácticos.`
             : 'Descripción general del curso.';
+
+        document.getElementById('cursoEstudianteNombre').textContent = curso.curso_nombre || 'Curso sin nombre';
+        document.getElementById('cursoEstudianteDescripcion').textContent = cursoDescripcion + (modulosExpirados > 0 ? ` ${modulosExpirados} módulo(s) ya se completaron porque se acabó el tiempo.` : '');
         document.getElementById('cursoEstudianteProfesores').textContent = curso.profesores ? `Profesor asignado: ${curso.profesores}` : 'Profesor asignado: Sin profesor asignado';
         document.getElementById('cursoEstudiantePeriodo').textContent = '2026';
         document.getElementById('cursoEstudianteEstado').textContent = 'Activo';
@@ -429,6 +435,23 @@ function formatDate(dateString) {
     });
 }
 
+function parseDateYMD(dateString) {
+    if (!dateString) return null;
+    const text = String(dateString).split('T')[0];
+    const parts = text.split('-').map(Number);
+    if (parts.length !== 3 || parts.some(isNaN)) return null;
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+}
+
+function isModuloVencido(modulo) {
+    if (!modulo || !modulo.fecha_fin) return false;
+    const fechaFin = parseDateYMD(modulo.fecha_fin);
+    if (!fechaFin) return false;
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    return fechaFin < hoy;
+}
+
 function renderizarModulosEstudiante(modulos) {
     const lista = document.getElementById('cursoEstudianteModulos') || document.getElementById('listaModulosEstudiante');
 
@@ -458,10 +481,14 @@ function renderizarModulosEstudiante(modulos) {
             ? `Promedio ${promedio} / 5.0`
             : 'Sin notas registradas';
         const estadoClase = promedio ? 'text-success' : 'text-muted';
+        const expirado = isModuloVencido(modulo);
+        const badgeHtml = expirado
+            ? `<span class="badge bg-danger bg-opacity-10 text-danger mb-3">Vencido / completado por tiempo</span>`
+            : `<span class="badge bg-success bg-opacity-10 text-success mb-3">Activo</span>`;
 
         return `
             <div class="col-12 col-sm-6 col-xl-4">
-                <div class="card border-0 shadow-lg modulo-card overflow-hidden h-100" style="cursor: default;">
+                <div class="card border-0 shadow-lg modulo-card overflow-hidden h-100 ${expirado ? 'border-danger' : ''}" style="cursor: default;">
                     <div class="bg-primary p-4 text-white">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -474,6 +501,7 @@ function renderizarModulosEstudiante(modulos) {
                         </div>
                     </div>
                     <div class="card-body p-4">
+                        ${badgeHtml}
                         <div class="bg-light rounded-4 p-3 mb-3">
                             <div class="d-flex justify-content-between mb-2">
                                 <small class="text-muted">Inicio</small>
@@ -484,6 +512,7 @@ function renderizarModulosEstudiante(modulos) {
                                 <span class="fw-semibold">${formatDate(modulo.fecha_fin)}</span>
                             </div>
                         </div>
+                        ${expirado ? `<div class="alert alert-danger py-2 mb-0 small">Este módulo ya venció y se considera completado porque se acabó el tiempo.</div>` : ''}
                     </div>
                 </div>
             </div>
