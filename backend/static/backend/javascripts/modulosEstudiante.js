@@ -32,6 +32,15 @@ function mostrarvistaModulosEstudiante() {
     cargarModulosEstudiante();
 }
 
+function moduloEstaCompletado(modulo) {
+    if (!modulo.fecha_fin) return false;
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const fechaFin = new Date(modulo.fecha_fin);
+    fechaFin.setHours(0, 0, 0, 0);
+    return fechaFin < hoy;
+}
+
 async function cargarCursoEstudiante() {
     const resumen = document.getElementById('cursoEstudianteResumen');
     if (!resumen) return;
@@ -252,6 +261,7 @@ async function cargarResumenInicioEstudiante() {
     const cursoDescripcion = document.getElementById('inicioDescripcionCurso');
     const modulosInscritos = document.getElementById('inicioModulosInscritos');
     const modulosPendientes = document.getElementById('inicioModulosPendientes');
+    const modulosCompletadosEl = document.getElementById('cursoEstudianteModulosCompletados');
     const promedioActual = document.getElementById('inicioPromedioActual');
     const promedioTexto = document.getElementById('inicioPromedioTexto');
     const asistenciaLabel = document.getElementById('inicioAsistencia');
@@ -262,13 +272,15 @@ async function cargarResumenInicioEstudiante() {
     }
 
     try {
-        const [cursoResp, notasResp, asistResp] = await Promise.all([
+        const [cursoResp, modulosResp, notasResp, asistResp] = await Promise.all([
             fetch(`/curso/estudiante/${window.USER_ID}`),
+            fetch(`/modulos/estudiante/${window.USER_ID}`),
             fetch(`/notas-alumno/${window.USER_ID}`),
             fetch(`/asistencias/${window.USER_ID}`)
         ]);
 
         const cursoData = cursoResp.ok ? await cursoResp.json() : null;
+        const modulosData = modulosResp.ok ? await modulosResp.json() : [];
         const notasData = notasResp.ok ? await notasResp.json() : null;
         const asistData = asistResp.ok ? await asistResp.json() : null;
 
@@ -287,11 +299,17 @@ async function cargarResumenInicioEstudiante() {
                 : 'Aún no tienes un curso asignado en la plataforma.';
         }
 
-        const totalModulos = Number(cursoInfo?.total_modulos || 0);
-        const completados = Number(cursoInfo?.modulos_hechos || 0);
+        const totalModulos = Array.isArray(modulosData) ? modulosData.length : 0;
+        const modulosCompletados = Array.isArray(modulosData) 
+            ? modulosData.filter(moduloEstaCompletado).length 
+            : 0;
 
-        modulosInscritos.textContent = totalModulos;
-        modulosPendientes.textContent = `Módulos completados: ${completados} • pendientes: ${Math.max(0, totalModulos - completados)}`;
+        // Actualizar contadores en la tarjeta
+        if (modulosInscritos) modulosInscritos.textContent = totalModulos;
+        if (modulosCompletadosEl) modulosCompletadosEl.textContent = modulosCompletados;
+        if (modulosPendientes) {
+            modulosPendientes.textContent = `Completados: ${modulosCompletados} • Pendientes: ${Math.max(0, totalModulos - modulosCompletados)}`;
+        }
 
         let promedioGlobal = null;
         if (notasData && Array.isArray(notasData.modulos)) {
