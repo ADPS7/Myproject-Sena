@@ -111,7 +111,7 @@ async function cargarCursoEstudiante() {
         document.getElementById('cursoEstudiantePeriodo').textContent = '2026';
         document.getElementById('cursoEstudianteEstado').textContent = 'Activo';
         document.getElementById('cursoEstudianteTotalModulos').textContent = curso.total_modulos || 0;
-        document.getElementById('cursoEstudianteModulosCompletados').textContent = curso.modulos_hechos || 0;
+        document.getElementById('cursoEstudianteModulosCompletados').textContent = (Number(curso.modulos_hechos || 0) + modulosExpirados).toString();
     } catch (error) {
         console.error(error);
         resumen.innerHTML = `
@@ -461,6 +461,13 @@ function renderizarModulosEstudiante(modulos) {
     }
 
     if (!modulos || !modulos.length) {
+        document.getElementById('listaModulosCompletados').innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-secondary shadow-sm">
+                    No hay módulos completados aún.
+                </div>
+            </div>
+        `;
         lista.innerHTML = `
             <div class="col-12">
                 <div class="alert alert-warning shadow-sm">
@@ -471,24 +478,41 @@ function renderizarModulosEstudiante(modulos) {
         return;
     }
 
-    lista.innerHTML = modulos.map(modulo => {
+    const modulosCompletados = modulos.filter(isModuloVencido);
+    const modulosActivos = modulos.filter(modulo => !isModuloVencido(modulo));
+
+    document.getElementById('listaModulosCompletados').innerHTML = modulosCompletados.length
+        ? modulosCompletados.map(modulo => renderModuloCard(modulo, true)).join('')
+        : `
+            <div class="col-12">
+                <div class="alert alert-secondary shadow-sm">
+                    No hay módulos completados aún.
+                </div>
+            </div>
+        `;
+
+    lista.innerHTML = modulosActivos.length
+        ? modulosActivos.map(modulo => renderModuloCard(modulo, false)).join('')
+        : `
+            <div class="col-12">
+                <div class="alert alert-warning shadow-sm">
+                    No hay módulos activos disponibles.
+                </div>
+            </div>
+        `;
+
+    function renderModuloCard(modulo, expirado) {
         const notas = Array.isArray(modulo.notas) ? modulo.notas : [];
         const promedio = notas.length
             ? (notas.reduce((sum, nota) => sum + Number(nota.nota || 0), 0) / notas.length).toFixed(1)
             : null;
-        const porcentaje = promedio ? Math.min(100, Math.round((Number(promedio) / 5) * 100)) : 0;
-        const estadoTexto = promedio
-            ? `Promedio ${promedio} / 5.0`
-            : 'Sin notas registradas';
-        const estadoClase = promedio ? 'text-success' : 'text-muted';
-        const expirado = isModuloVencido(modulo);
         const badgeHtml = expirado
-            ? `<span class="badge bg-danger bg-opacity-10 text-danger mb-3">Vencido / completado por tiempo</span>`
-            : `<span class="badge bg-success bg-opacity-10 text-success mb-3">Activo</span>`;
+            ? `<span class="badge bg-success bg-opacity-10 text-success mb-3">Completado</span>`
+            : `<span class="badge bg-primary bg-opacity-10 text-primary mb-3">Activo</span>`;
 
         return `
             <div class="col-12 col-sm-6 col-xl-4">
-                <div class="card border-0 shadow-lg modulo-card overflow-hidden h-100 ${expirado ? 'border-danger' : ''}" style="cursor: default;">
+                <div class="card border-0 shadow-lg modulo-card overflow-hidden h-100 ${expirado ? 'border-success' : ''}" style="cursor: default;">
                     <div class="bg-primary p-4 text-white">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -512,10 +536,10 @@ function renderizarModulosEstudiante(modulos) {
                                 <span class="fw-semibold">${formatDate(modulo.fecha_fin)}</span>
                             </div>
                         </div>
-                        ${expirado ? `<div class="alert alert-danger py-2 mb-0 small">Este módulo ya venció y se considera completado porque se acabó el tiempo.</div>` : ''}
+                        ${expirado ? `<div class="alert alert-success py-2 mb-0 small">Este módulo ya venció y se ha colocado como completado.</div>` : ''}
                     </div>
                 </div>
             </div>
         `;
-    }).join('');
+    }
 }
