@@ -12,6 +12,45 @@ document.addEventListener("DOMContentLoaded", () => {
     const exportPdfBtn = document.getElementById("exportPdfBtn");
     const exportExcelBtn = document.getElementById("exportExcelBtn");
     let historialNotasCache = [];
+    const modulosPorCurso = {};
+
+    function parseDateYMD(dateString) {
+        if (!dateString) return null;
+        const text = String(dateString).split('T')[0];
+        const parts = text.split('-').map(Number);
+        if (parts.length !== 3 || parts.some(isNaN)) return null;
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    function isModuloVencido(modulo) {
+        if (!modulo || !modulo.fecha_fin) return false;
+        const fechaFin = parseDateYMD(modulo.fecha_fin);
+        if (!fechaFin) return false;
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        return fechaFin < hoy;
+    }
+
+    function actualizarEstadoModuloSeleccionado(moduloSeleccionado) {
+        const expirado = moduloSeleccionado ? isModuloVencido(moduloSeleccionado) : false;
+        const warningHtml = expirado
+            ? `<div class="alert alert-warning">Este módulo ya venció, no se pueden registrar nuevas notas.</div>`
+            : '';
+
+        if (notaFeedback) {
+            notaFeedback.innerHTML = warningHtml;
+        }
+
+        if (applyAllNotaBtn) {
+            applyAllNotaBtn.disabled = !moduloSeleccionado || expirado;
+        }
+        if (viewAllNotasBtn) {
+            viewAllNotasBtn.disabled = !moduloSeleccionado;
+        }
+        if (searchStudentInput) {
+            searchStudentInput.disabled = !moduloSeleccionado || expirado;
+        }
+    }
 
     // 🔹 Cargar cursos del profesor
     fetch(`/cursos/profesor/${window.USER_ID}`)
@@ -39,10 +78,12 @@ document.addEventListener("DOMContentLoaded", () => {
             fetch(`/modulos/curso/${cursoId}`)
                 .then(res => res.json())
                 .then(modulos => {
+                    modulosPorCurso[cursoId] = modulos;
                     modulos.forEach(m => {
+                        const expirado = isModuloVencido(m);
                         const option = document.createElement("option");
                         option.value = m.id_modulo || m.id;
-                        option.textContent = m.nombre;
+                        option.textContent = m.nombre + (expirado ? ' (vencido)' : '');
                         moduloSelect.appendChild(option);
                     });
                 });
@@ -62,6 +103,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const nombreActividad = document.getElementById('nombreActividad') ? 
                                   document.getElementById('nombreActividad').value.trim() || "Evaluación" : "Evaluación";
+            const moduloSeleccionado = modulosPorCurso[cursoSelect.value]?.find(m => String(m.id_modulo || m.id) === String(moduloSelect.value));
+            if (moduloSeleccionado && isModuloVencido(moduloSeleccionado)) {
+                notaFeedback.innerHTML = `<div class="alert alert-warning">Este módulo ya venció, no se pueden registrar nuevas notas.</div>`;
+                return;
+            }
 
             const raw = (input.value || '').toString().trim();
             const n = parseFloat(raw);
@@ -157,7 +203,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const listaContainer = document.getElementById('listaEstudiantesNotas');
         if (listaContainer) listaContainer.innerHTML = "";
         const moduloId = moduloSelect.value;
+        const cursoId = cursoSelect.value;
         selectedModuleName.textContent = moduloSelect.options[moduloSelect.selectedIndex].text || '—';
+        const moduloSeleccionado = modulosPorCurso[cursoId]?.find(m => String(m.id_modulo || m.id) === String(moduloId));
+
+        actualizarEstadoModuloSeleccionado(moduloSeleccionado);
 
         if (moduloId) {
             if (viewAllNotasBtn) viewAllNotasBtn.disabled = false;
@@ -165,6 +215,7 @@ document.addEventListener("DOMContentLoaded", () => {
             fetch(`/notas/modulo/${moduloId}`)
                 .then(res => res.json())
                 .then(estudiantes => {
+                        const expirado = moduloSeleccionado && isModuloVencido(moduloSeleccionado);
                         const seen = new Set();
                         if (tablaEstudiantes) tablaEstudiantes.innerHTML = '';
                         estudiantes.forEach(e => {
@@ -176,23 +227,26 @@ document.addEventListener("DOMContentLoaded", () => {
                             const studentName = e.nombre || `${e.nombres || ''} ${e.apellidos || ''}`.trim();
                             const studentEmail = e.correo || e.email || '';
                             const notaVal = (e.nota !== undefined && e.nota !== null) ? e.nota : '';
+                            const disabledAttr = expirado ? 'disabled' : '';
 
-                            // Crear fila en la tabla de estudiantes
                             const fila = document.createElement("tr");
                             fila.innerHTML = `
                                 <td>${studentName}</td>
                                 <td>${studentEmail}</td>
-                                <td><input type="number" class="form-control nota-input" min="0" max="5" step="0.1" data-id="${studentId}" value="${notaVal}"></td>
-                                <td class="text-nowrap"><button class="btn btn-success btn-sm guardar-btn" data-id="${studentId}">Guardar</button></td>
+                                <td><input type="number" class="form-control nota-input" min="0" max="5" step="0.1" data-id="${studentId}" value="${notaVal}" ${disabledAttr}></td>
+                                <td class="text-nowrap"><button class="btn btn-success btn-sm guardar-btn" data-id="${studentId}" ${disabledAttr}>Guardar</button></td>
                             `;
                             if (tablaEstudiantes) tablaEstudiantes.appendChild(fila);
                         });
 
                     const hasStudents = estudiantes && estudiantes.length > 0;
-                    if (applyAllNotaBtn) applyAllNotaBtn.disabled = !hasStudents;
+                    if (applyAllNotaBtn) applyAllNotaBtn.disabled = !hasStudents || expirado;
                     if (searchStudentInput) {
-                        searchStudentInput.disabled = !hasStudents;
+                        searchStudentInput.disabled = !hasStudents || expirado;
                         searchStudentInput.value = '';
+                    }
+                    if (expirado && notaFeedback) {
+                        notaFeedback.innerHTML = `<div class="alert alert-warning">Este módulo ya venció y no se pueden registrar nuevas notas.</div>`;
                     }
                     filtrarEstudiantesPorNombre('');
 
@@ -238,6 +292,11 @@ document.addEventListener("DOMContentLoaded", () => {
                                 return;
                             }
 
+                            if (moduloSeleccionado && isModuloVencido(moduloSeleccionado)) {
+                                notaFeedback.innerHTML = `<div class="alert alert-warning">Este módulo ya venció, no se pueden registrar nuevas notas.</div>`;
+                                return;
+                            }
+
                             if (!updates.length) {
                                 notaFeedback.innerHTML = `<div class="alert alert-warning">No hay notas válidas para guardar.</div>`;
                                 return;
@@ -249,6 +308,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
                             try {
                                 const promises = updates.map(u => {
+                                    if (moduloSeleccionado && isModuloVencido(moduloSeleccionado)) {
+                                        return Promise.resolve({ id: u.id, ok: false });
+                                    }
                                     return fetch(`/notas`, {
                                         method: "POST",
                                         headers: { "Content-Type": "application/json" },
